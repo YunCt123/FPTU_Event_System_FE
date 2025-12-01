@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-fpt-orange: #F36F21;
+  --color-fpt-blue: #004070;
+  --color-fpt-gray: #F0F2F5;
+  --color-fpt-text: #333333;
+}
