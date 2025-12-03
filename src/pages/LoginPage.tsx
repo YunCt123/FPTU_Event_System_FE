@@ -1,7 +1,22 @@
 import { useNavigate } from "react-router-dom";
+import FPTLogo from "../assets/fpt_logo.png";
+import { toast } from "react-toastify";
+import { useState } from "react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  // const [error, setError] = useState("");
+
+  const handleLogin = () => {
+    if (email === "admin@gmail.com" && password === "123456") {
+      navigate("/home");
+    } else {
+      toast.error("Email or password is incorrect!");
+    }
+  };
+  
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 ">
       <div className="flex flex-col items-center justify-center px-10 lg:px-24 py-16 prose">      
