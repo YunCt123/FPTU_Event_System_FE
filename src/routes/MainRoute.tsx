@@ -10,6 +10,7 @@ import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import VenuePage from "../pages/admin/venue/VenuePage";
+import OrganizerList from "../pages/admin/organizer/OrganizerList";
 
 const MainRoute: React.FC = () => {
   return (
@@ -44,6 +45,7 @@ const MainRoute: React.FC = () => {
 
         <Route element={<AdminRoute />}>
           <Route path="/venues" element={<VenuePage />} />
+          <Route path="/organizerlist" element={<OrganizerList/>} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

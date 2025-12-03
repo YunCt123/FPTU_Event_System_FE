@@ -18,9 +18,8 @@ const LoginPage = () => {
   };
   
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-      <div className="flex flex-col items-center justify-center px-10 lg:px-24 py-16 prose">
-        
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 ">
+      <div className="flex flex-col items-center justify-center px-10 lg:px-24 py-16 prose">      
         <div className="w-full max-w-md border border-gray-300 p-4 rounded-lg">
           <div className="flex justify-center  mb-6">
             <img src={FPTLogo} alt="FPT Logo" 
@@ -77,7 +76,7 @@ const LoginPage = () => {
         </div>
       </div>
 
-      <div className="hidden lg:flex items-center justify-center bg-gray-100">
+      <div className="lg:flex items-center justify-center">
         <img
           src="https://th.bing.com/th/id/R.d99b25a9c5d5b8f484cd64aec784416d?rik=ko4qFdZXR5zYYQ&riu=http%3a%2f%2fthongtintuyensinh247.com%2fwp-content%2fuploads%2f2023%2f08%2ffpt.jpeg&ehk=LPscQ%2bnrlL5fytxXaZ%2fgbqs%2f6uiZs5tKzvrR0LjPbpQ%3d&risl=&pid=ImgRaw&r=0"
           alt="FPT University Campus"
