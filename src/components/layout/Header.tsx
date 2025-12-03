@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Menu,
   X,
@@ -9,6 +9,7 @@ import {
   Ticket,
   Settings,
   ChevronDown,
+  University,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -28,9 +29,13 @@ const Header = () => {
   const navItems = [
     { label: "Trang chủ", href: "/" },
     { label: "Sự kiện", href: "/events" },
+    { label: "Địa điểm", href: "/venues" },
     ...(user.role === "organizer"
       ? [{ label: "Quản lý sự kiện", href: "/organizer/dashboard" }]
       : [{ label: "Vé của tôi", href: "/my-tickets" }]),
+     ...(user.role === "admin"
+      ? [{ label: "Quản lý sự kiện", href: "/admin/dashboard" }]
+      : []),
   ];
 
   return (
@@ -119,6 +124,20 @@ const Header = () => {
                     <User size={16} /> Hồ sơ cá nhân
                   </a>
 
+                  <a
+                      href="/admin/venues"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
+                    >
+                      <University size={16} /> Quản lý địa điểm
+                    </a>
+
+                    <a
+                      href="/organizer/venues"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
+                    >
+                      <Settings size={16} /> Quản lý chỗ ngồi
+                    </a>
+
                   {user.role === "student" && (
                     <a
                       href="/my-tickets"
@@ -129,10 +148,18 @@ const Header = () => {
                   )}
                   {user.role === "organizer" && (
                     <a
-                      href="/organizer/settings"
+                      href="/organizer/venues"
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
                     >
-                      <Settings size={16} /> Cấu hình BTC
+                      <Settings size={16} /> Quản lý chỗ ngồi
+                    </a>
+                  )}
+                  {user.role === "admin" && (
+                    <a
+                      href="/admin/venues"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
+                    >
+                      <Settings size={16} /> Quản lý địa điểm
                     </a>
                   )}
 
