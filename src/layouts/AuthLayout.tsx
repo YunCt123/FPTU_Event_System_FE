@@ -1,7 +1,17 @@
+import Footer from "../components/layout/Footer";
+import Header from "../components/layout/Header";
 import type { MainLayoutProps } from "../types/MainLayoutProps";
 
 const AuthLayout = ({ children }: MainLayoutProps) => {
-  return <div>{children}</div>;
+  return (
+    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-6 w-full">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
 };
 
 export default AuthLayout;
