@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Venue, VenueStatus } from '../../../types/Venue';
-import VenueUpsertModal from './VenueUpsertModal';
+import VenueFormModal from '../../../components/admin/VenueFormModal';
 import ConfirmModal from '../../../components/common/ConfirmModal';
 
 // Mock data để test UI/UX
@@ -11,28 +11,67 @@ const MOCK_VENUES: Venue[] = [
     id: 1,
     name: 'Hội trường A',
     description: 'Hội trường lớn phục vụ cho các sự kiện quy mô lớn với đầy đủ tiện nghi hiện đại',
-    capacity: 500,
+    capacity: 200,
     status: 'ACTIVE',
     imageUrl: 'https://images.unsplash.com/photo-1519167758481-83f29da8c2b0?w=400',
     isActive: true,
+    seatMap: {
+      rows: 10,
+      cols: 20,
+      seats: Array.from({ length: 10 }, (_, r) =>
+        Array.from({ length: 20 }, (_, c) => ({
+          row: r,
+          col: c,
+          type: 'empty' as const,
+          label: `${String.fromCharCode(65 + r)}${c + 1}`
+        }))
+      ),
+      rowLabels: Array.from({ length: 10 }, (_, i) => String.fromCharCode(65 + i))
+    }
   },
   {
     id: 2,
     name: 'Hội trường B',
     description: 'Hội trường vừa phù hợp cho hội thảo và workshop',
-    capacity: 200,
+    capacity: 80,
     status: 'ACTIVE',
     imageUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400',
     isActive: true,
+    seatMap: {
+      rows: 8,
+      cols: 10,
+      seats: Array.from({ length: 8 }, (_, r) =>
+        Array.from({ length: 10 }, (_, c) => ({
+          row: r,
+          col: c,
+          type: 'empty' as const,
+          label: `${String.fromCharCode(65 + r)}${c + 1}`
+        }))
+      ),
+      rowLabels: Array.from({ length: 8 }, (_, i) => String.fromCharCode(65 + i))
+    }
   },
   {
     id: 3,
     name: 'Hội trường C',
     description: 'Đang trong quá trình bảo trì và nâng cấp hệ thống âm thanh',
-    capacity: 300,
+    capacity: 50,
     status: 'MAINTENANCE',
     imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400',
     isActive: true,
+    seatMap: {
+      rows: 5,
+      cols: 10,
+      seats: Array.from({ length: 5 }, (_, r) =>
+        Array.from({ length: 10 }, (_, c) => ({
+          row: r,
+          col: c,
+          type: 'empty' as const,
+          label: `${String.fromCharCode(65 + r)}${c + 1}`
+        }))
+      ),
+      rowLabels: Array.from({ length: 5 }, (_, i) => String.fromCharCode(65 + i))
+    }
   },
   {
     id: 4,
@@ -44,7 +83,7 @@ const MOCK_VENUES: Venue[] = [
   },
 ];
 
-const VenuePage = () => {
+const AdminVenuePage = () => {
   const [venues, setVenues] = useState<Venue[]>(MOCK_VENUES);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -121,7 +160,7 @@ const VenuePage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6">;
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -185,6 +224,7 @@ const VenuePage = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {venue.capacity.toLocaleString()} người
+                     
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(venue.status)}</td>
                     <td className="px-6 py-4">
@@ -220,9 +260,9 @@ const VenuePage = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Upsert Modal */}
       {isModalOpen && (
-        <VenueUpsertModal
+        <VenueFormModal
           venue={selectedVenue}
           onClose={handleModalClose}
           onSuccess={handleModalSuccess}
@@ -244,4 +284,4 @@ const VenuePage = () => {
   );
 };
 
-export default VenuePage;
+export default AdminVenuePage;
