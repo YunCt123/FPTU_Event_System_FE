@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import type { ApiResponse } from '../types/ApiResponse';
+import type { ApiResponse } from '../model/ApiResponse';
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
