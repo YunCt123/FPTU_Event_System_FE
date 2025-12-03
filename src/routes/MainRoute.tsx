@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthRoute from "./AuthRoute";
 import UserRoute from "./UserRoute";
-import AdminRoute from "./AdminRoute";
+
 import OrganizerRoute from "./OrganizerRoute";
 import { Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
@@ -12,6 +12,8 @@ import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
 import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
+import AdminRoute from "./AdminRoute";
+import OrganizerList from "../pages/admin/organizer/OrganizerList";
 
 const MainRoute: React.FC = () => {
   return (
@@ -55,6 +57,7 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
           <Route path="/admin/settings" element={<div>System Settings</div>} />
+          <Route path="/admin/organizers" element={<OrganizerList />} />
         </Route>
 
         {/* Organizer routes */}
@@ -63,6 +66,7 @@ const MainRoute: React.FC = () => {
           <Route path="/organizer/events" element={<div>My Events</div>} />
           <Route path="/organizer/venues" element={<OrganizerVenuePage />} />
           <Route path="/organizer/profile" element={<div>Organization Profile</div>} />
+          
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
