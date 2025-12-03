@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Venue, VenueStatus } from '../../../types/Venue';
-import VenueFormModal from '../../../components/admin/VenueFormModal';
+import VenueFormModal from '../../../components/admin/venue/VenueFormModal';
 import ConfirmModal from '../../../components/common/ConfirmModal';
 
 // Mock data để test UI/UX

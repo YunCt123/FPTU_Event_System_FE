@@ -12,6 +12,8 @@ import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
 import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
+import OrganizerList from "../pages/admin/organizer/OrganizerList";
+import CampusPage from "../pages/admin/campus/CampusPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -50,8 +52,8 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/events/pending" element={<div>Pending Events</div>} />
           <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
           <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
-          <Route path="/admin/organizers" element={<div>Organizers Management</div>} />
-          <Route path="/admin/campuses" element={<div>Campus Management</div>} />
+          <Route path="/admin/organizers" element={<OrganizerList />} />
+          <Route path="/admin/campuses" element={<CampusPage />} />
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
           <Route path="/admin/settings" element={<div>System Settings</div>} />

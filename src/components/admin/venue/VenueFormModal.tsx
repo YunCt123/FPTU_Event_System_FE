@@ -6,8 +6,8 @@ import type {
   VenueStatus,
   CreateVenueRequest,
   Seat,
-} from "../../types/Venue";
-import SeatMapEditor from "../common/SeatMapEditor";
+} from "../../../types/Venue";
+import SeatMapEditor from "../../common/SeatMapEditor";
 
 interface VenueFormModalProps {
   venue: Venue | null;
