@@ -9,6 +9,7 @@ import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import MyTickets from "../pages/MyTickets";
+import ListEventPage from "../pages/ListEventPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -34,6 +35,7 @@ const MainRoute: React.FC = () => {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/my-tickets" element={<MyTickets/>}/>
           <Route path="/list-events" element={<ListEventPage/>}/>
+
         </Route>
 
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}
