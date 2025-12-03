@@ -1,21 +1,21 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import AdminLayout from "../layouts/AdminLayout";
+import OrganizerLayout from "../layouts/OrganizerLayout";
 
 // const isAuthenticated = () => {
 //   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 //   const user = JSON.parse(localStorage.getItem("user") || "{}");
-//   return !!(token && user.role === "ADMIN");
+//   return !!(token && user.role === "ORGANIZER");
 // };
 
-const AdminRoute: React.FC = () => {
+const OrganizerRoute: React.FC = () => {
   // if (!isAuthenticated()) return <Navigate to="/login" replace />;
 
   return (
-    <AdminLayout>
+    <OrganizerLayout>
       <Outlet />
-    </AdminLayout>
+    </OrganizerLayout>
   );
 };
 
-export default AdminRoute;
+export default OrganizerRoute;
