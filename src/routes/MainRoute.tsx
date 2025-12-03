@@ -2,12 +2,15 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthRoute from "./AuthRoute";
 import UserRoute from "./UserRoute";
+import AdminRoute from "./AdminRoute";
 import { Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import HomePage from "../pages/HomePage";
 import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
+import VenuePage from "../pages/admin/venue/VenuePage";
+import OrganizerList from "../pages/admin/organizer/OrganizerList";
 
 const MainRoute: React.FC = () => {
   return (
@@ -31,11 +34,18 @@ const MainRoute: React.FC = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/about" element={<AboutPage />} />
+         
         </Route>
 
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}
         <Route element={<AuthRoute />}>
-          <Route path="/login" element={<LoginPage />} />
+           <Route path="/login" element={<LoginPage />} />
+           
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path="/venues" element={<VenuePage />} />
+          <Route path="/organizerlist" element={<OrganizerList/>} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
