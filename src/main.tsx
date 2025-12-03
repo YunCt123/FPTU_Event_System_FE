@@ -1,10 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { ToastContainer } from "react-toastify";
 import "./index.css";
 import MainRoute from "./routes/MainRoute";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <MainRoute />
+    <ToastContainer position="top-right" autoClose={2000} />
   </StrictMode>
 );
