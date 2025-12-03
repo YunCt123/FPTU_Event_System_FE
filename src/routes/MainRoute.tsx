@@ -3,13 +3,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthRoute from "./AuthRoute";
 import UserRoute from "./UserRoute";
 import AdminRoute from "./AdminRoute";
+import OrganizerRoute from "./OrganizerRoute";
 import { Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import HomePage from "../pages/HomePage";
 import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
-import VenuePage from "../pages/admin/venue/VenuePage";
+import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
+import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -33,7 +35,6 @@ const MainRoute: React.FC = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/about" element={<AboutPage />} />
-         
         </Route>
 
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}
@@ -43,7 +44,25 @@ const MainRoute: React.FC = () => {
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path="/venues" element={<VenuePage />} />
+          <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
+          <Route path="/admin/venues" element={<AdminVenuePage />} />
+          <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
+          <Route path="/admin/events/pending" element={<div>Pending Events</div>} />
+          <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
+          <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
+          <Route path="/admin/organizers" element={<div>Organizers Management</div>} />
+          <Route path="/admin/campuses" element={<div>Campus Management</div>} />
+          <Route path="/admin/categories" element={<div>Categories Management</div>} />
+          <Route path="/admin/banners" element={<div>Banners Management</div>} />
+          <Route path="/admin/settings" element={<div>System Settings</div>} />
+        </Route>
+
+        {/* Organizer routes */}
+        <Route element={<OrganizerRoute />}>
+          <Route path="/organizer/dashboard" element={<div>Organizer Dashboard</div>} />
+          <Route path="/organizer/events" element={<div>My Events</div>} />
+          <Route path="/organizer/venues" element={<OrganizerVenuePage />} />
+          <Route path="/organizer/profile" element={<div>Organization Profile</div>} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
