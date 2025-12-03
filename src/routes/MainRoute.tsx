@@ -9,6 +9,11 @@ import HomePage from "../pages/HomePage";
 import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
+import VenuePage from "../pages/admin/venue/VenuePage";
+import ListEventPage from "../pages/ListEventPage";
+import AllListEventPage from "../pages/AllListEventPage";
+import DetailEventPage from "../pages/DetailEventPage";
+
 
 const MainRoute: React.FC = () => {
   return (
@@ -32,6 +37,9 @@ const MainRoute: React.FC = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="list-events" element ={<ListEventPage/>}/>
+          <Route path="list-all-events" element ={<AllListEventPage/>}/>
+          <Route path="detail-events" element ={<DetailEventPage/>}/>
         </Route>
 
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}

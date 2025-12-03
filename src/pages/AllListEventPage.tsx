@@ -1,7 +1,6 @@
 import { useState } from "react";
-
-const ListEventPage = () => {
-  const [statusFilter, setStatusFilter] = useState("");
+const AllListEventPage = () => {
+    const [statusFilter, setStatusFilter] = useState("");
   const [events, setEvents] = useState([]);
   return (
     <div className="p-6">
@@ -23,9 +22,9 @@ const ListEventPage = () => {
         >
           {/* Placeholder that is NOT a selectable option */}
           <option value="" disabled hidden>
-            Trạng thái
+            Status
           </option>
-          <option value="all">Tất cả</option>
+          <option value="all">All</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
@@ -80,6 +79,5 @@ const ListEventPage = () => {
       </div>
     </div>
   );
-};
-
-export default ListEventPage;
+}
+export default AllListEventPage;
