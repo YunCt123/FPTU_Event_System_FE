@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthRoute from "./AuthRoute";
 import UserRoute from "./UserRoute";
+import AdminRoute from "./AdminRoute";
 import { Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import HomePage from "../pages/HomePage";
@@ -32,12 +33,17 @@ const MainRoute: React.FC = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/about" element={<AboutPage />} />
+         
         </Route>
 
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}
         <Route element={<AuthRoute />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/venue" element={<VenuePage />} />
+           <Route path="/login" element={<LoginPage />} />
+           
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path="/venues" element={<VenuePage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
