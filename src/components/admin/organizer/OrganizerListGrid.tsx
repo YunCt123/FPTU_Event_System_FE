@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import OrganizerModal from "./OrganizerModal";
 import AddOrganizerModal from "./AddOrganizerModal";
 import { Search, Plus, Trash2, Eye, Edit } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
+import organizerService from "../../../services/organizerService";
+import { toast } from "react-toastify";
+import type { OrganizerResponse } from "../../../types/Organizer";
 
 const OrganizerListGrid = () => {
-  const [selectedOrganizer, setSelectedOrganizer] = useState(null);
+  const [selectedOrganizer, setSelectedOrganizer] = useState<OrganizerResponse | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -13,50 +16,31 @@ const OrganizerListGrid = () => {
     isOpen: boolean;
     organizerId: number | null;
   }>({ isOpen: false, organizerId: null });
-  const [organizers, setOrganizers] = useState([
-    {
-      id: 1,
-      name: "FPT Event Club",
-      description:
-        "A student-led group responsible for organizing cultural, entertainment, and academic events at FPT University.",
-      contactEmail: "eventclub@fpt.edu.vn",
-      logo_url:
-        "https://upload.wikimedia.org/wikipedia/commons/4/43/FPT_Education_logo.png",
-      campus: "FPT University Hà Nội",
-    },
-    {
-      id: 2,
-      name: "FPT Media Team",
-      description:
-        "Specializes in media production, photography, and event livestream support for university activities.",
-      contactEmail: "mediateam@fpt.edu.vn",
-      logo_url:
-        "https://media.glassdoor.com/sql/472026/fpt-software-squarelogo-1568261569651.png",
-      campus: "FPT University Hồ Chí Minh",
-    },
-    {
-      id: 3,
-      name: "FPT Volunteer Club",
-      description:
-        "Organizes charity events, community services, and volunteer activities for students.",
-      contactEmail: "volunteer@fpt.edu.vn",
-      logo_url:
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/FPT_Polytechnic.png/640px-FPT_Polytechnic.png",
-      campus: "FPT University Đà Nẵng",
-    },
-    {
-      id: 4,
-      name: "FPT Developer Student Club",
-      description:
-        "A tech community that hosts workshops, hackathons, and developer training programs.",
-      contactEmail: "dsc@fpt.edu.vn",
-      logo_url:
-        "https://seeklogo.com/images/G/google-developers-logo-55B3A9F9E8-seeklogo.com.png",
-      campus: "FPT University Cần Thơ",
-    },
-  ]);
 
-  const handleOpenDetails = (org) => {
+  const [organizers, setOrganizers] = useState<OrganizerResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchOrganizers();
+  }, []);
+
+  const fetchOrganizers = async () => {
+    setIsLoading(true);
+    try {
+      const response = await organizerService.getAllOrganizers();
+      if (response) {
+        setOrganizers(response.data);
+        console.log("Organizers loaded:", response.data);
+      }
+    } catch (error: any) {
+      console.error("Error fetching organizers:", error);
+      toast.error(error.response?.data?.message || "Không thể tải danh sách nhà tổ chức");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenDetails = (org: OrganizerResponse) => {
     setSelectedOrganizer(org);
     setIsEditOpen(true);
   };
@@ -64,6 +48,10 @@ const OrganizerListGrid = () => {
   const handleCloseDetails = () => {
     setSelectedOrganizer(null);
     setIsEditOpen(false);
+  };
+
+  const handleUpdateSuccess = () => {
+    fetchOrganizers(); // Refresh list after updating
   };
 
   const handleAddNew = () => {
@@ -74,20 +62,35 @@ const OrganizerListGrid = () => {
     setIsAddOpen(false);
   };
 
-  const handleAddSuccess = (newOrganizer) => {
-    setOrganizers([...organizers, newOrganizer]);
+  const handleAddSuccess = (newOrganizer: OrganizerResponse) => {
+    fetchOrganizers(); // Refresh list after adding
+    // toast.success("Thêm nhà tổ chức thành công!");
   };
 
   const handleDelete = (id: number) => {
     setConfirmModal({ isOpen: true, organizerId: id });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const organizerId = confirmModal.organizerId;
     if (!organizerId) return;
 
-    setOrganizers(organizers.filter((org) => org.id !== organizerId));
-    setConfirmModal({ isOpen: false, organizerId: null });
+    try {
+      const response = await organizerService.deleteOrganizer(organizerId);
+      
+      if (response.status === 200 || response.data.success) {
+        toast.success("Xóa nhà tổ chức thành công!");
+        fetchOrganizers(); // Refresh list after deleting
+        setConfirmModal({ isOpen: false, organizerId: null });
+      }
+    } catch (error: any) {
+      console.error('Error deleting organizer:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.data?.message || 
+                          'Không thể xóa nhà tổ chức!';
+      toast.error(errorMessage);
+      setConfirmModal({ isOpen: false, organizerId: null });
+    }
   };
 
   const cancelDelete = () => {
@@ -97,7 +100,7 @@ const OrganizerListGrid = () => {
   const filteredOrganizers = organizers.filter(
     (org) =>
       org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      org.campus.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      org.campus?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       org.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -151,13 +154,25 @@ const OrganizerListGrid = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredOrganizers.length === 0 ? (
+              {isLoading ? (
                 <tr>
                   <td
                     colSpan={6}
                     className="px-6 py-12 text-center text-gray-500"
                   >
-                    Không tìm thấy nhà tổ chức nào
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-[#F27125] border-t-transparent rounded-full animate-spin"></div>
+                      <span>Đang tải...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredOrganizers.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    {organizers.length === 0 ? "Chưa có nhà tổ chức nào" : "Không tìm thấy nhà tổ chức nào"}
                   </td>
                 </tr>
               ) : (
@@ -171,9 +186,12 @@ const OrganizerListGrid = () => {
                     </td>
                     <td className="px-6 py-4">
                       <img
-                        src={org.logo_url}
+                        src={org.logoUrl}
                         alt={org.name}
                         className="w-16 h-16 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.src = `${org.logoUrl}`;
+                        }}
                       />
                     </td>
                     <td className="px-6 py-4">
@@ -187,7 +205,7 @@ const OrganizerListGrid = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600">{org.campus}</div>
+                      <div className="text-sm text-gray-600">{org.campus?.name || "N/A"}</div>
                     </td>
                     <td className="px-6 py-4">
                       <a
@@ -238,6 +256,7 @@ const OrganizerListGrid = () => {
           organizer={selectedOrganizer}
           isOpen={isEditOpen}
           onClose={handleCloseDetails}
+          onSuccess={handleUpdateSuccess}
         />
       )}
 
