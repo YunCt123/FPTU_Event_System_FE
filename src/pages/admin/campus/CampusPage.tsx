@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, MapPin } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Campus, CampusStatus } from '../../../types/Campus';
 import CampusFormModal from '../../../components/admin/campus/CampusFormModal';
@@ -189,8 +189,7 @@ const CampusPage = () => {
                 campuses.map((campus) => (
                   <tr key={campus.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded">
-                        <MapPin size={14} />
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-blue-600">
                         {campus.code}
                       </span>
                     </td>
