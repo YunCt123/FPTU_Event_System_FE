@@ -14,6 +14,8 @@ import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
 import AllListEventPage from "../pages/AllListEventPage";
 import DetailEventPage from "../pages/DetailEventPage";
 import ListEventPage from "../pages/ListEventPage";
+import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
+import OrganizerList from "../pages/admin/organizer/OrganizerList";
 
 const MainRoute: React.FC = () => {
   return (
@@ -53,7 +55,6 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/events/pending" element={<AllListEventPage/>} />
           <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
           <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
-          <Route path="/admin/organizers" element={<div>Organizers Management</div>} />
           <Route path="/admin/campuses" element={<div>Campus Management</div>} />
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
@@ -61,6 +62,7 @@ const MainRoute: React.FC = () => {
            <Route path="/admin/list-all-events" element={<AllListEventPage/>}/>
            <Route path="/admin/list-detail-events/:id" element={<DetailEventPage/>}/>
            <Route path="/admin/list-event" element={<ListEventPage/>}/>
+          <Route path="/admin/organizers" element={<OrganizerList />} />
         </Route>
 
         {/* Organizer routes */}
@@ -69,6 +71,7 @@ const MainRoute: React.FC = () => {
           <Route path="/organizer/events" element={<div>My Events</div>} />
           {/* <Route path="/organizer/venues" element={<OrganizerVenuePage />} /> */}
           <Route path="/organizer/profile" element={<div>Organization Profile</div>} />
+          
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
