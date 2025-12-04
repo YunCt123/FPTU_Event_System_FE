@@ -1,50 +1,117 @@
 import React, { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import type { OrganizerResponse } from '../../../types/Organizer'
+import organizerService from '../../../services/organizerService'
+import userService from '../../../services/userService'
+import type { User } from '../../../types/User'
 
-// interface OrganizerModalProps {
-//   organizer: {
-//     id: number;
-//     name: string;
-//     description: string;
-//     contactEmail: string;
-//     logo_url: string;
-//     campus: string;
-//   } | null;
-//   onClose: () => void;
-// }
+interface OrganizerModalProps {
+  organizer: OrganizerResponse | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
 
-const OrganizerModal= ({ organizer,isOpen, onClose }) => {
+const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onClose, onSuccess }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [eventOrganizers, setEventOrganizers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     contactEmail: '',
-    logo_url: '',
-    campus: ''
+    logoUrl: '',
+    campusId: 0,
+    campusName: '',
+    ownerId: 0,
+    ownerName: '',
+    createdAt: '',
+    updatedAt: ''
   });
   
 
   useEffect(() => {
-  if (isOpen && organizer) {
-    setFormData({
-      name: organizer.name,
-      description: organizer.description,
-      contactEmail: organizer.contactEmail,
-      logo_url: organizer.logo_url,
-      campus: organizer.campus
-    });
-  }
-}, [isOpen]);
+    if (isOpen && organizer) {
+      setFormData({
+        name: organizer.name,
+        description: organizer.description,
+        contactEmail: organizer.contactEmail,
+        logoUrl: organizer.logoUrl || '',
+        campusId: organizer.campusId,
+        campusName: organizer.campus?.name || '',
+        ownerId: organizer.ownerId || 0,
+        ownerName: organizer.owner ? `${organizer.owner.firstName || ''} ${organizer.owner.lastName || ''}`.trim() : 'Chưa có',
+        createdAt: organizer.createdAt,
+        updatedAt: organizer.updatedAt
+      });
+      fetchEventOrganizers();
+    }
+  }, [isOpen, organizer]);
+
+  const fetchEventOrganizers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const response = await userService.getUsers({ 
+        roleName: 'event_organizer'
+      });
+      if (response) {
+        setEventOrganizers(response.data.data);
+      }
+    } catch (error: any) {
+      console.error('Error fetching event organizers:', error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Gọi API cập nhật
-    toast.success('Cập nhật nhà tổ chức thành công!');
-    onClose();
+    
+    if (!organizer) return;
+
+    // Validate
+    if (!formData.logoUrl) {
+      toast.error('URL Logo là bắt buộc!');
+      return;
+    }
+
+    if (!formData.ownerId) {
+      toast.error('Vui lòng chọn Event Organizer!');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const updateData = {
+        name: formData.name,
+        description: formData.description,
+        contactEmail: formData.contactEmail,
+        logoUrl: formData.logoUrl,
+        campusId: formData.campusId,
+        ownerId: formData.ownerId
+      };
+
+      const response = await organizerService.putOrganizer(organizer.id, updateData);
+      
+      if (response.status === 200 || response.data.success) {
+        toast.success('Cập nhật nhà tổ chức thành công!');
+        onSuccess?.();
+        onClose();
+      }
+    } catch (error: any) {
+      console.error('Error updating organizer:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.data?.message || 
+                          'Không thể cập nhật nhà tổ chức!';
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!organizer) return null;
@@ -72,20 +139,21 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
           {/* Logo URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Logo
+              URL Logo <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              name="logo_url"
-              value={formData.logo_url}
+              type="url"
+              name="logoUrl"
+              value={formData.logoUrl}
               onChange={handleChange}
+              required
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
               placeholder="https://example.com/logo.png"
             />
-            {formData.logo_url && (
+            {formData.logoUrl && (
               <div className="mt-3 flex justify-center">
                 <img 
-                  src={formData.logo_url} 
+                  src={formData.logoUrl} 
                   alt="Preview" 
                   className="w-24 h-24 object-contain p-2 bg-gray-50 border border-gray-200 rounded-lg"
                   onError={(e) => {
@@ -118,19 +186,46 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
               Cơ sở <span className="text-red-500">*</span>
             </label>
             <select
-              name="campus"
-              value={formData.campus}
-              onChange={handleChange}
+              name="campusId"
+              value={formData.campusId}
+              onChange={(e) => setFormData(prev => ({ ...prev, campusId: parseInt(e.target.value) }))}
               required
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
             >
-              <option value="">Chọn cơ sở</option>
-              <option value="FPT University Hà Nội">FPT University Hà Nội</option>
-              <option value="FPT University Hồ Chí Minh">FPT University Hồ Chí Minh</option>
-              <option value="FPT University Đà Nẵng">FPT University Đà Nẵng</option>
-              <option value="FPT University Cần Thơ">FPT University Cần Thơ</option>
-              <option value="FPT University Quy Nhơn">FPT University Quy Nhơn</option>
+              <option value="0">Chọn cơ sở</option>
+              <option value="1">FU - Hà Nội</option>
+              <option value="2">FU - Hồ Chí Minh</option>
+              <option value="3">FU - Đà Nẵng</option>
+              <option value="4">FU - Cần Thơ</option>
+              <option value="5">FU - Quy Nhơn</option>
             </select>
+          </div>
+
+          {/* Event Organizer (Owner) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Organizer <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="ownerId"
+              value={formData.ownerId}
+              onChange={(e) => setFormData(prev => ({ ...prev, ownerId: parseInt(e.target.value) }))}
+              required
+              disabled={isLoadingUsers}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              <option value="0">{isLoadingUsers ? 'Đang tải...' : 'Chọn Event Organizer'}</option>
+              {eventOrganizers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName} ({user.email})
+                </option>
+              ))}
+            </select>
+            {eventOrganizers.length === 0 && !isLoadingUsers && (
+              <p className="text-sm text-amber-600 mt-1">
+                Không có Event Organizer nào. Vui lòng tạo user với role event_organizer trước.
+              </p>
+            )}
           </div>
 
           {/* Email */}
@@ -165,20 +260,48 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
             />
           </div>
 
+          {/* Thông tin thời gian (Read-only) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ngày tạo
+              </label>
+              <input
+                type="text"
+                value={formData.createdAt ? new Date(formData.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                disabled
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cập nhật lần cuối
+              </label>
+              <input
+                type="text"
+                value={formData.updatedAt ? new Date(formData.updatedAt).toLocaleString('vi-VN') : 'N/A'}
+                disabled
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              />
+            </div>
+          </div>
+
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cập nhật
+              {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật'}
             </button>
           </div>
         </form>

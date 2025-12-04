@@ -2,18 +2,65 @@ import { useNavigate } from "react-router-dom";
 import FPTLogo from "../assets/fpt_logo.png";
 import { toast } from "react-toastify";
 import { useState } from "react";
+import authService from "../services/authService";
+import { jwtDecode } from "jwt-decode";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (email === "admin@gmail.com" && password === "123456") {
-      navigate("/home");
-    } else {
-      toast.error("Email or password is incorrect!");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      toast.error("Please enter both email and password!");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authService.login({ email, password });
+      console.log(response.status);
+
+      
+      if (response.status == 201) {
+        console.log(response);
+        const { accessToken, message } = response.data;
+        
+        // Decode accessToken để lấy thông tin user
+        const decodedToken: any = jwtDecode(accessToken);
+        console.log("Decoded token:", decodedToken);
+        
+        // Lưu token và thông tin user
+        localStorage.setItem("token", accessToken);
+        localStorage.setItem("user", JSON.stringify(decodedToken));
+        
+        toast.success("Login successfully!");
+        
+        // Điều hướng dựa trên role từ decoded token
+        const userRole = decodedToken.role || decodedToken.roleName || decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        
+        switch (userRole) {
+          case "admin":
+            navigate("/admin/dashboard");
+            break;
+          case "event_organizer":
+            navigate("/organizer");
+            break;
+          case "student":
+          case "staff":
+          default:
+            navigate("/home");
+            break;
+        }
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.data?.message || 
+                          "Email or password is incorrect!";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -57,14 +104,16 @@ const LoginPage = () => {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 className="mt-1 w-full border rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <button
               onClick={handleLogin}
-              className="w-full bg-[#F27125] text-white py-3 rounded-lg hover:bg-[#d95c0b] transition-all duration-300 shadow-md hover:shadow-lg"
+              disabled={isLoading}
+              className="w-full bg-[#F27125] text-white py-3 rounded-lg hover:bg-[#d95c0b] transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </button>
             {/* Footer */}
             <p className="text-gray-600 text-sm mt-8 text-center">
