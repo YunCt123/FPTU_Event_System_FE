@@ -1,10 +1,12 @@
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, SquarePen } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const ListEventPage = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [events, setEvents] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const mockEvents = [
@@ -100,13 +102,10 @@ const ListEventPage = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full text-gray-700 cursor-pointer"
           >
-            <option value="" disabled hidden>
-              Trạng thái
-            </option>
             <option value="all">Tất cả</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="pending">Đang xử lý</option>
+            <option value="approved">Đã duyệt</option>
+            <option value="rejected">Bị từ chối</option>
           </select>
         </div>
       </div>
@@ -121,22 +120,22 @@ const ListEventPage = () => {
                   ID
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Name
+                  Tên sự kiện
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Organizer
+                  Ban tổ chức
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Date
+                  Ngày tổ chức
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Venue
+                  Địa điểm
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Status
+                  Trạng thái
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                  Action
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                  {/* Action */}
                 </th>
               </tr>
             </thead>
@@ -169,13 +168,16 @@ const ListEventPage = () => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end">
-                        <a
-                          href={`/admin/events/$  {e.id}`}
-                          className="text-blue-600 hover:underline text-sm"
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/events/${e.id}`)
+                          }
+                          className="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded-md hover:bg-blue-50"
+                          title="View Details"
                         >
-                          View
-                        </a>
+                          <SquarePen size={20} />
+                        </button>
                       </div>
                     </td>
                   </tr>
