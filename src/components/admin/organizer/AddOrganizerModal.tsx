@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { toast } from 'react-toastify'
 
+import type { Organizer } from '../../../types/Organizer';
+
 interface AddOrganizerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newOrganizer: any) => void;
+  onSuccess: (newOrganizer: Organizer) => void;
 }
 
 const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, onSuccess }) => {

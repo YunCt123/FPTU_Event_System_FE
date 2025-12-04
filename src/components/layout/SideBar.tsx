@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
-  CheckCircle,
-  XCircle,
   Building2,
   MapPin,
   Users,
@@ -43,26 +41,8 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'events',
       label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
-      children: [
-        {
-          id: 'events-pending',
-          label: 'Duyệt sự kiện',
-          icon: <CheckCircle size={18} />,
-          path: '/admin/events/pending',
-        },
-        {
-          id: 'events-approved',
-          label: 'Sự kiện đã duyệt',
-          icon: <Calendar size={18} />,
-          path: '/admin/events/approved',
-        },
-        {
-          id: 'events-rejected',
-          label: 'Sự kiện bị từ chối',
-          icon: <XCircle size={18} />,
-          path: '/admin/events/rejected',
-        },
-      ],
+      path: '/admin/events',
+     
     },
     {
       id: 'venues',

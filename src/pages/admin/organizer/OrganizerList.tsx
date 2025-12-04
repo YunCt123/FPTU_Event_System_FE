@@ -1,4 +1,3 @@
-import React from 'react'
 import OrganizerListGrid from '../../../components/admin/organizer/OrganizerListGrid'
 
 

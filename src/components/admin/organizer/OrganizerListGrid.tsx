@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import OrganizerModal from "./OrganizerModal";
 import AddOrganizerModal from "./AddOrganizerModal";
-import { Search, Plus, Trash2, Eye, Edit } from "lucide-react";
+import { Search, Plus, Trash2, Edit } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
+import type { Organizer } from '../../../types/Organizer';
 
 const OrganizerListGrid = () => {
-  const [selectedOrganizer, setSelectedOrganizer] = useState(null);
+  const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -13,7 +14,7 @@ const OrganizerListGrid = () => {
     isOpen: boolean;
     organizerId: number | null;
   }>({ isOpen: false, organizerId: null });
-  const [organizers, setOrganizers] = useState([
+  const [organizers, setOrganizers] = useState<Organizer[]>([
     {
       id: 1,
       name: "FPT Event Club",
@@ -56,7 +57,7 @@ const OrganizerListGrid = () => {
     },
   ]);
 
-  const handleOpenDetails = (org) => {
+  const handleOpenDetails = (org: Organizer) => {
     setSelectedOrganizer(org);
     setIsEditOpen(true);
   };
@@ -74,7 +75,7 @@ const OrganizerListGrid = () => {
     setIsAddOpen(false);
   };
 
-  const handleAddSuccess = (newOrganizer) => {
+  const handleAddSuccess = (newOrganizer: Organizer) => {
     setOrganizers([...organizers, newOrganizer]);
   };
 

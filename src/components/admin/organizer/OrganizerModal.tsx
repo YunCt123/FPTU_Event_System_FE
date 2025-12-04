@@ -1,19 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import type { Organizer } from '../../../types/Organizer';
 
-// interface OrganizerModalProps {
-//   organizer: {
-//     id: number;
-//     name: string;
-//     description: string;
-//     contactEmail: string;
-//     logo_url: string;
-//     campus: string;
-//   } | null;
-//   onClose: () => void;
-// }
+interface OrganizerModalProps {
+  organizer: Organizer | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-const OrganizerModal= ({ organizer,isOpen, onClose }) => {
+const OrganizerModal = ({ organizer, isOpen, onClose }: OrganizerModalProps) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',

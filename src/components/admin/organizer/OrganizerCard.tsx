@@ -1,6 +1,12 @@
-import React from "react";
+import type { Organizer } from '../../../types/Organizer';
 
-const OrganizerCard = ({ organizer, onOpenDetails, onDelete }) => {
+interface OrganizerCardProps {
+  organizer: Organizer;
+  onOpenDetails: (organizer: Organizer) => void;
+  onDelete: (id: number) => void;
+}
+
+const OrganizerCard = ({ organizer, onOpenDetails, onDelete }: OrganizerCardProps) => {
   return (
     <div
       className="bg-orange-100 p-5 rounded-xl shadow-lg flex flex-col items-center relative w-72 m-4 transition transform hover:shadow-xl cursor-pointer"
