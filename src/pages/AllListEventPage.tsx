@@ -1,83 +1,182 @@
-import { useState } from "react";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 const AllListEventPage = () => {
-    const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [events, setEvents] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const mockEvents = [
+      {
+        id: 1,
+        name: "Tech Conference 2025",
+        organizer: "FPT University",
+        date: "2025-12-10",
+        venue: "Hall A",
+        status: "pending",
+      },
+      {
+        id: 2,
+        name: "Music Festival Summer",
+        organizer: "Student Club",
+        date: "2025-08-15",
+        venue: "Hall B",
+        status: "approved",
+      },
+      {
+        id: 3,
+        name: "Startup Pitching Day",
+        organizer: "Innovation Hub",
+        date: "2025-07-22",
+        venue: "Room 132",
+        status: "rejected",
+      },
+      {
+        id: 4,
+        name: "AI Robotics Workshop",
+        organizer: "Tech Labs",
+        date: "2025-06-14",
+        venue: "Room 231",
+        status: "pending",
+      },
+      {
+        id: 5,
+        name: "Charity Marathon",
+        organizer: "Community Group",
+        date: "2025-05-30",
+        venue: "Room 404",
+        status: "approved",
+      },
+    ];
+
+    setEvents(mockEvents);
+  }, []);
+
+  const filteredEvents = events.filter((e) => {
+    return (
+      searchTerm === "" ||
+      e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.organizer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.venue.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
     <div className="p-6">
-      {/*Title*/}
-      <h1 className="text-2xl font-semibold mb-4">Event Approval List</h1>
-
-      {/*Search + Filter*/}
-      <div className="flex items-center gap-3 mb-4">
-        <input
-          type="text"
-          placeholder="Tìm sự kiện"
-          className="border rounded-lg px-3 py-2 w-1/3 focus:outline-none" // border(bo tron khung vien), rounded-lg (khung vien), w-1/3(chiem 1/3 thanh ngang)
-        />
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border rounded-lg px-3 py-2"
-        >
-          {/* Placeholder that is NOT a selectable option */}
-          <option value="" disabled hidden>
-            Status
-          </option>
-          <option value="all">All</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">
+          All Events Management
+        </h1>
+        <p className="text-gray-600 mt-1">Danh sách tất cả sự kiện</p>
       </div>
 
-      {/*Table*/}
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100 border-b">
-            <tr>
-              <th className="px-4 py-3">ID</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Organizer</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Venue</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-center">Action</th>
-            </tr>
-          </thead>
+      {/* Search */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center bg-gray-100 rounded-lg px-4 py-2.5 focus-within:ring-2 focus-within:ring-[#F27125] transition-all flex-1 max-w-md">
+          <Search size={20} className="text-gray-400" />
+          <input
+            type="text"
+            placeholder="Tìm sự kiện"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full placeholder-gray-400 text-gray-700"
+          />
+        </div>
+      </div>
 
-          <tbody>
-            {events.length === 0 ? (
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <td colSpan={7} className="text-center py-4 text-gray-500">
-                  Không có dữ liệu
-                </td>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  ID
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Name
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Organizer
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Date
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Venue
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  Action
+                </th>
               </tr>
-            ) : (
-              events.map((e) => (
-                <tr key={e.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">{e.id}</td>
-                  <td className="px-4 py-3">{e.name}</td>
-                  <td className="px-4 py-3">{e.organizer}</td>
-                  <td className="px-4 py-3">{e.date}</td>
-                  <td className="px-4 py-3">{e.venue}</td>
-                  <td className="px-4 py-3">{e.status}</td>
+            </thead>
 
-                  <td className="px-4 py-3 text-center">
-                    <a
-                      href={`/manager/event/${e.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      View
-                    </a>
+            <tbody className="divide-y divide-gray-200">
+              {filteredEvents.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    Không có dữ liệu
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredEvents.map((e) => (
+                  <tr
+                    key={e.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-gray-900">{e.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {e.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {e.organizer}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {e.date}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {e.venue}
+                    </td>
+                    <td className="px-6 py-4 text-sm capitalize text-gray-900">
+                      {e.status}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end">
+                        <button
+                          onClick={() => navigate(`/admin/list-detail-events/${e.id}`)}
+                          className="text-blue-600 hover:underline text-sm cursor-pointer"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Total Count */}
+      {filteredEvents.length > 0 && (
+        <div className="mt-4 text-sm text-gray-600">
+          Tổng số:{" "}
+          <span className="font-semibold">{filteredEvents.length}</span> sự kiện
+        </div>
+      )}
     </div>
   );
-}
+};
+
 export default AllListEventPage;
