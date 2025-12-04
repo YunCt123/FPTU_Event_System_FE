@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { toast } from 'react-toastify'
 
-// interface OrganizerModalProps {
-//   organizer: {
-//     id: number;
-//     name: string;
-//     description: string;
-//     contactEmail: string;
-//     logo_url: string;
-//     campus: string;
-//   } | null;
-//   onClose: () => void;
-// }
+interface AddOrganizerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: (newOrganizer: any) => void;
+}
 
-const OrganizerModal= ({ organizer,isOpen, onClose }) => {
+const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -21,19 +15,6 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
     logo_url: '',
     campus: ''
   });
-  
-
-  useEffect(() => {
-  if (isOpen && organizer) {
-    setFormData({
-      name: organizer.name,
-      description: organizer.description,
-      contactEmail: organizer.contactEmail,
-      logo_url: organizer.logo_url,
-      campus: organizer.campus
-    });
-  }
-}, [isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -42,24 +23,53 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Gọi API cập nhật
-    toast.success('Cập nhật nhà tổ chức thành công!');
+    
+    // TODO: Gọi API thêm mới
+    const newOrganizer = {
+      id: Date.now(), // Tạm thời dùng timestamp làm ID
+      ...formData
+    };
+    
+    onSuccess(newOrganizer);
+    toast.success('Thêm nhà tổ chức thành công!');
+    
+    // Reset form
+    setFormData({
+      name: '',
+      description: '',
+      contactEmail: '',
+      logo_url: '',
+      campus: ''
+    });
+    
     onClose();
   };
 
-  if (!organizer) return null;
+  const handleCancel = () => {
+    // Reset form khi hủy
+    setFormData({
+      name: '',
+      description: '',
+      contactEmail: '',
+      logo_url: '',
+      campus: ''
+    });
+    onClose();
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40  z-50 flex justify-center items-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center p-4" onClick={handleCancel}>
       {/* Modal Content */}
       <div 
         className="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl transform transition-all duration-300 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()} 
       >
         <div className="flex justify-between items-start border-b pb-4 mb-6">
-          <h3 className="text-3xl font-bold text-gray-800">Cập nhật nhà tổ chức</h3>
-          <button
-            onClick={onClose} 
+          <h3 className="text-3xl font-bold text-gray-800">Thêm nhà tổ chức mới</h3>
+          <button 
+            onClick={handleCancel} 
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +179,7 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
           <div className="flex justify-end gap-3 pt-4 border-t">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
               className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
             >
               Hủy
@@ -178,7 +188,7 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
               type="submit"
               className="px-6 py-2.5 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md"
             >
-              Cập nhật
+              Thêm mới
             </button>
           </div>
         </form>
@@ -187,5 +197,4 @@ const OrganizerModal= ({ organizer,isOpen, onClose }) => {
   )
 }
 
-
-export default OrganizerModal
+export default AddOrganizerModal

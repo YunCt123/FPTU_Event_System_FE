@@ -52,7 +52,6 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/events/pending" element={<div>Pending Events</div>} />
           <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
           <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
-          <Route path="/admin/organizers" element={<div>Organizers Management</div>} />
           <Route path="/admin/campuses" element={<div>Campus Management</div>} />
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
