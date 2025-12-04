@@ -41,11 +41,10 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'events',
       label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
-      path: '/admin/events',
-     
+      path: '/admin/events'
     },
     {
-      id: 'venues',
+      id: 'venues',   
       label: 'Quản lý Địa điểm',
       icon: <Building2 size={20} />,
       children: [
