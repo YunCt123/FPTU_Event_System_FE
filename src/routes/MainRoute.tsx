@@ -10,9 +10,9 @@ import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
-import AllListEventPage from "../pages/AllListEventPage";
-import DetailEventPage from "../pages/DetailEventPage";
-import ListEventPage from "../pages/ListEventPage";
+import AllListEventPage from "../pages/admin/event/AllListEventPage";
+import DetailEventPage from "../pages/admin/event/DetailEventPage";
+import ListEventPage from "../pages/admin/event/ListEventPage";
 import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
 // import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import CampusPage from "../pages/admin/campus/CampusPage";
@@ -54,7 +54,7 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
           <Route path="/admin/venues" element={<AdminVenuePage />} />
           <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
-          <Route path="/admin/events/pending" element={<AllListEventPage/>} />
+          <Route path="/admin/events/pending" element={<ListEventPage/>} />
           <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
           <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
           {/* <Route path="/admin/organizers" element={<OrganizerList />} /> */}
@@ -62,10 +62,11 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
           <Route path="/admin/settings" element={<div>System Settings</div>} />
-           <Route path="/admin/list-all-events" element={<AllListEventPage/>}/>
-           <Route path="/admin/list-detail-events/:id" element={<DetailEventPage/>}/>
-           <Route path="/admin/list-event" element={<ListEventPage/>}/>
+           {/* <Route path="/admin/events" element={<AllListEventPage/>}/> */}
+           <Route path="/admin/events/:id" element={<DetailEventPage/>}/>
+           <Route path="/admin/events" element={<ListEventPage/>}/>
           <Route path="/admin/organizers" element={<OrganizerList />} />
+
         </Route>
 
         {/* Organizer routes */}

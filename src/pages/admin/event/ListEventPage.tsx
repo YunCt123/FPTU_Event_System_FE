@@ -171,7 +171,7 @@ const ListEventPage = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end">
                         <a
-                          href={`/manager/event/${e.id}`}
+                          href={`/admin/events/$  {e.id}`}
                           className="text-blue-600 hover:underline text-sm"
                         >
                           View
