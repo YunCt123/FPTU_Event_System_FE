@@ -1,7 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthRoute from "./AuthRoute";
-import AdminRoute from "./AdminRoute";
 import UserRoute from "./UserRoute";
 import OrganizerRoute from "./OrganizerRoute";
 import { Navigate } from "react-router-dom";
@@ -15,7 +14,10 @@ import AllListEventPage from "../pages/AllListEventPage";
 import DetailEventPage from "../pages/DetailEventPage";
 import ListEventPage from "../pages/ListEventPage";
 import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
+// import OrganizerList from "../pages/admin/organizer/OrganizerList";
+import CampusPage from "../pages/admin/campus/CampusPage";
 import OrganizerList from "../pages/admin/organizer/OrganizerList";
+import AdminRoute from "./AdminRoute";
 
 const MainRoute: React.FC = () => {
   return (
@@ -55,7 +57,8 @@ const MainRoute: React.FC = () => {
           <Route path="/admin/events/pending" element={<AllListEventPage/>} />
           <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
           <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
-          <Route path="/admin/campuses" element={<div>Campus Management</div>} />
+          {/* <Route path="/admin/organizers" element={<OrganizerList />} /> */}
+          <Route path="/admin/campuses" element={<CampusPage />} />
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
           <Route path="/admin/settings" element={<div>System Settings</div>} />

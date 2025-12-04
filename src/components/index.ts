@@ -1,5 +1,5 @@
 // Admin Components
-export { default as VenueFormModal } from './admin/VenueFormModal';
+export { default as VenueFormModal } from './admin/venue/VenueFormModal';
 export { default as SeatMapEditor } from './common/SeatMapEditor';
 
 // Organizer Components
