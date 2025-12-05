@@ -1,10 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import userService from '../../../services/userService'
+import organizerService from '../../../services/organizerService'
+import type { User } from '../../../types/User'
+import type { OrganizerRequest, OrganizerResponse } from '../../../types/Organizer'
 
 interface AddOrganizerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newOrganizer: any) => void;
+  onSuccess: (newOrganizer: OrganizerResponse) => void;
 }
 
 const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, onSuccess }) => {
@@ -12,37 +16,106 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, 
     name: '',
     description: '',
     contactEmail: '',
-    logo_url: '',
-    campus: ''
+    logoUrl: '',
+    campusId: 0,
+    ownerId: 0
   });
+  
+  const [eventOrganizers, setEventOrganizers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch event organizers when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchEventOrganizers();
+    }
+  }, [isOpen]);
+
+  const fetchEventOrganizers = async () => {
+    setIsLoading(true);
+    try {
+      const response = await userService.getUsers({ 
+        roleName: 'event_organizer'
+      });
+     
+      if (response) {
+        setEventOrganizers(response.data.data);
+      }else{
+        console.log("no data");
+      }
+    } catch (error: any) {
+      console.error('Error fetching event organizers:', error);
+      toast.error('Không thể tải danh sách event organizer');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // TODO: Gọi API thêm mới
-    const newOrganizer = {
-      id: Date.now(), // Tạm thời dùng timestamp làm ID
-      ...formData
-    };
+    // Validate required fields
+    if (!formData.logoUrl) {
+      toast.error('URL Logo là bắt buộc!');
+      return;
+    }
     
-    onSuccess(newOrganizer);
-    toast.success('Thêm nhà tổ chức thành công!');
-    
-    // Reset form
-    setFormData({
-      name: '',
-      description: '',
-      contactEmail: '',
-      logo_url: '',
-      campus: ''
-    });
-    
-    onClose();
+    if (!formData.ownerId) {
+      toast.error('Vui lòng chọn Event Organizer!');
+      return;
+    }
+
+    if (!formData.campusId) {
+      toast.error('Vui lòng chọn cơ sở!');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Create FormData
+      const payload: OrganizerRequest = {
+  name: formData.name,
+  description: formData.description || "",
+  contactEmail: formData.contactEmail,
+  logoUrl: formData.logoUrl,
+  ownerId: Number(formData.ownerId),
+  campusId: Number(formData.campusId),
+};
+
+      const response = await organizerService.postOrganizer(payload);
+      console.log("data", response);
+      if (response.status === 201) {
+        toast.success('Thêm nhà tổ chức thành công!');
+        onSuccess(response.data as any);
+        
+        // Reset form
+        setFormData({
+          name: '',
+          description: '',
+          contactEmail: '',
+          logoUrl: '',
+          campusId: 0,
+          ownerId: 0
+        });
+        
+        onClose();
+      }
+    } catch (error: any) {
+      console.error('Error adding organizer:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.data?.message || 
+                          'Không thể thêm nhà tổ chức!';
+      toast.error(errorMessage);
+      console.log("Response data:", error.response?.data);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -51,8 +124,9 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, 
       name: '',
       description: '',
       contactEmail: '',
-      logo_url: '',
-      campus: ''
+      logoUrl: '',
+      campusId: 0,
+      ownerId: 0
     });
     onClose();
   };
@@ -82,20 +156,21 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, 
           {/* Logo URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Logo
+              URL Logo <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              name="logo_url"
-              value={formData.logo_url}
+              type="url"
+              name="logoUrl"
+              value={formData.logoUrl}
               onChange={handleChange}
+              required
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
               placeholder="https://example.com/logo.png"
             />
-            {formData.logo_url && (
+            {formData.logoUrl && (
               <div className="mt-3 flex justify-center">
                 <img 
-                  src={formData.logo_url} 
+                  src={formData.logoUrl} 
                   alt="Preview" 
                   className="w-24 h-24 object-contain p-2 bg-gray-50 border border-gray-200 rounded-lg"
                   onError={(e) => {
@@ -128,19 +203,46 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, 
               Cơ sở <span className="text-red-500">*</span>
             </label>
             <select
-              name="campus"
-              value={formData.campus}
-              onChange={handleChange}
+              name="campusId"
+              value={formData.campusId}
+              onChange={(e) => setFormData(prev => ({ ...prev, campusId: parseInt(e.target.value) }))}
               required
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
             >
-              <option value="">Chọn cơ sở</option>
-              <option value="FPT University Hà Nội">FPT University Hà Nội</option>
-              <option value="FPT University Hồ Chí Minh">FPT University Hồ Chí Minh</option>
-              <option value="FPT University Đà Nẵng">FPT University Đà Nẵng</option>
-              <option value="FPT University Cần Thơ">FPT University Cần Thơ</option>
-              <option value="FPT University Quy Nhơn">FPT University Quy Nhơn</option>
+              <option value="0">Chọn cơ sở</option>
+              <option value="1">FU - Hà Nội</option>
+              <option value="2">FU - Hồ Chí Minh</option>
+              <option value="3">FU - Đà Nẵng</option>
+              <option value="4">FU - Cần Thơ</option>
+              <option value="5">FU - Quy Nhơn</option>
             </select>
+          </div>
+
+          {/* Event Organizer (Owner) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Event Organizer <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="ownerId"
+              value={formData.ownerId}
+              onChange={(e) => setFormData(prev => ({ ...prev, ownerId: parseInt(e.target.value) }))}
+              required
+              disabled={isLoading}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              <option value="0">{isLoading ? 'Đang tải...' : 'Chọn Event Organizer'}</option>
+              {eventOrganizers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName} ({user.email})
+                </option>
+              ))}
+            </select>
+            {eventOrganizers.length === 0 && !isLoading && (
+              <p className="text-sm text-amber-600 mt-1">
+                Không có Event Organizer nào. Vui lòng tạo user với role event_organizer trước.
+              </p>
+            )}
           </div>
 
           {/* Email */}
@@ -180,15 +282,17 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ isOpen, onClose, 
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md"
+              disabled={isSubmitting || eventOrganizers.length === 0}
+              className="px-6 py-2.5 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Thêm mới
+              {isSubmitting ? 'Đang thêm...' : 'Thêm mới'}
             </button>
           </div>
         </form>
