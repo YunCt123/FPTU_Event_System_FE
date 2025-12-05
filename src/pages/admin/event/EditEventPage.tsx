@@ -193,9 +193,9 @@ export default function EditEventPage() {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="pending">Đang xử lý</option>
+            <option value="approved">Đã duyệt</option>
+            <option value="rejected">Đã từ chối</option>
           </select>
         </div>
 

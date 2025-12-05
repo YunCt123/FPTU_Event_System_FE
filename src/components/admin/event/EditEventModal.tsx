@@ -117,9 +117,9 @@ export default function EditEventModal({ initialData, onSubmit, submitting }: {
           onChange={handleChange}
           className="w-full px-4 py-2 border rounded-lg border-gray-300"
         >
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+          <option value="pending">Đang xử lý</option>
+          <option value="approved">Đã duyệt</option>
+          <option value="rejected">Đã từ chối</option>
         </select>
       </div>
 
