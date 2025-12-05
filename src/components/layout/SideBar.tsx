@@ -36,6 +36,14 @@ const SideBar = ({ userRole }: SideBarProps) => {
       label: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
       path: '/admin/dashboard',
+      children: [
+        {
+          id: 'events-doashboard',
+          label: 'Thống kê sự kiện',
+          icon: <Building2 size={18} />,
+          path: '/admin/dashboard-events',
+        }
+      ],
     },
     {
       id: 'events',
@@ -48,12 +56,6 @@ const SideBar = ({ userRole }: SideBarProps) => {
           icon: <Building2 size={18} />,
           path: '/admin/list-events',
         },
-        {
-          id: 'events-doashboard',
-          label: 'Thống kê sự kiện',
-          icon: <Building2 size={18} />,
-          path: '/admin/dashboard-events',
-        }
       ],
     },
     {
