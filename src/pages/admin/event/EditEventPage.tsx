@@ -13,24 +13,17 @@ interface EventData {
   image: string;
 }
 
-const EditEventPage = () => {
+export default function EditEventPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState<EventData>({
-    id: 0,
-    name: "",
-    organizer: "",
-    date: "",
-    venue: "",
-    status: "pending",
-    description: "",
-    image: "",
-  });
 
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState<EventData | null>(null);
+
+  // mock data load
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockEvents = [
+    const mockEvents: EventData[] = [
       {
         id: 1,
         name: "Tech Conference 2025",
@@ -38,8 +31,10 @@ const EditEventPage = () => {
         date: "2025-12-10",
         venue: "Hall A",
         status: "pending",
-        image: "https://thanhnien.mediacdn.vn/Uploaded/dieutrang-qc/2022_04_24/fpt2-7865.jpg",
-        description: "A comprehensive technology conference featuring the latest innovations in AI, blockchain, and cloud computing.",
+        image:
+          "https://thanhnien.mediacdn.vn/Uploaded/dieutrang-qc/2022_04_24/fpt2-7865.jpg",
+        description:
+          "A comprehensive technology conference featuring the latest innovations.",
       },
       {
         id: 2,
@@ -49,38 +44,41 @@ const EditEventPage = () => {
         venue: "Main Stadium",
         status: "approved",
         image: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800",
-        description: "An exciting summer music festival featuring local and international artists.",
+        description: "Exciting summer music festival with international artists.",
       },
     ];
 
-    const foundEvent = mockEvents.find((e) => e.id === parseInt(id || "0"));
-    if (foundEvent) {
-      setFormData(foundEvent);
+    const found = mockEvents.find((e) => e.id === Number(id));
+    if (!found) {
+      alert("Không tìm thấy sự kiện!");
+      navigate("/admin/list-events");
+      return;
     }
+
+    setFormData(found);
     setLoading(false);
-  }, [id]);
+  }, [id, navigate]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => (prev ? { ...prev, [name]: value } : null));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Call API to update event
-    console.log("Updated event data:", formData);
-    alert("Event updated successfully!");
+    if (!formData) return;
+
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 500));
+    console.log("Updated event:", formData);
+    alert("Cập nhật sự kiện thành công!");
     navigate("/admin/list-events");
   };
 
-  if (loading) {
-    return <div className="p-6 text-gray-600">Loading...</div>;
-  }
+  if (loading) return <div className="p-6 text-gray-600">Loading...</div>;
+  if (!formData) return null;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -89,10 +87,10 @@ const EditEventPage = () => {
         <button
           onClick={() => navigate(-1)}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Go Back"
         >
           <ArrowLeft size={24} />
         </button>
+
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Edit Event</h1>
           <p className="text-gray-600 mt-1">Chỉnh sửa thông tin sự kiện</p>
@@ -101,7 +99,7 @@ const EditEventPage = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
-        {/* Event Image Preview */}
+        {/* Image Preview */}
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Event Image
@@ -126,7 +124,7 @@ const EditEventPage = () => {
         {/* Event Name */}
         <div className="mb-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Event Name <span className="text-red-500">*</span>
+            Tên sự kiện <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -141,7 +139,7 @@ const EditEventPage = () => {
         {/* Organizer */}
         <div className="mb-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Organizer <span className="text-red-500">*</span>
+            Ban tổ chức <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -157,7 +155,7 @@ const EditEventPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Date <span className="text-red-500">*</span>
+              Ngày tổ chức <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -171,7 +169,7 @@ const EditEventPage = () => {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Venue <span className="text-red-500">*</span>
+              Địa điểm <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -187,7 +185,7 @@ const EditEventPage = () => {
         {/* Status */}
         <div className="mb-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Status
+            Trạng thái
           </label>
           <select
             name="status"
@@ -204,7 +202,7 @@ const EditEventPage = () => {
         {/* Description */}
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Description
+            Mô tả
           </label>
           <textarea
             name="description"
@@ -219,10 +217,11 @@ const EditEventPage = () => {
         <div className="flex gap-3">
           <button
             type="submit"
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={submitting}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             <Save size={20} />
-            Save Changes
+            {submitting ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
 
           <button
@@ -230,12 +229,10 @@ const EditEventPage = () => {
             onClick={() => navigate(-1)}
             className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
           >
-            Cancel
+            Hủy
           </button>
         </div>
       </form>
     </div>
   );
-};
-
-export default EditEventPage;
+}

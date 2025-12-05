@@ -18,6 +18,7 @@ import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
 import CampusPage from "../pages/admin/campus/CampusPage";
 import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import AdminRoute from "./AdminRoute";
+import DashboardPage from "../pages/admin/event/DashboardPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -50,21 +51,20 @@ const MainRoute: React.FC = () => {
            
         </Route>
 
+        {/* Admin routes */}
         <Route element={<AdminRoute />}>
           <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
           <Route path="/admin/venues" element={<AdminVenuePage />} />
           <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
-          <Route path="/admin/events/pending" element={<ListEventPage/>} />
-          <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
-          <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
+          {/* <Route path="/admin/events/pending" element={<ListEventPage/>} /> */}
           {/* <Route path="/admin/organizers" element={<OrganizerList />} /> */}
           <Route path="/admin/campuses" element={<CampusPage />} />
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
           <Route path="/admin/settings" element={<div>System Settings</div>} />
-           {/* <Route path="/admin/events" element={<AllListEventPage/>}/> */}
-           <Route path="/admin/events/:id" element={<DetailEventPage/>}/>
-           <Route path="/admin/events" element={<ListEventPage/>}/>
+           <Route path="/admin/detail-events/:id" element={<DetailEventPage/>}/>
+           <Route path="/admin/list-events" element={<ListEventPage/>}/>
+           <Route path="/admin/dashboard-events" element={<DashboardPage/>}/>
            <Route path="/admin/events" element={<EditEventPage/>}/>
           <Route path="/admin/organizers" element={<OrganizerList />} />
 
