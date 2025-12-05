@@ -18,6 +18,7 @@ import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
 import CampusPage from "../pages/admin/campus/CampusPage";
 import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import AdminRoute from "./AdminRoute";
+import AuthCallback from "../pages/AuthCallBack";
 
 const MainRoute: React.FC = () => {
   return (
@@ -47,6 +48,7 @@ const MainRoute: React.FC = () => {
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}
         <Route element={<AuthRoute />}>
            <Route path="/login" element={<LoginPage />} />
+           <Route  path="/auth/callback" element={<AuthCallback />} />
            
         </Route>
 
@@ -66,6 +68,7 @@ const MainRoute: React.FC = () => {
            <Route path="/admin/events/:id" element={<DetailEventPage/>}/>
            <Route path="/admin/events" element={<ListEventPage/>}/>
           <Route path="/admin/organizers" element={<OrganizerList />} />
+          
 
         </Route>
 

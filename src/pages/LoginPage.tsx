@@ -4,12 +4,19 @@ import { toast } from "react-toastify";
 import { useState } from "react";
 import authService from "../services/authService";
 import { jwtDecode } from "jwt-decode";
+import { GOOGLE_URL } from "../constants/apiEndPoints";
+import RegisterUserModal from "../components/auth/RegisterUserModal";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  const handleGoogleLogin = () => {
+    window.location.href = GOOGLE_URL;
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -113,14 +120,37 @@ const LoginPage = () => {
               disabled={isLoading}
               className="w-full bg-[#F27125] text-white py-3 rounded-lg hover:bg-[#d95c0b] transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+            </button>
+
+            <div className="flex items-center space-x-2 my-6">
+                <div className="grow border-t border-gray-300"></div>
+                <span className="shrink text-xs text-gray-500 font-medium">HOẶC</span>
+                <div className="grow border-t border-gray-300"></div>
+            </div>
+
+            {/* GOOGLE */}
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              className="w-full bg-white text-gray-700 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium space-x-3"
+            >
+              <img 
+                src="https://www.svgrepo.com/show/353817/google-icon.svg"
+                alt="Google"
+                className="w-5 h-5"
+              />
+              <span>Đăng nhập với Google</span>
             </button>
             {/* Footer */}
             <p className="text-gray-600 text-sm mt-8 text-center">
-              Don't have an account?{" "}
-              <a href="#" className="text-[#F27125] font-semibold hover:underline">
-                Sign Up
-              </a>
+              Bạn chưa có tài khoản?{" "}
+              <button 
+                onClick={() => setIsRegisterOpen(true)}
+                className="text-[#F27125] font-semibold hover:underline"
+              >
+                Đăng ký
+              </button>
             </p>
           </div>
         </div>
@@ -133,6 +163,12 @@ const LoginPage = () => {
           className="w-full h-full object-cover"
         />
       </div>
+
+      {/* Register Modal */}
+      <RegisterUserModal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+      />
     </div>
   );
 };
