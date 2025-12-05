@@ -10,9 +10,9 @@ import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
-import AllListEventPage from "../pages/admin/event/AllListEventPage";
 import DetailEventPage from "../pages/admin/event/DetailEventPage";
 import ListEventPage from "../pages/admin/event/ListEventPage";
+import EditEventPage from "../pages/admin/event/EditEventPage";
 import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
 // import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import CampusPage from "../pages/admin/campus/CampusPage";
@@ -65,6 +65,7 @@ const MainRoute: React.FC = () => {
            {/* <Route path="/admin/events" element={<AllListEventPage/>}/> */}
            <Route path="/admin/events/:id" element={<DetailEventPage/>}/>
            <Route path="/admin/events" element={<ListEventPage/>}/>
+           <Route path="/admin/events" element={<EditEventPage/>}/>
           <Route path="/admin/organizers" element={<OrganizerList />} />
 
         </Route>
