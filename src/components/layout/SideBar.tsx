@@ -52,7 +52,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
         },
         {
           id: 'events-doashboard',
-          label: 'Tổng kết sự kiện',
+          label: 'Thống kê sự kiện',
           icon: <Building2 size={18} />,
           path: '/admin/dashboard-events',
         }
