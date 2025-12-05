@@ -38,6 +38,7 @@ export interface RegisterRequest {
   gender?: boolean;         // optional
   address?: string;         // optional
   avatar?: string; 
+  studentCardImage?: string; // optional
 }
 
 
