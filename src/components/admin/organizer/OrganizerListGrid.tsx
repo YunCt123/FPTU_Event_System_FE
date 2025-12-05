@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import OrganizerModal from "./OrganizerModal";
 import AddOrganizerModal from "./AddOrganizerModal";
-import { Search, Plus, Trash2, Eye, Edit } from "lucide-react";
+import { Search, Plus, Trash2, Edit } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
 import organizerService from "../../../services/organizerService";
 import { toast } from "react-toastify";
@@ -62,7 +62,7 @@ const OrganizerListGrid = () => {
     setIsAddOpen(false);
   };
 
-  const handleAddSuccess = (newOrganizer: OrganizerResponse) => {
+  const handleAddSuccess = (_newOrganizer: OrganizerResponse) => {
     fetchOrganizers(); // Refresh list after adding
     // toast.success("Thêm nhà tổ chức thành công!");
   };

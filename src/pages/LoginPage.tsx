@@ -25,7 +25,7 @@ const LoginPage = () => {
       
       if (response.status == 201) {
         console.log(response);
-        const { accessToken, message } = response.data;
+        const { accessToken } = response.data;
         
         // Decode accessToken để lấy thông tin user
         const decodedToken: any = jwtDecode(accessToken);
@@ -45,7 +45,7 @@ const LoginPage = () => {
             navigate("/admin/dashboard");
             break;
           case "event_organizer":
-            navigate("/organizer");
+            navigate("/organizer/dashboard");
             break;
           case "student":
           case "staff":

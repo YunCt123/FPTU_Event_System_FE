@@ -1,4 +1,5 @@
 export interface ApiResponse<T> {
+    accessToken: string;
     success: boolean;
     data: T;
     message?: string;
