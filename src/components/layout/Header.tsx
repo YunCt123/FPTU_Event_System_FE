@@ -21,20 +21,20 @@ const Header = () => {
   const user = {
     isLoggedIn: true,
     name: "Nguyen Van A",
-    role: "student",
+    role: "admin",
     avatar:
       "https://ui-avatars.com/api/?name=Nguyen+Van+A&background=F27125&color=fff",
   };
 
   const navItems = [
-    { label: "Trang chủ", href: "/" },
+    { label: "Trang chủ", href: "/home" },
     { label: "Sự kiện", href: "/events" },
     { label: "Địa điểm", href: "/venues" },
     ...(user.role === "organizer"
-      ? [{ label: "Quản lý sự kiện", href: "/organizer/dashboard" }]
-      : [{ label: "Vé của tôi", href: "/my-tickets" }]),
+      ? [{ label: "Dashboard", href: "/organizer/dashboard" }]
+      : []),
      ...(user.role === "admin"
-      ? [{ label: "Quản lý sự kiện", href: "/admin/dashboard" }]
+      ? [{ label: "Dashboard", href: "/admin/dashboard" }]
       : []),
   ];
 
@@ -44,7 +44,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = "/home")}
           >
             <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
               F

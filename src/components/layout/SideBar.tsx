@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
-  CheckCircle,
-  XCircle,
   Building2,
   MapPin,
   Users,
@@ -43,7 +41,20 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'events',
       label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
-      path: '/admin/events'
+      children: [
+        {
+          id: 'events-list',
+          label: 'Danh sách sự kiện',
+          icon: <Building2 size={18} />,
+          path: '/admin/list-events',
+        },
+        {
+          id: 'events-doashboard',
+          label: 'Tổng kết sự kiện',
+          icon: <Building2 size={18} />,
+          path: '/admin/dashboard-events',
+        }
+      ],
     },
     {
       id: 'venues',   
@@ -81,22 +92,28 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/dashboard',
     },
     {
-      id: 'my-events',
-      label: 'Sự kiện của tôi',
+      id: 'events',
+      label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
       path: '/organizer/events',
     },
     {
-      id: 'venues',
-      label: 'Quản lý Sơ đồ ghế',
-      icon: <MapPin size={20} />,
-      path: '/organizer/venues',
+      id: 'attendees',
+      label: 'Người tham dự',
+      icon: <Users size={20} />,
+      path: '/organizer/attendees',
     },
     {
-      id: 'profile',
-      label: 'Thông tin tổ chức',
+      id: 'staff',
+      label: 'Quản lý Staff',
       icon: <UserCog size={20} />,
-      path: '/organizer/profile',
+      path: '/organizer/staff',
+    },
+    {
+      id: 'reports',
+      label: 'Báo cáo',
+      icon: <MapPin size={20} />,
+      path: '/organizer/reports',
     },
   ];
 
@@ -176,7 +193,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
             ${level > 0 ? 'pl-12' : ''}
             ${
               itemIsActive || parentIsActive
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-[#F27125] text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
             }
           `}
@@ -217,14 +234,19 @@ const SideBar = ({ userRole }: SideBarProps) => {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-linear-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            F
-          </div>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => (window.location.href = "/")}
+          >
+          <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
+              F
+            </div>
           <div>
             <h2 className="font-bold text-gray-900">FPT-Event</h2>
             <p className="text-xs text-gray-500">
               {userRole === 'admin' ? 'Admin Panel' : 'Organizer Panel'}
             </p>
+          </div>
           </div>
         </div>
       </div>

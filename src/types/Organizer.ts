@@ -5,6 +5,16 @@ export interface Campus {
   address: string;
 } ;
 
+export interface Organizer {
+  id: number;
+  name: string;
+  description: string;
+  contactEmail: string;
+  logoUrl?: string;
+  campusId: number;
+  ownerId?: number;
+};
+
 export interface OrganizerResponse {
   id: number;
   name: string;
