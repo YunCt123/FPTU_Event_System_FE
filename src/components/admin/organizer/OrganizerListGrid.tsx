@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import OrganizerModal from "./OrganizerModal";
 import AddOrganizerModal from "./AddOrganizerModal";
 import { Search, Plus, Trash2, Edit } from "lucide-react";
@@ -29,7 +29,7 @@ const OrganizerListGrid = () => {
     try {
       const response = await organizerService.getAllOrganizers();
       if (response) {
-        setOrganizers(response.data);
+        setOrganizers(response.data.data);
         console.log("Organizers loaded:", response.data);
       }
     } catch (error: any) {
@@ -62,7 +62,7 @@ const OrganizerListGrid = () => {
     setIsAddOpen(false);
   };
 
-  const handleAddSuccess = (newOrganizer: OrganizerResponse) => {
+  const handleAddSuccess = (_newOrganizer: OrganizerResponse) => {
     fetchOrganizers(); // Refresh list after adding
     // toast.success("Thêm nhà tổ chức thành công!");
   };

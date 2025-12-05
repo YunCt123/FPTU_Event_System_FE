@@ -44,7 +44,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = "/home")}
           >
             <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
               F

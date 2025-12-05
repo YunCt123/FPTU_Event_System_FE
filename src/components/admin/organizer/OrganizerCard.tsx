@@ -35,7 +35,7 @@ const OrganizerCard = ({ organizer, onOpenDetails, onDelete }: OrganizerCardProp
 
       <div className="w-28 h-28 border-2 border-gray-100 rounded-full overflow-hidden mb-4 ">
         <img
-          src={organizer.logo_url}
+          src={organizer.logoUrl}
           alt={""}
           className="w-full h-full object-contain"
         />
@@ -45,7 +45,7 @@ const OrganizerCard = ({ organizer, onOpenDetails, onDelete }: OrganizerCardProp
           <h2 className="text-xl font-bold text-gray-800 mb-1">{`${organizer.name}`}</h2>
         </div>
         <div className="">
-          <p className="text-sm text-gray-500">{organizer.campus}</p>
+          <p className="text-sm text-gray-500">{organizer.campusId}</p>
           <p className="text-xs text-gray-400 mt-2">{organizer.contactEmail}</p>
         </div>
       </div>
