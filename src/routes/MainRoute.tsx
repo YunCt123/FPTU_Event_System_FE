@@ -16,8 +16,13 @@ import ListEventPage from "../pages/admin/event/ListEventPage";
 import CampusPage from "../pages/admin/campus/CampusPage";
 import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import AdminRoute from "./AdminRoute";
-import { OrganizerVenuePage } from "../pages";
-import OrganizerEventPage from "../pages/organizer/event/OrganizerEventPage";
+import { OrganizerEventPage } from "../pages";
+import OrganizerDashboardPage from "../pages/organizer/dashboard/OrganizerDashboardPage";
+import EventManagementPage from "../pages/organizer/event/EventManagementPage";
+import SeatAllocationPage from "../pages/organizer/seat/SeatAllocationPage";
+import AttendeesManagementPage from "../pages/organizer/attendee/AttendeesManagementPage";
+import StaffManagementPage from "../pages/organizer/staff/StaffManagementPage";
+import EventReportsPage from "../pages/organizer/report/EventReportsPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -71,11 +76,15 @@ const MainRoute: React.FC = () => {
 
         {/* Organizer routes */}
         <Route element={<OrganizerRoute />}>
-          <Route path="/organizer/dashboard" element={<div>Organizer Dashboard</div>} />
-          <Route path="/organizer/events" element={<OrganizerEventPage />} />
-          <Route path="/organizer/venues" element={<OrganizerVenuePage />} />
+          <Route path="/organizer/dashboard" element={<OrganizerDashboardPage />} />
+          <Route path="/organizer/events" element={<EventManagementPage />} />
+          <Route path="/organizer/events/create" element={<EventManagementPage />} />
+          <Route path="/organizer/events/:id" element={<OrganizerEventPage />} />
+          <Route path="/organizer/events/:eventId/seats/:venueId" element={<SeatAllocationPage />} />
+          <Route path="/organizer/attendees" element={<AttendeesManagementPage />} />
+          <Route path="/organizer/staff" element={<StaffManagementPage />} />
+          <Route path="/organizer/reports" element={<EventReportsPage />} />
           <Route path="/organizer/profile" element={<div>Organization Profile</div>} />
-          
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

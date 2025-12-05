@@ -45,7 +45,7 @@ const LoginPage = () => {
             navigate("/admin/dashboard");
             break;
           case "event_organizer":
-            navigate("/organizer");
+            navigate("/organizer/dashboard");
             break;
           case "student":
           case "staff":

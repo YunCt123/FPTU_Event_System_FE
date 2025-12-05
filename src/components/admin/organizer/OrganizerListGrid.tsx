@@ -29,7 +29,7 @@ const OrganizerListGrid = () => {
     try {
       const response = await organizerService.getAllOrganizers();
       if (response) {
-        setOrganizers(response.data.data);
+        setOrganizers(response.data);
         console.log("Organizers loaded:", response.data);
       }
     } catch (error: any) {

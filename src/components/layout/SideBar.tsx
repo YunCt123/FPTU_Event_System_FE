@@ -79,22 +79,28 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/dashboard',
     },
     {
-      id: 'my-events',
-      label: 'Sự kiện của tôi',
+      id: 'events',
+      label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
       path: '/organizer/events',
     },
     {
-      id: 'venues',
-      label: 'Quản lý Sơ đồ ghế',
-      icon: <MapPin size={20} />,
-      path: '/organizer/venues',
+      id: 'attendees',
+      label: 'Người tham dự',
+      icon: <Users size={20} />,
+      path: '/organizer/attendees',
     },
     {
-      id: 'profile',
-      label: 'Thông tin tổ chức',
+      id: 'staff',
+      label: 'Quản lý Staff',
       icon: <UserCog size={20} />,
-      path: '/organizer/profile',
+      path: '/organizer/staff',
+    },
+    {
+      id: 'reports',
+      label: 'Báo cáo',
+      icon: <MapPin size={20} />,
+      path: '/organizer/reports',
     },
   ];
 

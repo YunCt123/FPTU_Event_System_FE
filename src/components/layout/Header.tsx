@@ -27,7 +27,7 @@ const Header = () => {
   };
 
   const navItems = [
-    { label: "Trang chủ", href: "/" },
+    { label: "Trang chủ", href: "/home" },
     { label: "Sự kiện", href: "/events" },
     { label: "Địa điểm", href: "/venues" },
     ...(user.role === "organizer"
