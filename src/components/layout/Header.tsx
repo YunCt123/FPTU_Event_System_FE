@@ -21,7 +21,7 @@ const Header = () => {
   const user = {
     isLoggedIn: true,
     name: "Nguyen Van A",
-    role: "student",
+    role: "admin",
     avatar:
       "https://ui-avatars.com/api/?name=Nguyen+Van+A&background=F27125&color=fff",
   };
@@ -31,10 +31,10 @@ const Header = () => {
     { label: "Sự kiện", href: "/events" },
     { label: "Địa điểm", href: "/venues" },
     ...(user.role === "organizer"
-      ? [{ label: "Quản lý sự kiện", href: "/organizer/dashboard" }]
-      : [{ label: "Vé của tôi", href: "/my-tickets" }]),
+      ? [{ label: "Dashboard", href: "/organizer/dashboard" }]
+      : []),
      ...(user.role === "admin"
-      ? [{ label: "Quản lý sự kiện", href: "/admin/dashboard" }]
+      ? [{ label: "Dashboard", href: "/admin/dashboard" }]
       : []),
   ];
 

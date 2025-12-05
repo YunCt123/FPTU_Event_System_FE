@@ -10,14 +10,14 @@ import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
-import AllListEventPage from "../pages/admin/event/AllListEventPage";
 import DetailEventPage from "../pages/admin/event/DetailEventPage";
 import ListEventPage from "../pages/admin/event/ListEventPage";
-import OrganizerVenuePage from "../pages/organizer/venue/OrganizerVenuePage";
 // import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import CampusPage from "../pages/admin/campus/CampusPage";
 import OrganizerList from "../pages/admin/organizer/OrganizerList";
 import AdminRoute from "./AdminRoute";
+import { OrganizerVenuePage } from "../pages";
+import OrganizerEventPage from "../pages/organizer/event/OrganizerEventPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -72,8 +72,8 @@ const MainRoute: React.FC = () => {
         {/* Organizer routes */}
         <Route element={<OrganizerRoute />}>
           <Route path="/organizer/dashboard" element={<div>Organizer Dashboard</div>} />
-          <Route path="/organizer/events" element={<div>My Events</div>} />
-          {/* <Route path="/organizer/venues" element={<OrganizerVenuePage />} /> */}
+          <Route path="/organizer/events" element={<OrganizerEventPage />} />
+          <Route path="/organizer/venues" element={<OrganizerVenuePage />} />
           <Route path="/organizer/profile" element={<div>Organization Profile</div>} />
           
         </Route>

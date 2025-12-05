@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Edit } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Venue, VenueStatus } from '../../../types/Venue';
-import ManageSeat from '../../../components/organizer/ManageSeat';
+import ManageSeat from '../../../components/organizer/venue/ManageSeat';
+
 
 // Mock data để test UI/UX - sử dụng cùng data với Admin
 const MOCK_VENUES: Venue[] = [
@@ -232,7 +233,7 @@ const OrganizerVenuePage = () => {
                           {venue.seatMap ? (
                             <button
                               onClick={() => handleEditSeatMap(venue)}
-                              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[#F27125] text-white rounded-lg hover:bg-[#D65A00] transition-colors"
                               title="Phân loại ghế"
                             >
                               <Edit size={16} />

@@ -174,7 +174,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
             ${level > 0 ? 'pl-12' : ''}
             ${
               itemIsActive || parentIsActive
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-[#F27125] text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
             }
           `}
@@ -215,14 +215,19 @@ const SideBar = ({ userRole }: SideBarProps) => {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-linear-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            F
-          </div>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => (window.location.href = "/")}
+          >
+          <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
+              F
+            </div>
           <div>
             <h2 className="font-bold text-gray-900">FPT-Event</h2>
             <p className="text-xs text-gray-500">
               {userRole === 'admin' ? 'Admin Panel' : 'Organizer Panel'}
             </p>
+          </div>
           </div>
         </div>
       </div>

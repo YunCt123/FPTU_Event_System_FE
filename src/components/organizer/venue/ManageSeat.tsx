@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
-import type { Venue, Seat } from "../../types/Venue";
-import SeatMapEditor from "../common/SeatMapEditor";
+import type { Seat, Venue } from "../../../types/Venue";
+import SeatMapEditor from "../../common/SeatMapEditor";
+
+
 
 interface SeatMapEditorModalProps {
   venue: Venue;

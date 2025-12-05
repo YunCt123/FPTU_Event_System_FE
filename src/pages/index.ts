@@ -10,3 +10,4 @@ export { default as CampusPage } from "./admin/campus/CampusPage";
 
 // Organizer pages
 export { default as OrganizerVenuePage } from "./organizer/venue/OrganizerVenuePage";
+export { default as OrganizerEventPage } from "./organizer/event/OrganizerEventPage";
