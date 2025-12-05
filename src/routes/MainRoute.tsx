@@ -2,7 +2,6 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthRoute from "./AuthRoute";
 import UserRoute from "./UserRoute";
-import AdminRoute from "./AdminRoute";
 import OrganizerRoute from "./OrganizerRoute";
 import { Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
@@ -10,7 +9,22 @@ import HomePage from "../pages/HomePage";
 import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
-import VenuePage from "../pages/admin/venue/VenuePage";
+import AdminVenuePage from "../pages/admin/venue/AdminVenuePage";
+import DetailEventPage from "../pages/admin/event/DetailEventPage";
+import ListEventPage from "../pages/admin/event/ListEventPage";
+// import OrganizerList from "../pages/admin/organizer/OrganizerList";
+import CampusPage from "../pages/admin/campus/CampusPage";
+import OrganizerList from "../pages/admin/organizer/OrganizerList";
+import AdminRoute from "./AdminRoute";
+import { OrganizerEventPage } from "../pages";
+import OrganizerDashboardPage from "../pages/organizer/dashboard/OrganizerDashboardPage";
+import EventManagementPage from "../pages/organizer/event/EventManagementPage";
+import SeatAllocationPage from "../pages/organizer/seat/SeatAllocationPage";
+import AttendeesManagementPage from "../pages/organizer/attendee/AttendeesManagementPage";
+import StaffManagementPage from "../pages/organizer/staff/StaffManagementPage";
+import EventReportsPage from "../pages/organizer/report/EventReportsPage";
+import DashboardPage from "../pages/admin/event/DashboardPage";
+import EditEventPage from "../pages/admin/event/EditEventPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -43,26 +57,33 @@ const MainRoute: React.FC = () => {
            
         </Route>
 
+        {/* Admin routes */}
         <Route element={<AdminRoute />}>
           <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
           <Route path="/admin/venues" element={<AdminVenuePage />} />
           <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
-          <Route path="/admin/events/pending" element={<div>Pending Events</div>} />
-          <Route path="/admin/events/approved" element={<div>Approved Events</div>} />
-          <Route path="/admin/events/rejected" element={<div>Rejected Events</div>} />
-          <Route path="/admin/organizers" element={<div>Organizers Management</div>} />
-          <Route path="/admin/campuses" element={<div>Campus Management</div>} />
+          <Route path="/admin/campuses" element={<CampusPage />} />
           <Route path="/admin/categories" element={<div>Categories Management</div>} />
           <Route path="/admin/banners" element={<div>Banners Management</div>} />
           <Route path="/admin/settings" element={<div>System Settings</div>} />
+           <Route path="/admin/detail-events/:id" element={<DetailEventPage/>}/>
+           <Route path="/admin/list-events" element={<ListEventPage/>}/>
+           <Route path="/admin/dashboard-events" element={<DashboardPage/>}/>
+           <Route path="/admin/events" element={<EditEventPage/>}/>
+          <Route path="/admin/organizers" element={<OrganizerList />} />
+
         </Route>
 
         {/* Organizer routes */}
         <Route element={<OrganizerRoute />}>
-          <Route path="/organizer/dashboard" element={<div>Organizer Dashboard</div>} />
-          <Route path="/organizer/events" element={<div>My Events</div>} />
-          <Route path="/organizer/venues" element={<OrganizerVenuePage />} />
-          <Route path="/organizer/profile" element={<div>Organization Profile</div>} />
+          <Route path="/organizer/dashboard" element={<OrganizerDashboardPage />} />
+          <Route path="/organizer/events" element={<EventManagementPage />} />
+          <Route path="/organizer/events/create" element={<EventManagementPage />} />
+          <Route path="/organizer/events/:id" element={<OrganizerEventPage />} />
+          <Route path="/organizer/events/:eventId/seats/:venueId" element={<SeatAllocationPage />} />
+          <Route path="/organizer/attendees" element={<AttendeesManagementPage />} />
+          <Route path="/organizer/staff" element={<StaffManagementPage />} />
+          <Route path="/organizer/reports" element={<EventReportsPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

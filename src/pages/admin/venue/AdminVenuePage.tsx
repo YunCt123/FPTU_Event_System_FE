@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Venue, VenueStatus } from '../../../types/Venue';
-import VenueFormModal from '../../../components/admin/VenueFormModal';
+import VenueFormModal from '../../../components/admin/venue/VenueFormModal';
 import ConfirmModal from '../../../components/common/ConfirmModal';
 
 // Mock data để test UI/UX
@@ -169,7 +169,7 @@ const AdminVenuePage = () => {
         </div>
         <button
           onClick={handleCreate}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65a00] transition-colors"
         >
           <Plus size={20} />
           Thêm địa điểm

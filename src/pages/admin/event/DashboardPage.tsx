@@ -1,0 +1,125 @@
+import { useEffect, useState } from "react";
+
+const DashboardPage = () => {
+  const [stats] = useState({
+    totalEvents: 120,
+    pending: 10,
+    approved: 95,
+    rejected: 15,
+    monthlyData: [
+      { month: "Tháng 1", events: 12 },
+      { month: "Tháng 2", events: 18 },
+      { month: "Tháng 3", events: 25 },
+      { month: "Tháng 4", events: 20 },
+      { month: "Tháng 5", events: 30 },
+      { month: "Tháng 6", events: 15 },
+    ],
+  });
+
+  const maxEvents = Math.max(...stats.monthlyData.map(item => item.events));
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Số liệu mock và biểu đồ events theo tháng
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Tổng số lượng sự kiện</p>
+          <h2 className="text-3xl font-bold text-gray-900">{stats.totalEvents}</h2>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Đang xử lý</p>
+          <h2 className="text-3xl font-bold text-gray-900">{stats.pending}</h2>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Đã duyệt</p>
+          <h2 className="text-3xl font-bold text-gray-900">{stats.approved}</h2>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Đã từ chối</p>
+          <h2 className="text-3xl font-bold text-gray-900">{stats.rejected}</h2>
+        </div>
+      </div>
+
+      {/* Bar Chart */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Số lượng sự kiện theo tháng</h3>
+          <span className="text-sm text-gray-500">Unit: số events</span>
+        </div>
+
+        {/* Chart Container with Grid Background */}
+        <div className="relative">
+          {/* Simple Bar Chart */}
+          <div className="flex items-end justify-around gap-8 h-64 px-4">
+            {stats.monthlyData.map((item) => (
+              <div key={item.month} className="flex flex-col items-center gap-3 flex-1">
+                <div 
+                  className="w-full max-w-[100px] bg-blue-500 rounded-t-md transition-all hover:bg-blue-600 relative group"
+                  style={{ 
+                    height: `${(item.events / maxEvents) * 100}%`,
+                    minHeight: item.events > 0 ? '10px' : '0'
+                  }}
+                >
+                  {/* Tooltip on hover */}
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {item.events} events
+                  </span>
+                </div>
+                <span className="text-sm text-gray-600 font-medium">{item.month}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* X-axis labels */}
+          <div className="flex justify-around mt-6 text-xs text-blue-600 font-medium px-4">
+            <span>0</span>
+            <span>10</span>
+            <span>15</span>
+            <span>20</span>
+            <span>25</span>
+            <span>30</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Tháng gần nhất <span className="text-sm font-normal text-gray-500"></span>
+          </h3>
+        </div>
+
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tháng</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Sự kiện</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {stats.monthlyData.map((item) => (
+              <tr key={item.month} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 text-sm text-gray-900">{item.month}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{item.events}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPage;
