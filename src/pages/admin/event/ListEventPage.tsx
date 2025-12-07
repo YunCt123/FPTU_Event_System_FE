@@ -120,7 +120,7 @@ const ListEventPage = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Event Approval List</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Danh sách sự kiện</h1>
         <p className="text-gray-600 mt-1">Quản lý phê duyệt sự kiện</p>
       </div>
 
@@ -158,7 +158,7 @@ const ListEventPage = () => {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">STT</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Tên sự kiện</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ban tổ chức</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ngày tổ chức</th>
