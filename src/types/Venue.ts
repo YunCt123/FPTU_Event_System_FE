@@ -19,14 +19,11 @@ export interface SeatMapData {
 export interface Venue {
   id: number;
   name: string;
-  description?: string;
-  capacity: number;
-  status: VenueStatus;
-  imageUrl?: string;
-  isActive: boolean;
-  seatMap?: SeatMapData;
-  createdAt?: string;
-  updatedAt?: string;
+  location: string;
+  row: number;
+  column: number;
+  hasSeats: boolean;
+  mapImageUrl: string | null;
 }
 
 export interface CreateVenueRequest {
