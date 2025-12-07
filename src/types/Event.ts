@@ -25,6 +25,57 @@ export interface Event {
   updatedAt?: string;
 }
 
+export interface organizer{
+  id: number;
+  name: string;
+  description: string;
+  contactEmail: string;
+  logoUrl?: string;
+}
+
+export interface venue{
+  id: number;
+  name: string;
+  location: string;
+  hasSeats: boolean;
+}
+
+export interface host{
+  id: number;
+  name: string;
+  email: string;
+  firtName: string;
+  lastName: string;
+}
+
+export interface meta{
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface GetEventResponse {
+  id: number;
+  title: string;
+  description: string;
+  bannerUrl?: string;
+  startTimeRegistration: string;
+  endTimeRegistration: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  maxCapacity: number;
+  registeredCount: number;
+  isGlobal: boolean;
+  createdAt: string;
+  hostId: number;
+  organizerId: number;
+  venueId?: number;
+  organizer: organizer;
+  venue?: venue;
+  host: host;
+}
 export interface CreateEventRequest {
   title: string;
   description: string;

@@ -1,66 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import type { Campus, CampusStatus } from '../../../types/Campus';
+import type { Campus, Status, CreateCampusRequest, UpdateCampusRequest } from '../../../types/Campus';
 import CampusFormModal from '../../../components/admin/campus/CampusFormModal';
 import ConfirmModal from '../../../components/common/ConfirmModal';
+import { campusService } from '../../../services';
 
-// Mock data để test UI/UX
-const MOCK_CAMPUSES: Campus[] = [
-  {
-    id: 1,
-    code: 'HCM',
-    name: 'Campus Hồ Chí Minh',
-    address: 'Lô E2a-7, Đường D1, Khu Công nghệ cao, P.Long Thạnh Mỹ, TP. Thủ Đức',
-    city: 'Hồ Chí Minh',
-    description: 'Campus lớn nhất với đầy đủ cơ sở vật chất hiện đại',
-    imageUrl: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400',
-    status: 'ACTIVE',
-    isActive: true,
-  },
-  {
-    id: 2,
-    code: 'HN',
-    name: 'Campus Hà Nội',
-    address: 'Khu Công nghệ cao Hòa Lạc, Km29 Đại lộ Thăng Long, Hà Nội',
-    city: 'Hà Nội',
-    description: 'Campus tại thủ đô với nhiều hội trường và phòng học hiện đại',
-    imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400',
-    status: 'ACTIVE',
-    isActive: true,
-  },
-  {
-    id: 3,
-    code: 'DN',
-    name: 'Campus Đà Nẵng',
-    address: 'Khu đô thị công nghệ FPT Đà Nẵng, Ngũ Hành Sơn',
-    city: 'Đà Nẵng',
-    description: 'Campus ven biển với không gian xanh mát',
-    imageUrl: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400',
-    status: 'ACTIVE',
-    isActive: true,
-  },
-  {
-    id: 4,
-    code: 'CT',
-    name: 'Campus Cần Thơ',
-    address: '600 Nguyễn Văn Cừ nối dài, P. An Bình, Q. Ninh Kiều, TP. Cần Thơ',
-    city: 'Cần Thơ',
-    description: 'Campus miền Tây đang trong quá trình mở rộng',
-    imageUrl: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400',
-    status: 'INACTIVE',
-    isActive: false,
-  },
-];
 
 const CampusPage = () => {
-  const [campuses, setCampuses] = useState<Campus[]>(MOCK_CAMPUSES);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     campusId: number | null;
   }>({ isOpen: false, campusId: null });
+
+  // Fetch campuses from API on component mount
+  useEffect(() => {
+    fetchCampuses();
+  }, []);
+
+  const fetchCampuses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await campusService.getAllCampuses();
+      setCampuses(response.data);
+    } catch (error: any) {
+      console.error('Error fetching campuses:', error);
+      toast.error(error?.response?.data?.message || 'Không thể tải danh sách campus');
+      setCampuses([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreate = () => {
     setSelectedCampus(null);
@@ -76,21 +50,29 @@ const CampusPage = () => {
     setConfirmModal({ isOpen: true, campusId: id });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const campusId = confirmModal.campusId;
     if (!campusId) return;
 
-    // Soft delete - chuyển status sang INACTIVE
-    setCampuses(
-      campuses.map((c) =>
-        c.id === campusId
-          ? { ...c, status: 'INACTIVE' as CampusStatus, isActive: false }
-          : c
-      )
-    );
+    try {
+      await campusService.deleteCampus(campusId);
+      
+      // Update local state - soft delete
+      setCampuses(
+        campuses.map((c) =>
+          c.id === campusId
+            ? { ...c, status: 'INACTIVE' as Status, isActive: false }
+            : c
+        )
+      );
 
-    toast.success('Xóa campus thành công!');
-    setConfirmModal({ isOpen: false, campusId: null });
+      toast.success('Xóa campus thành công!');
+    } catch (error: any) {
+      console.error('Error deleting campus:', error);
+      toast.error(error?.response?.data?.message || 'Không thể xóa campus');
+    } finally {
+      setConfirmModal({ isOpen: false, campusId: null });
+    }
   };
 
   const cancelDelete = () => {
@@ -102,27 +84,50 @@ const CampusPage = () => {
     setSelectedCampus(null);
   };
 
-  const handleModalSuccess = (newCampus: Campus) => {
-    if (selectedCampus) {
-      // Update existing campus
-      setCampuses(campuses.map((c) => (c.id === newCampus.id ? newCampus : c)));
-      toast.success('Cập nhật campus thành công!');
-    } else {
-      // Add new campus
-      setCampuses([...campuses, { ...newCampus, id: campuses.length + 1 }]);
-      toast.success('Thêm campus thành công!');
+  const handleModalSuccess = async (newCampus: Campus) => {
+    try {
+      if (selectedCampus) {
+        // Update existing campus
+        const updateData: UpdateCampusRequest = {
+          code: newCampus.code,
+          name: newCampus.name,
+          address: newCampus.address,
+          capacity: newCampus.capacity || null,
+          image: newCampus.image || undefined,
+        };
+        
+        await campusService.updateCampus(newCampus.id, updateData);
+        toast.success('Cập nhật campus thành công!');
+      } else {
+        // Add new campus
+        const createData: CreateCampusRequest = {
+          code: newCampus.code,
+          name: newCampus.name,
+          address: newCampus.address,
+          capacity: newCampus.capacity || null,
+          image: newCampus.image || undefined,
+        };
+        
+        await campusService.createCampus(createData);
+        toast.success('Thêm campus thành công!');
+      }
+      
+      // Refresh the campus list from API after create/update
+      await fetchCampuses();
+      handleModalClose();
+    } catch (error: any) {
+      console.error('Error saving campus:', error);
+      toast.error(error?.response?.data?.message || 'Không thể lưu campus');
     }
-    handleModalClose();
   };
 
-  const getStatusBadge = (status: CampusStatus) => {
+  const getStatusBadge = (status: Status) => {
     const statusConfig = {
-      ACTIVE: { label: 'Hoạt động', class: 'bg-green-100 text-green-800' },
-      INACTIVE: { label: 'Ngừng hoạt động', class: 'bg-red-100 text-red-800' },
+      Active: { label: 'Hoạt động', class: 'bg-green-100 text-green-800' },
+      Inactive: { label: 'Ngừng hoạt động', class: 'bg-red-100 text-red-800' },
     };
 
-    const config = statusConfig[status] || statusConfig.INACTIVE;
-
+    const config = statusConfig[status] || statusConfig.Inactive;
     return (
       <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.class}`}>
         {config.label}
@@ -168,9 +173,6 @@ const CampusPage = () => {
                   Địa chỉ
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Thành phố
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Trạng thái
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
@@ -179,7 +181,16 @@ const CampusPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {campuses.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F27125]"></div>
+                      <span className="text-gray-500">Đang tải...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : campuses.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     Chưa có campus nào. Nhấn "Thêm Campus" để bắt đầu.
@@ -194,9 +205,9 @@ const CampusPage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {campus.imageUrl ? (
+                      {campus.image ? (
                         <img
-                          src={campus.imageUrl}
+                          src={campus.image}
                           alt={campus.name}
                           className="w-16 h-16 object-cover rounded-lg"
                         />
@@ -210,9 +221,9 @@ const CampusPage = () => {
                       <div className="text-sm font-medium text-gray-900">
                         {campus.name}
                       </div>
-                      {campus.description && (
+                      {campus.capacity && (
                         <div className="text-sm text-gray-500 mt-1 line-clamp-2">
-                          {campus.description}
+                          {campus.capacity}
                         </div>
                       )}
                     </td>
@@ -221,7 +232,6 @@ const CampusPage = () => {
                         {campus.address}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{campus.city}</td>
                     <td className="px-6 py-4">{getStatusBadge(campus.status)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
