@@ -60,14 +60,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'venues',   
       label: 'Quản lý Địa điểm',
       icon: <Building2 size={20} />,
-      children: [
-        {
-          id: 'venues-list',
-          label: 'Danh sách hội trường',
-          icon: <Building2 size={18} />,
-          path: '/admin/venues',
-        },
-      ],
+      path: '/admin/venues',
     },
     {
       id: 'organizers',
