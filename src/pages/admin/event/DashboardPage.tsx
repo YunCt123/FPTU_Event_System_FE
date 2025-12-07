@@ -2,17 +2,23 @@ import { useEffect, useState } from "react";
 
 const DashboardPage = () => {
   const [stats] = useState({
-    totalEvents: 120,
-    pending: 10,
-    approved: 95,
-    rejected: 15,
+    totalEvents: 240,
+    pending: 25,
+    approved: 180,
+    rejected: 35,
     monthlyData: [
-      { month: "Tháng 1", events: 12 },
+      { month: "Tháng 1", events: 15 },
       { month: "Tháng 2", events: 18 },
-      { month: "Tháng 3", events: 25 },
+      { month: "Tháng 3", events: 22 },
       { month: "Tháng 4", events: 20 },
-      { month: "Tháng 5", events: 30 },
-      { month: "Tháng 6", events: 15 },
+      { month: "Tháng 5", events: 28 },
+      { month: "Tháng 6", events: 17 },
+      { month: "Tháng 7", events: 25 },
+      { month: "Tháng 8", events: 19 },
+      { month: "Tháng 9", events: 23 },
+      { month: "Tháng 10", events: 21 },
+      { month: "Tháng 11", events: 26 },
+      { month: "Tháng 12", events: 16 },
     ],
   });
 
@@ -58,37 +64,27 @@ const DashboardPage = () => {
           <span className="text-sm text-gray-500">Unit: số events</span>
         </div>
 
-        {/* Chart Container with Grid Background */}
+        {/* Chart Container */}
         <div className="relative">
           {/* Simple Bar Chart */}
-          <div className="flex items-end justify-around gap-8 h-64 px-4">
+          <div className="grid grid-cols-12 gap-2 items-end h-64 px-4">
             {stats.monthlyData.map((item) => (
-              <div key={item.month} className="flex flex-col items-center gap-3 flex-1">
+              <div key={item.month} className="flex flex-col items-center gap-3">
                 <div 
-                  className="w-full max-w-[100px] bg-blue-500 rounded-t-md transition-all hover:bg-blue-600 relative group"
+                  className="w-full bg-blue-500 rounded-t-md transition-all hover:bg-blue-600 relative group"
                   style={{ 
                     height: `${(item.events / maxEvents) * 100}%`,
                     minHeight: item.events > 0 ? '10px' : '0'
                   }}
                 >
                   {/* Tooltip on hover */}
-                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                     {item.events} events
                   </span>
                 </div>
-                <span className="text-sm text-gray-600 font-medium">{item.month}</span>
+                <span className="text-xs text-gray-600 font-medium">{item.month.replace("Tháng ", "T")}</span>
               </div>
             ))}
-          </div>
-
-          {/* X-axis labels */}
-          <div className="flex justify-around mt-6 text-xs text-blue-600 font-medium px-4">
-            <span>0</span>
-            <span>10</span>
-            <span>15</span>
-            <span>20</span>
-            <span>25</span>
-            <span>30</span>
           </div>
         </div>
       </div>
@@ -97,26 +93,35 @@ const DashboardPage = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            Thống kê <span className="text-sm font-normal text-gray-500"></span>
+            Thống kê 12 tháng <span className="text-sm font-normal text-gray-500">(năm 2024)</span>
           </h3>
         </div>
 
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tháng</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Sự kiện</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {stats.monthlyData.map((item) => (
-              <tr key={item.month} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 text-sm text-gray-900">{item.month}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">{item.events}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tháng</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Sự kiện</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {stats.monthlyData.map((item) => (
+                <tr key={item.month} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-gray-900">{item.month}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{item.events}</td>
+                </tr>
+              ))}
+              {/* Tổng kết */}
+              <tr className="bg-gray-50 font-semibold">
+                <td className="px-6 py-4 text-sm text-gray-900">Tổng cộng</td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {stats.monthlyData.reduce((sum, item) => sum + item.events, 0)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
