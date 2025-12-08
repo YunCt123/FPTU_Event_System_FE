@@ -59,7 +59,7 @@ export interface eventSpeaker{
 
 }
 
-export interface evenStaff{
+export interface eventStaff{
 
 }
 
@@ -68,6 +68,7 @@ export interface GetEventResponse {
   title: string;
   description: string;
   bannerUrl?: string;
+  imageUrl?: string; 
   startTimeRegistration: string;
   endTimeRegistration: string;
   startTime: string;
@@ -84,8 +85,9 @@ export interface GetEventResponse {
   venue?: venue;
   host: host;
   eventSpeakers: eventSpeaker[];
-  eventStaffs: evenStaff[];
+  eventStaffs: eventStaff[];
 }
+
 export interface CreateEventRequest {
   title: string;
   description: string;
