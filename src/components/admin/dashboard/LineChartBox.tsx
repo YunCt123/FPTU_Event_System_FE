@@ -6,24 +6,65 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 
 interface LineChartBoxProps {
   title: string;
+  subtitle?: string;
   data: { name: string; value: number }[];
 }
 
-const LineChartBox: React.FC<LineChartBoxProps> = ({ title, data }) => {
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+        <p className="text-sm font-semibold text-gray-900">
+          {payload[0].payload.name}
+        </p>
+        <p className="text-sm text-blue-600 font-medium">
+          {payload[0].value} người tham gia
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} />
+const LineChartBox: React.FC<LineChartBoxProps> = ({ title, subtitle, data }) => {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        {subtitle && (
+          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+        )}
+      </div>
+
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart
+          data={data}
+          margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 12, fill: "#6b7280" }}
+            axisLine={{ stroke: "#e5e7eb" }}
+          />
+          <YAxis
+            tick={{ fontSize: 12, fill: "#6b7280" }}
+            axisLine={{ stroke: "#e5e7eb" }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#3b82f6"
+            strokeWidth={3}
+            dot={{ fill: "#3b82f6", r: 4 }}
+            activeDot={{ r: 6 }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

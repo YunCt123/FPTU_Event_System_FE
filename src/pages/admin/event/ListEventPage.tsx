@@ -49,25 +49,32 @@ const ListEventPage = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const handleApproveEvent = async (eventId: string | number) => {
+  const handleApproveEvent = async (eventId: string | number, status: string) => {
     setSubmitting(true);
     try {
-      // TODO: Call API to approve event
-      // const response = await eventService.updateEventStatus(eventId, "PUBLISHED");
+      console.log("Approving event:", eventId);
       
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Gọi API thực
+      const response = await eventService.patchEvent(String(eventId), { status : "PUBLISHED" });
       
-      // Cập nhật state local
-      setEvents(prevEvents => 
-        prevEvents.map(e => 
-          e.id === eventId ? { ...e, status: "PUBLISHED" } : e
-        )
-      );
+      console.log("Approve response:", response);
       
-      toast.success("Duyệt sự kiện thành công!");
-      await fetchEvents();
+      if (response) {
+        toast.success("Duyệt sự kiện thành công!");
+        
+        // Cập nhật state local
+        setEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === eventId ? { ...e, status: "PUBLISHED" } : e
+          )
+        );
+        
+        // Fetch lại data từ server
+        fetchEvents();
+      } 
     } catch (error: any) {
       console.error("Error approving event:", error);
+      console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Duyệt sự kiện thất bại!");
     } finally {
       setSubmitting(false);
@@ -77,22 +84,29 @@ const ListEventPage = () => {
   const handleRejectEvent = async (eventId: string | number) => {
     setSubmitting(true);
     try {
-      // TODO: Call API to reject event
-      // const response = await eventService.updateEventStatus(eventId, "REJECTED");
+      console.log("Rejecting event:", eventId);
       
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Gọi API thực
+      const response = await eventService.patchEvent(String(eventId), { status: "CANCELED" });
       
-      // Cập nhật state local
-      setEvents(prevEvents => 
-        prevEvents.map(e => 
-          e.id === eventId ? { ...e, status: "REJECTED" } : e
-        )
-      );
+      console.log("Reject response:", response);
       
-      toast.success("Từ chối sự kiện thành công!");
-      await fetchEvents();
+      if (response) {
+        toast.success("Từ chối sự kiện thành công!");
+        
+        // Cập nhật state local
+        setEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === eventId ? { ...e, status: "CANCELED" } : e
+          )
+        );
+        
+        // Fetch lại data từ server
+        fetchEvents();
+      } 
     } catch (error: any) {
       console.error("Error rejecting event:", error);
+      console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Từ chối sự kiện thất bại!");
     } finally {
       setSubmitting(false);
@@ -130,14 +144,14 @@ const ListEventPage = () => {
     const statusConfig: Record<string, string> = {
       "PUBLISHED": "bg-green-100 text-green-700",
       "PENDING": "bg-yellow-100 text-yellow-700",
-      "REJECTED": "bg-red-100 text-red-700",
+      "CANCELED": "bg-red-100 text-red-700",
       "DRAFT": "bg-gray-100 text-gray-700",
     };
 
     const statusLabel: Record<string, string> = {
       "PUBLISHED": "Đã duyệt",
       "PENDING": "Đang xử lý",
-      "REJECTED": "Bị từ chối",
+      "CANCELED": "Bị từ chối",
       "DRAFT": "Nháp",
     };
 
@@ -179,7 +193,7 @@ const ListEventPage = () => {
             <option value="all">Tất cả</option>
             <option value="PENDING">Đang xử lý</option>
             <option value="PUBLISHED">Đã duyệt</option>
-            <option value="REJECTED">Bị từ chối</option>
+            <option value="CANCELED">Bị từ chối</option>
           </select>
         </div>
       </div>
@@ -308,7 +322,7 @@ const ListEventPage = () => {
               <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   onClick={() => {
-                    handleApproveEvent(selectedEvent.id);
+                    handleApproveEvent(selectedEvent.id, "PUBLISHED");
                     setShowDetailModal(false);
                   }}
                   disabled={submitting}
@@ -332,7 +346,7 @@ const ListEventPage = () => {
               </div>
             )}
 
-            {(selectedEvent.status === "PUBLISHED" || selectedEvent.status === "REJECTED") && (
+            {(selectedEvent.status === "PUBLISHED" || selectedEvent.status === "CANCELED") && (
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-500 text-center">
                   {selectedEvent.status === "PUBLISHED" 
