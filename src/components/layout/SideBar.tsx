@@ -10,6 +10,8 @@ import {
   ChevronRight,
   Map,
   UserCog,
+  UserStar,
+  User,
 } from 'lucide-react';
 
 interface SideBarProps {
@@ -75,6 +77,32 @@ const SideBar = ({ userRole }: SideBarProps) => {
       label: 'Quản lý Campus',
       icon: <Map size={20} />,
       path: '/admin/campuses',
+    },
+    {
+      id: 'users',
+      label: 'Quản lý Người dùng',
+      icon: <UserCog size={20} />,
+      path: '/admin/users',
+      children: [
+        {
+          id: 'event-organizers',
+          label: 'Event Organizers',
+          icon: <UserStar size={18} />,
+          path: '/admin/users?role=event_organizer',
+        },
+        {
+          id: 'staff',
+          label: 'Staff',
+          icon: <UserCog size={18} />,
+          path: '/admin/users?role=staff',
+        },
+        {
+          id: 'student',
+          label: 'Student',
+          icon: <User size={18} />,
+          path: '/admin/users?role=student',
+        }
+      ],
     },
   ];
 
@@ -153,7 +181,16 @@ const SideBar = ({ userRole }: SideBarProps) => {
 
   const isActive = (path?: string) => {
     if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    // Extract pathname and search from the path
+    const [pathOnly, search] = path.split('?');
+    const currentPathMatches = location.pathname === pathOnly || location.pathname.startsWith(pathOnly + '/');
+    
+    // If path has query params, also match them
+    if (search && currentPathMatches) {
+      return location.search === `?${search}`;
+    }
+    
+    return currentPathMatches;
   };
 
   const isParentActive = (children?: MenuItem[]) => {

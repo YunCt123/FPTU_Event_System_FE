@@ -5,7 +5,7 @@ import type { ApiResponse } from '../types/ApiResponse';
 import type { AxiosResponse } from 'axios';
 
 const userService = {
-    async getUsers(params: {
+    async getUsers(params?: {
   page?: number;
   limit?: number;
   roleName?: string;
@@ -15,6 +15,8 @@ const userService = {
 }): Promise<AxiosResponse<ApiResponse<User[]>>> {
         return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}`,  params );
     },
+
+    
     
 };
 

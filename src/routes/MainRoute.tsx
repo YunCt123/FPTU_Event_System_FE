@@ -26,6 +26,8 @@ import StaffManagementPage from "../pages/organizer/staff/StaffManagementPage";
 import EventReportsPage from "../pages/organizer/report/EventReportsPage";
 import DashboardPage from "../pages/admin/event/DashboardPage";
 import EditEventPage from "../pages/admin/event/EditEventPage";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+import UserList from "../pages/admin/user/UserList";
 
 
 const MainRoute: React.FC = () => {
@@ -38,9 +40,9 @@ const MainRoute: React.FC = () => {
             const token =
               localStorage.getItem("token") || sessionStorage.getItem("token");
             return !token ? (
-              <Navigate to="/home" replace />
-            ) : (
               <Navigate to="/login" replace />
+            ) : (
+              <Navigate to="/home" replace />
             );
           })()}
         />
@@ -61,34 +63,40 @@ const MainRoute: React.FC = () => {
         </Route>
 
         {/* Admin routes */}
-        <Route element={<AdminRoute />}>
-          <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
-          <Route path="/admin/venues" element={<AdminVenuePage />} />
-          <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
-          <Route path="/admin/campuses" element={<CampusPage />} />
-          <Route path="/admin/categories" element={<div>Categories Management</div>} />
-          <Route path="/admin/banners" element={<div>Banners Management</div>} />
-          <Route path="/admin/settings" element={<div>System Settings</div>} />
-           <Route path="/admin/detail-events/:id" element={<DetailEventPage/>}/>
-           <Route path="/admin/list-events" element={<ListEventPage/>}/>
-           <Route path="/admin/dashboard-events" element={<DashboardPage/>}/>
-           <Route path="/admin/events" element={<EditEventPage/>}/>
-          <Route path="/admin/organizers" element={<OrganizerList />} />
-          
+        <Route element={<ProtectedRoute role={["admin"]} />}>
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/dashboard" element={<DashboardPage />} />
+            <Route path="/admin/venues" element={<AdminVenuePage />} />
+            <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
+            <Route path="/admin/campuses" element={<CampusPage />} />
+            <Route path="/admin/categories" element={<div>Categories Management</div>} />
+            <Route path="/admin/banners" element={<div>Banners Management</div>} />
+            <Route path="/admin/settings" element={<div>System Settings</div>} />
+            <Route path="/admin/detail-events/:id" element={<DetailEventPage/>}/>
+            <Route path="/admin/list-events" element={<ListEventPage/>}/>
+            <Route path="/admin/dashboard-events" element={<DashboardPage/>}/>
+            <Route path="/admin/events" element={<EditEventPage/>}/>
+            <Route path="/admin/organizers" element={<OrganizerList />} />
+            <Route path="/admin/users" element={<UserList />} />
 
+          </Route>
         </Route>
+        
 
         {/* Organizer routes */}
-        <Route element={<OrganizerRoute />}>
-          <Route path="/organizer/dashboard" element={<OrganizerDashboardPage />} />
-          <Route path="/organizer/events" element={<EventManagementPage />} />
-          <Route path="/organizer/events/create" element={<EventManagementPage />} />
-          <Route path="/organizer/events/:id" element={<OrganizerEventPage />} />
-          <Route path="/organizer/events/:eventId/seats/:venueId" element={<SeatAllocationPage />} />
-          <Route path="/organizer/attendees" element={<AttendeesManagementPage />} />
-          <Route path="/organizer/staff" element={<StaffManagementPage />} />
-          <Route path="/organizer/reports" element={<EventReportsPage />} />
+        <Route element={<ProtectedRoute role={["event_organizer"]} />}>
+          <Route element={<OrganizerRoute />}>
+            <Route path="/organizer/dashboard" element={<OrganizerDashboardPage />} />
+            <Route path="/organizer/events" element={<EventManagementPage />} />
+            <Route path="/organizer/events/create" element={<EventManagementPage />} />
+            <Route path="/organizer/events/:id" element={<OrganizerEventPage />} />
+            <Route path="/organizer/events/:eventId/seats/:venueId" element={<SeatAllocationPage />} />
+            <Route path="/organizer/attendees" element={<AttendeesManagementPage />} />
+            <Route path="/organizer/staff" element={<StaffManagementPage />} />
+            <Route path="/organizer/reports" element={<EventReportsPage />} />
+          </Route>
         </Route>
+       
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

@@ -26,6 +26,15 @@ export interface LoginResponse {
   message: string
 }
 
+export interface UserParams{
+  page?: number;
+  limit?: number;
+  roleName?: string;
+  search?: string;
+  campusId?: number;
+  isActive?: boolean;
+};
+
 export interface RegisterRequest {
   userName: string;
   email: string;
@@ -40,5 +49,7 @@ export interface RegisterRequest {
   avatar?: string; 
   studentCardImage?: string; // optional
 }
+
+
 
 
