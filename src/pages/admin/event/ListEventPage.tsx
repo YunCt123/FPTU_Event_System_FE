@@ -1,7 +1,6 @@
-import { Search, Filter, Eye, SquarePen, Trash2 } from "lucide-react";
+import { Search, Filter, Eye, Trash2, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
-import EditEventModal from "../../../components/admin/event/EditEventModal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
 import eventService from "../../../services/eventService";
 import type { GetEventResponse } from "../../../types/Event";
@@ -14,7 +13,6 @@ const ListEventPage = () => {
 
   const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,17 +49,51 @@ const ListEventPage = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const handleEditSubmit = async (formData: any) => {
+  const handleApproveEvent = async (eventId: string | number) => {
     setSubmitting(true);
     try {
-      // TODO: Call API to update event
+      // TODO: Call API to approve event
+      // const response = await eventService.updateEventStatus(eventId, "PUBLISHED");
+      
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Updated event:", formData);
-      toast.success("Cập nhật sự kiện thành công!");
-      setShowEditModal(false);
+      
+      // Cập nhật state local
+      setEvents(prevEvents => 
+        prevEvents.map(e => 
+          e.id === eventId ? { ...e, status: "PUBLISHED" } : e
+        )
+      );
+      
+      toast.success("Duyệt sự kiện thành công!");
       await fetchEvents();
-    } catch (error) {
-      toast.error("Cập nhật sự kiện thất bại!");
+    } catch (error: any) {
+      console.error("Error approving event:", error);
+      toast.error(error.response?.data?.message || "Duyệt sự kiện thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectEvent = async (eventId: string | number) => {
+    setSubmitting(true);
+    try {
+      // TODO: Call API to reject event
+      // const response = await eventService.updateEventStatus(eventId, "REJECTED");
+      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Cập nhật state local
+      setEvents(prevEvents => 
+        prevEvents.map(e => 
+          e.id === eventId ? { ...e, status: "REJECTED" } : e
+        )
+      );
+      
+      toast.success("Từ chối sự kiện thành công!");
+      await fetchEvents();
+    } catch (error: any) {
+      console.error("Error rejecting event:", error);
+      toast.error(error.response?.data?.message || "Từ chối sự kiện thất bại!");
     } finally {
       setSubmitting(false);
     }
@@ -72,19 +104,16 @@ const ListEventPage = () => {
     
     setSubmitting(true);
     try {
-      // Gọi API xóa sự kiện
       const response = await eventService.deleteEvent(selectedEvent.id);
       
       if (response.status == 200) {
         toast.success("Xóa sự kiện thành công!");
         
-        // Cập nhật state local ngay lập tức (optimistic update)
         setEvents(prevEvents => prevEvents.filter(e => e.id !== selectedEvent.id));
         
         setShowDeleteConfirm(false);
         setSelectedEvent(null);
         
-        // Fetch lại data để đảm bảo sync với server
         await fetchEvents();
       } else {
         toast.error(response.data.message || "Xóa sự kiện thất bại!");
@@ -212,17 +241,6 @@ const ListEventPage = () => {
                         <button
                           onClick={() => {
                             setSelectedEvent(e);
-                            setShowEditModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-800 p-1 rounded-md hover:bg-green-50 transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <SquarePen size={20} />
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setSelectedEvent(e);
                             setShowDeleteConfirm(true);
                           }}
                           className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
@@ -250,53 +268,84 @@ const ListEventPage = () => {
       {/* Detail Modal */}
       {showDetailModal && selectedEvent && (
         <EventModal title="Chi tiết sự kiện" onClose={() => setShowDetailModal(false)}>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">ID:</span>
-              <span>{selectedEvent.id}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Tên:</span>
-              <span>{selectedEvent.title}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Ban tổ chức:</span>
-              <span>{selectedEvent.organizer.name}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Ngày tạo:</span>
-              <span>{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Địa điểm:</span>
-              <span>{selectedEvent.venue?.name || "-"}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Trạng thái:</span>
-              {getStatusBadge(selectedEvent.status)}
-            </div>
-            {selectedEvent.description && (
+          <div className="space-y-4">
+            {/* Thông tin chi tiết */}
+            <div className="space-y-3">
               <div className="flex gap-2">
-                <span className="font-semibold min-w-[100px]">Mô tả:</span>
-                <span>{selectedEvent.description}</span>
+                <span className="font-semibold min-w-[120px]">ID:</span>
+                <span>{selectedEvent.id}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Tên sự kiện:</span>
+                <span>{selectedEvent.title}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Ban tổ chức:</span>
+                <span>{selectedEvent.organizer.name}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Ngày tạo:</span>
+                <span>{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Địa điểm:</span>
+                <span>{selectedEvent.venue?.name || "-"}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Trạng thái:</span>
+                {getStatusBadge(selectedEvent.status)}
+              </div>
+              {selectedEvent.description && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[120px]">Mô tả:</span>
+                  <span>{selectedEvent.description}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {selectedEvent.status === "PENDING" && (
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    handleApproveEvent(selectedEvent.id);
+                    setShowDetailModal(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Check size={18} />
+                  {submitting ? "Đang xử lý..." : "Duyệt"}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleRejectEvent(selectedEvent.id);
+                    setShowDetailModal(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <X size={18} />
+                  {submitting ? "Đang xử lý..." : "Từ chối"}
+                </button>
+              </div>
+            )}
+
+            {(selectedEvent.status === "PUBLISHED" || selectedEvent.status === "REJECTED") && (
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-500 text-center">
+                  {selectedEvent.status === "PUBLISHED" 
+                    ? "Sự kiện đã được duyệt" 
+                    : "Sự kiện đã bị từ chối"}
+                </p>
               </div>
             )}
           </div>
         </EventModal>
       )}
 
-      {/* Edit Modal */}
-      {showEditModal && selectedEvent && (
-        <EventModal title="Chỉnh sửa sự kiện" onClose={() => setShowEditModal(false)}>
-          <EditEventModal
-            initialData={selectedEvent}
-            onSubmit={handleEditSubmit}
-            submitting={submitting}
-          />
-        </EventModal>
-      )}
-
-      {/* Delete Confirmation Modal - Using ConfirmModal */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title="Xác nhận xóa sự kiện"
