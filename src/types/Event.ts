@@ -55,11 +55,20 @@ export interface meta{
   totalPages: number;
 }
 
+export interface eventSpeaker{
+
+}
+
+export interface eventStaff{
+
+}
+
 export interface GetEventResponse {
   id: string;
   title: string;
   description: string;
   bannerUrl?: string;
+  imageUrl?: string; 
   startTimeRegistration: string;
   endTimeRegistration: string;
   startTime: string;
@@ -75,7 +84,10 @@ export interface GetEventResponse {
   organizer: organizer;
   venue?: venue;
   host: host;
+  eventSpeakers: eventSpeaker[];
+  eventStaffs: eventStaff[];
 }
+
 export interface CreateEventRequest {
   title: string;
   description: string;

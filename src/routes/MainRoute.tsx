@@ -62,7 +62,7 @@ const MainRoute: React.FC = () => {
 
         {/* Admin routes */}
         <Route element={<AdminRoute />}>
-          <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
+          <Route path="/admin/dashboard" element={<DashboardPage/>} />
           <Route path="/admin/venues" element={<AdminVenuePage />} />
           <Route path="/admin/venues/seat-config" element={<div>Seat Config</div>} />
           <Route path="/admin/campuses" element={<CampusPage />} />

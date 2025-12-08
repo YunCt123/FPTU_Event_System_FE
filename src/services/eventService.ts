@@ -16,12 +16,16 @@ const eventService = {
         return await apiUtils.get<ApiResponse<GetEventResponse[]>>(`${EVENT_URL}`);
     },
 
-    async getEventById(id: number): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
-        return await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}/${id}`);
+    async getEventById(id: string): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
+        return await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
     },
 
     async deleteEvent(id: string): Promise<AxiosResponse<ApiResponse<EventDeleteResponse>>> {
         return await apiUtils.delete<ApiResponse<EventDeleteResponse>>(`${EVENT_URL}${id}`);
+    },
+
+    async patchEvent(id: string, data: {status: string}): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
+        return await apiUtils.patch<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}/status`, data);
     }
 
 };

@@ -1,126 +1,236 @@
-import { useEffect, useState } from "react";
+import React from "react";
+import StatsCard from "../../../components/admin/dashboard/StatsCard";
+import BarChartBox from "../../../components/admin/dashboard/BarChartBox";
+import LineChartBox from "../../../components/admin/dashboard/LineChartBox";
+import PieChartBox from "../../../components/admin/dashboard/PieChartBox";
+import { Calendar, Clock, CheckCircle, XCircle, TrendingUp, Users } from "lucide-react";
 
 const DashboardPage = () => {
-  const [stats] = useState({
-    totalEvents: 240,
-    pending: 25,
-    approved: 180,
-    rejected: 35,
-    monthlyData: [
-      { month: "Tháng 1", events: 15 },
-      { month: "Tháng 2", events: 18 },
-      { month: "Tháng 3", events: 22 },
-      { month: "Tháng 4", events: 20 },
-      { month: "Tháng 5", events: 28 },
-      { month: "Tháng 6", events: 17 },
-      { month: "Tháng 7", events: 25 },
-      { month: "Tháng 8", events: 19 },
-      { month: "Tháng 9", events: 23 },
-      { month: "Tháng 10", events: 21 },
-      { month: "Tháng 11", events: 26 },
-      { month: "Tháng 12", events: 16 },
-    ],
-  });
+  // Mock data
+  const stats = [
+    { 
+      label: "Tổng số sự kiện", 
+      value: 240,
+      icon: Calendar,
+      color: "blue" as const,
+      trend: { value: 12, isPositive: true }
+    },
+    { 
+      label: "Đang xử lý", 
+      value: 25,
+      icon: Clock,
+      color: "yellow" as const,
+      trend: { value: 5, isPositive: false }
+    },
+    { 
+      label: "Đã duyệt", 
+      value: 180,
+      icon: CheckCircle,
+      color: "green" as const,
+      trend: { value: 18, isPositive: true }
+    },
+    { 
+      label: "Đã từ chối", 
+      value: 35,
+      icon: XCircle,
+      color: "red" as const,
+      trend: { value: 3, isPositive: false }
+    },
+  ];
 
-  const maxEvents = Math.max(...stats.monthlyData.map(item => item.events));
+  const monthlyData = [
+    { name: "T1", value: 15 },
+    { name: "T2", value: 18 },
+    { name: "T3", value: 22 },
+    { name: "T4", value: 20 },
+    { name: "T5", value: 28 },
+    { name: "T6", value: 17 },
+    { name: "T7", value: 25 },
+    { name: "T8", value: 19 },
+    { name: "T9", value: 23 },
+    { name: "T10", value: 21 },
+    { name: "T11", value: 26 },
+    { name: "T12", value: 16 },
+  ];
+
+  const participantsData = [
+    { name: "T7", value: 450 },
+    { name: "T8", value: 520 },
+    { name: "T9", value: 680 },
+    { name: "T10", value: 590 },
+    { name: "T11", value: 750 },
+    { name: "T12", value: 820 },
+  ];
+
+  const statusData = [
+    { name: "Đã duyệt", value: 180 },
+    { name: "Đang xử lý", value: 25 },
+    { name: "Đã từ chối", value: 35 },
+  ];
+
+  const recentEvents = [
+    { id: 1, name: "Tech Conference 2025", status: "Đã duyệt", participants: 350, date: "12/12/2024" },
+    { id: 2, name: "AI Workshop", status: "Đang xử lý", participants: 120, date: "15/12/2024" },
+    { id: 3, name: "Career Fair", status: "Đã duyệt", participants: 500, date: "18/12/2024" },
+    { id: 4, name: "Music Festival", status: "Đang xử lý", participants: 800, date: "20/12/2024" },
+  ];
+
+  const getStatusBadge = (status: string) => {
+    const config: Record<string, string> = {
+      "Đã duyệt": "bg-green-100 text-green-700",
+      "Đang xử lý": "bg-yellow-100 text-yellow-700",
+      "Đã từ chối": "bg-red-100 text-red-700",
+    };
+    return config[status] || "bg-gray-100 text-gray-700";
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Thống kê số liệu</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Số liệu mock và biểu đồ events theo tháng
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Tổng số lượng sự kiện</p>
-          <h2 className="text-3xl font-bold text-gray-900">{stats.totalEvents}</h2>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Đang xử lý</p>
-          <h2 className="text-3xl font-bold text-gray-900">{stats.pending}</h2>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Đã duyệt</p>
-          <h2 className="text-3xl font-bold text-gray-900">{stats.approved}</h2>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Đã từ chối</p>
-          <h2 className="text-3xl font-bold text-gray-900">{stats.rejected}</h2>
-        </div>
-      </div>
-
-      {/* Bar Chart */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Số lượng sự kiện theo tháng</h3>
-          <span className="text-sm text-gray-500">Unit: số events</span>
-        </div>
-
-        {/* Chart Container */}
-        <div className="relative">
-          {/* Simple Bar Chart */}
-          <div className="grid grid-cols-12 gap-2 items-end h-64 px-4">
-            {stats.monthlyData.map((item) => (
-              <div key={item.month} className="flex flex-col items-center gap-3">
-                <div 
-                  className="w-full bg-blue-500 rounded-t-md transition-all hover:bg-blue-600 relative group"
-                  style={{ 
-                    height: `${(item.events / maxEvents) * 100}%`,
-                    minHeight: item.events > 0 ? '10px' : '0'
-                  }}
-                >
-                  {/* Tooltip on hover */}
-                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                    {item.events} events
-                  </span>
-                </div>
-                <span className="text-xs text-gray-600 font-medium">{item.month.replace("Tháng ", "T")}</span>
-              </div>
-            ))}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      {/* Header with Gradient */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-3 bg-orange-400 rounded-xl shadow-lg">
+            <TrendingUp className="text-white" size={28} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Thống Kê Sự Kiện</h1>
+            <p className="text-gray-600 mt-1">
+              Tổng quan hệ thống quản lý sự kiện FPT
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Thống kê 12 tháng <span className="text-sm font-normal text-gray-500">(năm 2024)</span>
-          </h3>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => (
+          <StatsCard
+            key={index}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+            trend={stat.trend}
+          />
+        ))}
+      </div>
+
+      {/* Charts Grid - 2 Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <BarChartBox
+          title="Số lượng sự kiện theo tháng"
+          subtitle="Thống kê 12 tháng năm 2024"
+          unit="sự kiện"
+          data={monthlyData}
+        />
+
+        <PieChartBox
+          title="Phân bố trạng thái sự kiện"
+          subtitle="Tổng quan theo trạng thái hiện tại"
+          data={statusData}
+        />
+      </div>
+
+      {/* Full Width Line Chart
+      <div className="mb-8">
+        <LineChartBox
+          title="Lượng người tham gia theo tháng"
+          subtitle="Xu hướng tham gia 6 tháng gần nhất (T7 - T12/2024)"
+          data={participantsData}
+        />
+      </div> */}
+
+      {/* Recent Events Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
+        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Sự kiện gần đây</h3>
+              {/* <p className="text-sm text-gray-500 mt-1">Sự kiện được tạo mới nhất</p> */}
+            </div>
+            <button className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+              Xem tất cả
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tháng</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Sự kiện</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Tên sự kiện
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Người tham gia
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Ngày tổ chức
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {stats.monthlyData.map((item) => (
-                <tr key={item.month} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.month}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.events}</td>
+            <tbody className="divide-y divide-gray-100">
+              {recentEvents.map((event) => (
+                <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <Calendar size={18} className="text-blue-600" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{event.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(event.status)}`}>
+                      {event.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-gray-400" />
+                      <span className="text-sm text-gray-900">{event.participants} người</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-600">{event.date}</span>
+                  </td>
                 </tr>
               ))}
-              {/* Tổng kết */}
-              <tr className="bg-gray-50 font-semibold">
-                <td className="px-6 py-4 text-sm text-gray-900">Tổng cộng</td>
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  {stats.monthlyData.reduce((sum, item) => sum + item.events, 0)}
-                </td>
-              </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Quick Stats Footer */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-medium opacity-90">Tổng người tham gia</h4>
+            <Users size={24} className="opacity-80" />
+          </div>
+          <p className="text-3xl font-bold">3,210</p>
+          <p className="text-xs opacity-75 mt-2">↑ 23% so với tháng trước</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-medium opacity-90">Tỷ lệ hoàn thành</h4>
+            <CheckCircle size={24} className="opacity-80" />
+          </div>
+          <p className="text-3xl font-bold">94.5%</p>
+          <p className="text-xs opacity-75 mt-2">↑ 5% so với tháng trước</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-medium opacity-90">Đánh giá trung bình</h4>
+            <TrendingUp size={24} className="opacity-80" />
+          </div>
+          <p className="text-3xl font-bold">4.8/5</p>
+          <p className="text-xs opacity-75 mt-2">↑ 0.3 so với tháng trước</p>
         </div>
       </div>
     </div>

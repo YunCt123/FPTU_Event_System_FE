@@ -1,7 +1,6 @@
-import { Search, Filter, Eye, SquarePen, Trash2 } from "lucide-react";
+import { Search, Filter, Eye, Trash2, Check, X, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
-import EditEventModal from "../../../components/admin/event/EditEventModal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
 import eventService from "../../../services/eventService";
 import type { GetEventResponse } from "../../../types/Event";
@@ -14,7 +13,6 @@ const ListEventPage = () => {
 
   const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,17 +49,59 @@ const ListEventPage = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const handleEditSubmit = async (formData: any) => {
+  const handleApproveEvent = async (eventId: string | number, status: string) => {
     setSubmitting(true);
     try {
-      // TODO: Call API to update event
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Updated event:", formData);
-      toast.success("Cập nhật sự kiện thành công!");
-      setShowEditModal(false);
-      await fetchEvents();
-    } catch (error) {
-      toast.error("Cập nhật sự kiện thất bại!");
+      console.log("Approving event:", eventId);
+      
+      const response = await eventService.patchEvent(String(eventId), { status : "PUBLISHED" });
+      
+      console.log("Approve response:", response);
+      
+      if (response) {
+        toast.success("Duyệt sự kiện thành công!");
+        
+        setEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === eventId ? { ...e, status: "PUBLISHED" } : e
+          )
+        );
+        
+        fetchEvents();
+      } 
+    } catch (error: any) {
+      console.error("Error approving event:", error);
+      console.error("Error response:", error.response?.data);
+      toast.error(error.response?.data?.message || "Duyệt sự kiện thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectEvent = async (eventId: string | number) => {
+    setSubmitting(true);
+    try {
+      console.log("Rejecting event:", eventId);
+      
+      const response = await eventService.patchEvent(String(eventId), { status: "CANCELED" });
+      
+      console.log("Reject response:", response);
+      
+      if (response) {
+        toast.success("Từ chối sự kiện thành công!");
+        
+        setEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === eventId ? { ...e, status: "CANCELED" } : e
+          )
+        );
+        
+        fetchEvents();
+      } 
+    } catch (error: any) {
+      console.error("Error rejecting event:", error);
+      console.error("Error response:", error.response?.data);
+      toast.error(error.response?.data?.message || "Từ chối sự kiện thất bại!");
     } finally {
       setSubmitting(false);
     }
@@ -72,19 +112,16 @@ const ListEventPage = () => {
     
     setSubmitting(true);
     try {
-      // Gọi API xóa sự kiện
       const response = await eventService.deleteEvent(selectedEvent.id);
       
       if (response.status == 200) {
         toast.success("Xóa sự kiện thành công!");
         
-        // Cập nhật state local ngay lập tức (optimistic update)
         setEvents(prevEvents => prevEvents.filter(e => e.id !== selectedEvent.id));
         
         setShowDeleteConfirm(false);
         setSelectedEvent(null);
         
-        // Fetch lại data để đảm bảo sync với server
         await fetchEvents();
       } else {
         toast.error(response.data.message || "Xóa sự kiện thất bại!");
@@ -101,14 +138,14 @@ const ListEventPage = () => {
     const statusConfig: Record<string, string> = {
       "PUBLISHED": "bg-green-100 text-green-700",
       "PENDING": "bg-yellow-100 text-yellow-700",
-      "REJECTED": "bg-red-100 text-red-700",
+      "CANCELED": "bg-red-100 text-red-700",
       "DRAFT": "bg-gray-100 text-gray-700",
     };
 
     const statusLabel: Record<string, string> = {
       "PUBLISHED": "Đã duyệt",
       "PENDING": "Đang xử lý",
-      "REJECTED": "Bị từ chối",
+      "CANCELED": "Bị từ chối",
       "DRAFT": "Nháp",
     };
 
@@ -150,7 +187,7 @@ const ListEventPage = () => {
             <option value="all">Tất cả</option>
             <option value="PENDING">Đang xử lý</option>
             <option value="PUBLISHED">Đã duyệt</option>
-            <option value="REJECTED">Bị từ chối</option>
+            <option value="CANCELED">Bị từ chối</option>
           </select>
         </div>
       </div>
@@ -212,17 +249,6 @@ const ListEventPage = () => {
                         <button
                           onClick={() => {
                             setSelectedEvent(e);
-                            setShowEditModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-800 p-1 rounded-md hover:bg-green-50 transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <SquarePen size={20} />
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setSelectedEvent(e);
                             setShowDeleteConfirm(true);
                           }}
                           className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
@@ -250,53 +276,128 @@ const ListEventPage = () => {
       {/* Detail Modal */}
       {showDetailModal && selectedEvent && (
         <EventModal title="Chi tiết sự kiện" onClose={() => setShowDetailModal(false)}>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">ID:</span>
-              <span>{selectedEvent.id}</span>
+          <div className="space-y-6">
+            {/* Event Image */}
+            <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100 mt-4">
+              {selectedEvent.imageUrl || selectedEvent.bannerUrl ? (
+                <img 
+                  src={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
+                  alt={selectedEvent.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                          <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          </svg>
+                          <p class="text-sm">Không thể tải ảnh</p>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <ImageIcon size={48} className="mb-2" />
+                  <p className="text-sm">Không có ảnh</p>
+                </div>
+              )}
             </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Tên:</span>
-              <span>{selectedEvent.title}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Ban tổ chức:</span>
-              <span>{selectedEvent.organizer.name}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Ngày tạo:</span>
-              <span>{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Địa điểm:</span>
-              <span>{selectedEvent.venue?.name || "-"}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Trạng thái:</span>
-              {getStatusBadge(selectedEvent.status)}
-            </div>
-            {selectedEvent.description && (
+
+            {/* Thông tin chi tiết */}
+            <div className="space-y-3 overflow-y-auto max-h-96">
               <div className="flex gap-2">
-                <span className="font-semibold min-w-[100px]">Mô tả:</span>
-                <span>{selectedEvent.description}</span>
+                <span className="font-semibold min-w-[120px]">ID:</span>
+                <span className="text-gray-700 break-all">{selectedEvent.id}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Tên sự kiện:</span>
+                <span className="text-gray-700">{selectedEvent.title}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Ban tổ chức:</span>
+                <span className="text-gray-700">{selectedEvent.organizer.name}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Ngày tạo:</span>
+                <span className="text-gray-700">{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Địa điểm:</span>
+                <span className="text-gray-700">{selectedEvent.venue?.name || "-"}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Trạng thái:</span>
+                {getStatusBadge(selectedEvent.status)}
+              </div>
+              {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
+                <div className="flex gap-2 items-start">
+                  <span className="font-semibold min-w-[120px]">URL Ảnh:</span>
+                  <a 
+                    href={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 hover:underline break-all flex-1 text-sm"
+                  >
+                    {selectedEvent.bannerUrl || selectedEvent.imageUrl}
+                  </a>
+                </div>
+              )}
+              {selectedEvent.description && (
+                <div className="flex gap-2 items-start">
+                  <span className="font-semibold min-w-[120px]">Mô tả:</span>
+                  <span className="text-gray-700 flex-1">{selectedEvent.description}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {selectedEvent.status === "PENDING" && (
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    handleApproveEvent(selectedEvent.id, "PUBLISHED");
+                    setShowDetailModal(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Check size={18} />
+                  {submitting ? "Đang xử lý..." : "Duyệt"}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleRejectEvent(selectedEvent.id);
+                    setShowDetailModal(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <X size={18} />
+                  {submitting ? "Đang xử lý..." : "Từ chối"}
+                </button>
+              </div>
+            )}
+
+            {(selectedEvent.status === "PUBLISHED" || selectedEvent.status === "CANCELED") && (
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-500 text-center">
+                  {selectedEvent.status === "PUBLISHED" 
+                    ? "Sự kiện đã được duyệt" 
+                    : "Sự kiện đã bị từ chối"}
+                </p>
               </div>
             )}
           </div>
         </EventModal>
       )}
 
-      {/* Edit Modal */}
-      {showEditModal && selectedEvent && (
-        <EventModal title="Chỉnh sửa sự kiện" onClose={() => setShowEditModal(false)}>
-          <EditEventModal
-            initialData={selectedEvent}
-            onSubmit={handleEditSubmit}
-            submitting={submitting}
-          />
-        </EventModal>
-      )}
-
-      {/* Delete Confirmation Modal - Using ConfirmModal */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title="Xác nhận xóa sự kiện"
