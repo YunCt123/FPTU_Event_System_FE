@@ -2,6 +2,7 @@ import { Search, Filter, Eye, SquarePen, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
 import EditEventModal from "../../../components/admin/event/EditEventModal";
+import ConfirmModal from "../../../components/common/ConfirmModal";
 import eventService from "../../../services/eventService";
 import type { GetEventResponse } from "../../../types/Event";
 import { toast } from "react-toastify";
@@ -17,13 +18,6 @@ const ListEventPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // const [confirmModal, setConfirmModal] = useState <{
-  //   isOpen: boolean;
-  //   eventId: number | null;
-  // }>({
-  //   isOpen: false,
-  //   eventId: null,
-  // });
 
   useEffect(() => {
     fetchEvents();
@@ -78,15 +72,26 @@ const ListEventPage = () => {
     
     setSubmitting(true);
     try {
-      // TODO: Call API to delete event
-      // await eventService.deleteEvent(selectedEvent.id);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Xóa sự kiện thành công!");
-      setShowDeleteConfirm(false);
-      setSelectedEvent(null);
-      await fetchEvents();
-    } catch (error) {
-      toast.error("Xóa sự kiện thất bại!");
+      // Gọi API xóa sự kiện
+      const response = await eventService.deleteEvent(selectedEvent.id);
+      
+      if (response.status == 200) {
+        toast.success("Xóa sự kiện thành công!");
+        
+        // Cập nhật state local ngay lập tức (optimistic update)
+        setEvents(prevEvents => prevEvents.filter(e => e.id !== selectedEvent.id));
+        
+        setShowDeleteConfirm(false);
+        setSelectedEvent(null);
+        
+        // Fetch lại data để đảm bảo sync với server
+        await fetchEvents();
+      } else {
+        toast.error(response.data.message || "Xóa sự kiện thất bại!");
+      }
+    } catch (error: any) {
+      console.error("Error deleting event:", error);
+      toast.error(error.response?.data?.message || "Xóa sự kiện thất bại!");
     } finally {
       setSubmitting(false);
     }
@@ -222,6 +227,7 @@ const ListEventPage = () => {
                           }}
                           className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
                           title="Xóa"
+                          disabled={submitting}
                         >
                           <Trash2 size={20} />
                         </button>
@@ -290,35 +296,20 @@ const ListEventPage = () => {
         </EventModal>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && selectedEvent && (
-        <EventModal title="Xác nhận xóa" onClose={() => setShowDeleteConfirm(false)}>
-          <div className="space-y-4">
-            <p className="text-gray-700">
-              Bạn có chắc chắn muốn xóa sự kiện <strong>"{selectedEvent.title}"</strong>?
-            </p>
-            <p className="text-sm text-red-600">
-              Hành động này không thể hoàn tác!
-            </p>
-            <div className="flex gap-3 pt-4">
-              <button
-                onClick={handleDeleteEvent}
-                disabled={submitting}
-                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Đang xóa..." : "Xóa"}
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={submitting}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 disabled:opacity-50"
-              >
-                Hủy
-              </button>
-            </div>
-          </div>
-        </EventModal>
-      )}
+      {/* Delete Confirmation Modal - Using ConfirmModal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xóa sự kiện"
+        message={`Bạn có chắc chắn muốn xóa sự kiện "${selectedEvent?.title}"? Hành động này không thể hoàn tác!`}
+        confirmText={submitting ? "Đang xóa..." : "Xóa"}
+        cancelText="Hủy"
+        onConfirm={handleDeleteEvent}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setSelectedEvent(null);
+        }}
+        type="danger"
+      />
     </div>
   );
 };

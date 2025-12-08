@@ -35,28 +35,29 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
-      path: '/admin/dashboard',
-      children: [
-        {
-          id: 'events-doashboard',
-          label: 'Thống kê sự kiện',
-          icon: <Building2 size={18} />,
-          path: '/admin/dashboard-events',
-        }
-      ],
+      path: '/admin/dashboard-events',
+      // children: [
+      //   {
+      //     id: 'events-doashboard',
+      //     label: 'Thống kê sự kiện',
+      //     icon: <Building2 size={18} />,
+      //     path: '/admin/dashboard-events',
+      //   }
+      // ],
     },
     {
       id: 'events',
       label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
-      children: [
-        {
-          id: 'events-list',
-          label: 'Danh sách sự kiện',
-          icon: <Building2 size={18} />,
-          path: '/admin/list-events',
-        },
-      ],
+      path: '/admin/list-events'
+      // children: [
+      //   {
+      //     id: 'events-list',
+      //     label: 'Danh sách sự kiện',
+      //     icon: <Building2 size={18} />,
+      //     path: '/admin/list-events',
+      //   },
+      // ],
     },
     {
       id: 'venues',   
