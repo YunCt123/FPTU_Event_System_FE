@@ -56,7 +56,7 @@ export interface meta{
 }
 
 export interface GetEventResponse {
-  id: number;
+  id: string;
   title: string;
   description: string;
   bannerUrl?: string;
@@ -107,4 +107,9 @@ export interface EventFormData {
   description: string;
   location: string;
   date: string;
+}
+
+export interface EventDeleteResponse {
+  id: string;
+  message: string;
 }
