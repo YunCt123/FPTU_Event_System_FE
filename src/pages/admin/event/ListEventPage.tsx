@@ -1,4 +1,4 @@
-import { Search, Filter, Eye, Trash2, Check, X } from "lucide-react";
+import { Search, Filter, Eye, Trash2, Check, X, Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
@@ -54,7 +54,6 @@ const ListEventPage = () => {
     try {
       console.log("Approving event:", eventId);
       
-      // Gọi API thực
       const response = await eventService.patchEvent(String(eventId), { status : "PUBLISHED" });
       
       console.log("Approve response:", response);
@@ -62,14 +61,12 @@ const ListEventPage = () => {
       if (response) {
         toast.success("Duyệt sự kiện thành công!");
         
-        // Cập nhật state local
         setEvents(prevEvents => 
           prevEvents.map(e => 
             e.id === eventId ? { ...e, status: "PUBLISHED" } : e
           )
         );
         
-        // Fetch lại data từ server
         fetchEvents();
       } 
     } catch (error: any) {
@@ -86,7 +83,6 @@ const ListEventPage = () => {
     try {
       console.log("Rejecting event:", eventId);
       
-      // Gọi API thực
       const response = await eventService.patchEvent(String(eventId), { status: "CANCELED" });
       
       console.log("Reject response:", response);
@@ -94,14 +90,12 @@ const ListEventPage = () => {
       if (response) {
         toast.success("Từ chối sự kiện thành công!");
         
-        // Cập nhật state local
         setEvents(prevEvents => 
           prevEvents.map(e => 
             e.id === eventId ? { ...e, status: "CANCELED" } : e
           )
         );
         
-        // Fetch lại data từ server
         fetchEvents();
       } 
     } catch (error: any) {
@@ -282,37 +276,81 @@ const ListEventPage = () => {
       {/* Detail Modal */}
       {showDetailModal && selectedEvent && (
         <EventModal title="Chi tiết sự kiện" onClose={() => setShowDetailModal(false)}>
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Event Image */}
+            <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100 mt-4">
+              {selectedEvent.imageUrl || selectedEvent.bannerUrl ? (
+                <img 
+                  src={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
+                  alt={selectedEvent.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                          <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          </svg>
+                          <p class="text-sm">Không thể tải ảnh</p>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <ImageIcon size={48} className="mb-2" />
+                  <p className="text-sm">Không có ảnh</p>
+                </div>
+              )}
+            </div>
+
             {/* Thông tin chi tiết */}
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto max-h-96">
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[120px]">ID:</span>
-                <span>{selectedEvent.id}</span>
+                <span className="text-gray-700 break-all">{selectedEvent.id}</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[120px]">Tên sự kiện:</span>
-                <span>{selectedEvent.title}</span>
+                <span className="text-gray-700">{selectedEvent.title}</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[120px]">Ban tổ chức:</span>
-                <span>{selectedEvent.organizer.name}</span>
+                <span className="text-gray-700">{selectedEvent.organizer.name}</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[120px]">Ngày tạo:</span>
-                <span>{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
+                <span className="text-gray-700">{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[120px]">Địa điểm:</span>
-                <span>{selectedEvent.venue?.name || "-"}</span>
+                <span className="text-gray-700">{selectedEvent.venue?.name || "-"}</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold min-w-[120px]">Trạng thái:</span>
                 {getStatusBadge(selectedEvent.status)}
               </div>
+              {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
+                <div className="flex gap-2 items-start">
+                  <span className="font-semibold min-w-[120px]">URL Ảnh:</span>
+                  <a 
+                    href={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 hover:underline break-all flex-1 text-sm"
+                  >
+                    {selectedEvent.bannerUrl || selectedEvent.imageUrl}
+                  </a>
+                </div>
+              )}
               {selectedEvent.description && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-start">
                   <span className="font-semibold min-w-[120px]">Mô tả:</span>
-                  <span>{selectedEvent.description}</span>
+                  <span className="text-gray-700 flex-1">{selectedEvent.description}</span>
                 </div>
               )}
             </div>
