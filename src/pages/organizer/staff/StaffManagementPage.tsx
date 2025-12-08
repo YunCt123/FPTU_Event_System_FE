@@ -2,41 +2,79 @@ import { useState, useEffect } from 'react';
 import {
   UserPlus,
   Search,
-  MoreVertical,
-  Edit,
-  Trash2,
   Mail,
   Phone,
   Shield,
+  Smartphone,
   CheckCircle,
   XCircle,
-  Smartphone,
 } from 'lucide-react';
-
-interface Staff {
-  id: number;
-  accountId: number;
-  fullName: string;
-  email: string;
-  phone: string;
-  role: 'CHECK_IN' | 'SUPPORT' | 'COORDINATOR';
-  status: 'ACTIVE' | 'INACTIVE';
-  assignedAt: string;
-  hasAppAccess: boolean;
-}
+import type { Staff, StaffRole, CreateStaffRequest } from '../../../types/Staff';
+import type { Event } from '../../../types/Event';
 
 const StaffManagementPage = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredStaff, setFilteredStaff] = useState<Staff[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
+  const [newStaff, setNewStaff] = useState<Partial<CreateStaffRequest>>({
+    role: 'CHECK_IN',
+    hasAppAccess: true,
+  });
 
   useEffect(() => {
-    // Mock data - Replace with actual API call
+    // Mock events data
+    const mockEvents: Event[] = [
+      {
+        id: 1,
+        title: 'Workshop: AI & Machine Learning',
+        description: 'Hội thảo về AI',
+        eventType: 'WORKSHOP',
+        status: 'APPROVED',
+        startDate: '2024-12-10T09:00:00',
+        endDate: '2024-12-10T17:00:00',
+        registrationDeadline: '2024-12-08T23:59:59',
+        maxParticipants: 100,
+        currentParticipants: 85,
+        organizerId: 1,
+        requiresApproval: true,
+        isPublished: true,
+      },
+      {
+        id: 2,
+        title: 'Tech Conference 2024',
+        description: 'Hội nghị công nghệ',
+        eventType: 'CONFERENCE',
+        status: 'APPROVED',
+        startDate: '2024-12-15T08:00:00',
+        endDate: '2024-12-16T18:00:00',
+        registrationDeadline: '2024-12-12T23:59:59',
+        maxParticipants: 200,
+        currentParticipants: 150,
+        organizerId: 1,
+        requiresApproval: true,
+        isPublished: true,
+      },
+    ];
+    setEvents(mockEvents);
+    if (mockEvents.length > 0) {
+      setSelectedEventId(mockEvents[0].id);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      setStaffList([]);
+      return;
+    }
+
+    // Mock data - Replace with actual API call filtered by selectedEventId
     const mockStaff: Staff[] = [
       {
         id: 1,
+        eventId: selectedEventId,
         accountId: 101,
         fullName: 'Nguyễn Văn A',
         email: 'staff1@fpt.edu.vn',
@@ -48,6 +86,7 @@ const StaffManagementPage = () => {
       },
       {
         id: 2,
+        eventId: selectedEventId,
         accountId: 102,
         fullName: 'Trần Thị B',
         email: 'staff2@fpt.edu.vn',
@@ -59,6 +98,7 @@ const StaffManagementPage = () => {
       },
       {
         id: 3,
+        eventId: selectedEventId,
         accountId: 103,
         fullName: 'Lê Văn C',
         email: 'staff3@fpt.edu.vn',
@@ -71,7 +111,7 @@ const StaffManagementPage = () => {
     ];
     setStaffList(mockStaff);
     setFilteredStaff(mockStaff);
-  }, []);
+  }, [selectedEventId]);
 
   useEffect(() => {
     const filtered = staffList.filter(
@@ -83,8 +123,8 @@ const StaffManagementPage = () => {
     setFilteredStaff(filtered);
   }, [searchQuery, staffList]);
 
-  const getRoleBadge = (role: string) => {
-    const roleConfig: Record<string, { label: string; className: string }> = {
+  const getRoleBadge = (role: StaffRole) => {
+    const roleConfig: Record<StaffRole, { label: string; className: string }> = {
       CHECK_IN: { label: 'Check-in', className: 'bg-blue-100 text-blue-700' },
       SUPPORT: { label: 'Hỗ trợ', className: 'bg-green-100 text-green-700' },
       COORDINATOR: { label: 'Điều phối', className: 'bg-purple-100 text-purple-700' },
@@ -98,31 +138,41 @@ const StaffManagementPage = () => {
     );
   };
 
-  const handleGrantAppAccess = (staffId: number) => {
+  const handleToggleAppAccess = (staffId: number, currentStatus: boolean) => {
     setStaffList((prev) =>
       prev.map((s) =>
-        s.id === staffId ? { ...s, hasAppAccess: true } : s
+        s.id === staffId ? { ...s, hasAppAccess: !currentStatus } : s
       )
     );
-    setActionMenuOpen(null);
-    alert('Đã cấp quyền truy cập Mobile App');
-  };
-
-  const handleRevokeAppAccess = (staffId: number) => {
-    setStaffList((prev) =>
-      prev.map((s) =>
-        s.id === staffId ? { ...s, hasAppAccess: false } : s
-      )
-    );
-    setActionMenuOpen(null);
-    alert('Đã thu hồi quyền truy cập Mobile App');
   };
 
   const handleDeleteStaff = (staffId: number) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa staff này?')) {
       setStaffList((prev) => prev.filter((s) => s.id !== staffId));
-      setActionMenuOpen(null);
     }
+  };
+
+  const handleAddStaff = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaff.accountId || !newStaff.role || !selectedEventId) return;
+
+    // Mock add staff - Replace with actual API call
+    const staff: Staff = {
+      id: Math.max(...staffList.map((s) => s.id), 0) + 1,
+      eventId: selectedEventId,
+      accountId: newStaff.accountId,
+      fullName: `Staff ${newStaff.accountId}`,
+      email: `staff${newStaff.accountId}@fpt.edu.vn`,
+      phone: '0900000000',
+      role: newStaff.role,
+      status: 'ACTIVE',
+      assignedAt: new Date().toISOString(),
+      hasAppAccess: newStaff.hasAppAccess || false,
+    };
+
+    setStaffList((prev) => [...prev, staff]);
+    setIsAddModalOpen(false);
+    setNewStaff({ role: 'CHECK_IN', hasAppAccess: true });
   };
 
   const stats = {
@@ -140,186 +190,219 @@ const StaffManagementPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Staff</h1>
           <p className="text-gray-600 mt-1">
-            Phân công staff và cấp quyền truy cập Mobile Check-in App
+            Phân công staff và cấp quyền truy cập Mobile Check-in App theo sự kiện
           </p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors"
+          disabled={!selectedEventId}
+          className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UserPlus size={20} />
           Thêm Staff
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Tổng Staff</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Check-in</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.checkIn}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Hỗ trợ</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">{stats.support}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Điều phối</div>
-          <div className="text-2xl font-bold text-purple-600 mt-1">{stats.coordinator}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">App Access</div>
-          <div className="text-2xl font-bold text-orange-600 mt-1">{stats.appAccess}</div>
-        </div>
-      </div>
-
-      {/* Search & Filter */}
+      {/* Event Selector */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Tìm kiếm staff theo tên, email, số điện thoại..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
-          />
-        </div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Chọn Sự kiện
+        </label>
+        <select
+          value={selectedEventId || ''}
+          onChange={(e) => setSelectedEventId(Number(e.target.value))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
+        >
+          {events.length === 0 ? (
+            <option value="">Không có sự kiện nào</option>
+          ) : (
+            events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title} - {new Date(event.startDate).toLocaleDateString('vi-VN')}
+              </option>
+            ))
+          )}
+        </select>
       </div>
 
-      {/* Staff List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredStaff.map((staff) => (
-          <div
-            key={staff.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-linear-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  {staff.fullName.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{staff.fullName}</h3>
-                  {getRoleBadge(staff.role)}
-                </div>
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setActionMenuOpen(actionMenuOpen === staff.id ? null : staff.id)
-                  }
-                  className="p-1 hover:bg-gray-100 rounded-lg"
-                >
-                  <MoreVertical size={20} className="text-gray-600" />
-                </button>
-                {actionMenuOpen === staff.id && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                    <button
-                      onClick={() => console.log('Edit staff', staff.id)}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Edit size={16} />
-                      Chỉnh sửa
-                    </button>
-                    {staff.hasAppAccess ? (
-                      <button
-                        onClick={() => handleRevokeAppAccess(staff.id)}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        <XCircle size={16} />
-                        Thu hồi App Access
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleGrantAppAccess(staff.id)}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50"
-                      >
-                        <CheckCircle size={16} />
-                        Cấp App Access
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteStaff(staff.id)}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 size={16} />
-                      Xóa
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <div className="flex items-center gap-2">
-                <Mail size={16} className="text-gray-400" />
-                {staff.email}
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone size={16} className="text-gray-400" />
-                {staff.phone}
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield size={16} className="text-gray-400" />
-                <span>Account ID: {staff.accountId}</span>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Smartphone
-                  size={16}
-                  className={staff.hasAppAccess ? 'text-green-600' : 'text-gray-400'}
-                />
-                <span
-                  className={`text-sm font-medium ${
-                    staff.hasAppAccess ? 'text-green-600' : 'text-gray-500'
-                  }`}
-                >
-                  {staff.hasAppAccess ? 'App Access' : 'No Access'}
-                </span>
-              </div>
-              <span className="text-xs text-gray-500">
-                Assigned {new Date(staff.assignedAt).toLocaleDateString('vi-VN')}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredStaff.length === 0 && (
+      {!selectedEventId ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <Shield className="mx-auto text-gray-400 mb-4" size={48} />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Không tìm thấy staff
+            Vui lòng chọn sự kiện
           </h3>
           <p className="text-gray-600">
-            {searchQuery
-              ? 'Thử điều chỉnh từ khóa tìm kiếm'
-              : 'Bắt đầu bằng cách thêm staff cho sự kiện'}
+            Chọn một sự kiện để xem danh sách staff
           </p>
         </div>
-      )}
-
-      {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <Smartphone className="text-blue-600 mt-0.5" size={20} />
-          <div>
-            <h4 className="font-semibold text-blue-900">Mobile Check-in App</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              Staff được cấp quyền App Access có thể sử dụng Mobile App để check-in người tham dự tại sự kiện. Đảm bảo staff đã được đào tạo về cách sử dụng app trước khi sự kiện diễn ra.
-            </p>
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="text-sm text-gray-600">Tổng Staff</div>
+              <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="text-sm text-gray-600">Check-in</div>
+              <div className="text-2xl font-bold text-blue-600 mt-1">{stats.checkIn}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="text-sm text-gray-600">Hỗ trợ</div>
+              <div className="text-2xl font-bold text-green-600 mt-1">{stats.support}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="text-sm text-gray-600">Điều phối</div>
+              <div className="text-2xl font-bold text-purple-600 mt-1">{stats.coordinator}</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="text-sm text-gray-600">App Access</div>
+              <div className="text-2xl font-bold text-orange-600 mt-1">{stats.appAccess}</div>
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* Search */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="text"
+                placeholder="Tìm kiếm staff theo tên, email, số điện thoại..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* Staff Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Staff
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Liên hệ
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Account ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Vai trò
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      App Access
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ngày phân công
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Hành động
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredStaff.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <Shield className="mx-auto text-gray-400 mb-3" size={48} />
+                        <p className="text-gray-600">
+                          {searchQuery
+                            ? 'Không tìm thấy staff'
+                            : 'Chưa có staff nào được phân công cho sự kiện này'}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStaff.map((staff) => (
+                      <tr key={staff.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              {staff.fullName.charAt(0)}
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {staff.fullName}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Mail size={14} />
+                              {staff.email}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Phone size={14} />
+                              {staff.phone}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {staff.accountId}
+                        </td>
+                        <td className="px-6 py-4">{getRoleBadge(staff.role)}</td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => handleToggleAppAccess(staff.id, staff.hasAppAccess)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                              staff.hasAppAccess
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {staff.hasAppAccess ? (
+                              <>
+                                <CheckCircle size={14} />
+                                Có quyền
+                              </>
+                            ) : (
+                              <>
+                                <XCircle size={14} />
+                                Không
+                              </>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(staff.assignedAt).toLocaleDateString('vi-VN')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => handleDeleteStaff(staff.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Info Box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Smartphone className="text-blue-600 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-semibold text-blue-900">Mobile Check-in App</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Staff được cấp quyền App Access có thể sử dụng Mobile App để check-in người tham dự tại sự kiện. Đảm bảo staff đã được đào tạo về cách sử dụng app trước khi sự kiện diễn ra.
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Add Staff Modal */}
       {isAddModalOpen && (
@@ -328,14 +411,7 @@ const StaffManagementPage = () => {
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Thêm Staff mới</h2>
             </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Handle form submission
-                setIsAddModalOpen(false);
-              }}
-              className="p-6 space-y-4"
-            >
+            <form onSubmit={handleAddStaff} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Account ID *
@@ -343,6 +419,10 @@ const StaffManagementPage = () => {
                 <input
                   type="number"
                   required
+                  value={newStaff.accountId || ''}
+                  onChange={(e) =>
+                    setNewStaff({ ...newStaff, accountId: Number(e.target.value) })
+                  }
                   placeholder="Nhập Account ID..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
                 />
@@ -354,9 +434,12 @@ const StaffManagementPage = () => {
                 </label>
                 <select
                   required
+                  value={newStaff.role}
+                  onChange={(e) =>
+                    setNewStaff({ ...newStaff, role: e.target.value as StaffRole })
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
                 >
-                  <option value="">Chọn vai trò</option>
                   <option value="CHECK_IN">Check-in</option>
                   <option value="SUPPORT">Hỗ trợ</option>
                   <option value="COORDINATOR">Điều phối</option>
@@ -367,6 +450,10 @@ const StaffManagementPage = () => {
                 <input
                   type="checkbox"
                   id="grantAppAccess"
+                  checked={newStaff.hasAppAccess || false}
+                  onChange={(e) =>
+                    setNewStaff({ ...newStaff, hasAppAccess: e.target.checked })
+                  }
                   className="w-4 h-4 text-[#F27125] border-gray-300 rounded focus:ring-[#F27125]"
                 />
                 <label htmlFor="grantAppAccess" className="ml-2 text-sm text-gray-700">
@@ -377,7 +464,10 @@ const StaffManagementPage = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setNewStaff({ role: 'CHECK_IN', hasAppAccess: true });
+                  }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
                   Hủy
