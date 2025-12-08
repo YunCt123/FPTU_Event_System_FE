@@ -3,7 +3,6 @@ import {
   Plus,
   Filter,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
   Send,
@@ -24,7 +23,6 @@ const EventManagementPage = () => {
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'ALL'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
 
   useEffect(() => {
     // Mock data - Replace with actual API call
@@ -59,7 +57,7 @@ const EventManagementPage = () => {
         endDate: '2024-12-16T18:00:00',
         registrationDeadline: '2024-12-12T23:59:59',
         maxParticipants: 200,
-        currentParticipants: 0,
+        currentParticipants: 150,
         campusId: 1,
         campusName: 'FPT Hà Nội',
         organizerId: 1,
@@ -76,7 +74,9 @@ const EventManagementPage = () => {
         endDate: '2024-12-20T18:00:00',
         registrationDeadline: '2024-12-18T23:59:59',
         maxParticipants: 150,
-        currentParticipants: 0,
+        currentParticipants: 45,
+        venueId: 2,
+        venueName: 'Sân vận động',
         campusId: 1,
         organizerId: 1,
         requiresApproval: true,
@@ -142,7 +142,6 @@ const EventManagementPage = () => {
   const handleEditEvent = (event: Event) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
-    setActionMenuOpen(null);
   };
 
   const handleSubmitForApproval = (eventId: number) => {
@@ -151,7 +150,6 @@ const EventManagementPage = () => {
     setEvents((prev) =>
       prev.map((e) => (e.id === eventId ? { ...e, status: 'PENDING' as EventStatus } : e))
     );
-    setActionMenuOpen(null);
   };
 
   const handlePublishEvent = (eventId: number) => {
@@ -160,13 +158,11 @@ const EventManagementPage = () => {
     setEvents((prev) =>
       prev.map((e) => (e.id === eventId ? { ...e, isPublished: true } : e))
     );
-    setActionMenuOpen(null);
   };
 
   const handleDeleteEvent = (eventId: number) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
       setEvents((prev) => prev.filter((e) => e.id !== eventId));
-      setActionMenuOpen(null);
     }
   };
 
@@ -180,7 +176,14 @@ const EventManagementPage = () => {
       isPublished: false,
     };
     setEvents((prev) => [...prev, newEvent]);
-    setActionMenuOpen(null);
+  };
+
+  const stats = {
+    total: events.length,
+    draft: events.filter((e) => e.status === 'DRAFT').length,
+    pending: events.filter((e) => e.status === 'PENDING').length,
+    approved: events.filter((e) => e.status === 'APPROVED').length,
+    published: events.filter((e) => e.isPublished).length,
   };
 
   return (
@@ -200,6 +203,30 @@ const EventManagementPage = () => {
           <Plus size={20} />
           Tạo sự kiện mới
         </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600">Tổng sự kiện</div>
+          <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600">Nháp</div>
+          <div className="text-2xl font-bold text-gray-600 mt-1">{stats.draft}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600">Chờ duyệt</div>
+          <div className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600">Đã duyệt</div>
+          <div className="text-2xl font-bold text-green-600 mt-1">{stats.approved}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600">Đã xuất bản</div>
+          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.published}</div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -241,173 +268,181 @@ const EventManagementPage = () => {
         </div>
       </div>
 
-      {/* Events Grid */}
-      {filteredEvents.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <Calendar className="mx-auto text-gray-400 mb-4" size={48} />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Không tìm thấy sự kiện
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {searchQuery || statusFilter !== 'ALL'
-              ? 'Thử điều chỉnh bộ lọc của bạn'
-              : 'Bắt đầu bằng cách tạo sự kiện đầu tiên'}
-          </p>
-          {!searchQuery && statusFilter === 'ALL' && (
-            <button
-              onClick={handleCreateEvent}
-              className="inline-flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors"
-            >
-              <Plus size={20} />
-              Tạo sự kiện mới
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
-            <div
-              key={event.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-            >
-              {/* Event Image */}
-              <div className="h-40 bg-linear from-orange-400 to-red-500 flex items-center justify-center">
-                {event.imageUrl ? (
-                  <img
-                    src={event.imageUrl}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Calendar className="text-white" size={48} />
-                )}
-              </div>
-
-              {/* Event Content */}
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                    {event.title}
-                  </h3>
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setActionMenuOpen(
-                          actionMenuOpen === event.id ? null : event.id
-                        )
-                      }
-                      className="p-1 hover:bg-gray-100 rounded-lg"
-                    >
-                      <MoreVertical size={20} className="text-gray-600" />
-                    </button>
-                    {actionMenuOpen === event.id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+      {/* Events Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sự kiện
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Thời gian
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Địa điểm
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Người tham gia
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Xuất bản
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <Calendar className="mx-auto text-gray-400 mb-3" size={48} />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Không tìm thấy sự kiện
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {searchQuery || statusFilter !== 'ALL'
+                        ? 'Thử điều chỉnh bộ lọc của bạn'
+                        : 'Bắt đầu bằng cách tạo sự kiện đầu tiên'}
+                    </p>
+                    {!searchQuery && statusFilter === 'ALL' && (
+                      <button
+                        onClick={handleCreateEvent}
+                        className="inline-flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors"
+                      >
+                        <Plus size={20} />
+                        Tạo sự kiện mới
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                filteredEvents.map((event) => (
+                  <tr key={event.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-linear from-orange-400 to-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Calendar className="text-white" size={24} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
+                            {event.title}
+                          </h3>
+                          <p className="text-xs text-gray-600 line-clamp-1 mt-0.5">
+                            {event.description}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{getStatusBadge(event.status)}</td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-gray-900">
+                          <Calendar size={14} className="text-gray-400" />
+                          {new Date(event.startDate).toLocaleDateString('vi-VN')}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <Clock size={12} className="text-gray-400" />
+                          {new Date(event.startDate).toLocaleTimeString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {event.venueName ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-900">
+                          <MapPin size={14} className="text-gray-400" />
+                          <span className="line-clamp-1">{event.venueName}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">Chưa có</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">
+                          {event.currentParticipants}/{event.maxParticipants}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div
+                          className="bg-[#F27125] h-1.5 rounded-full"
+                          style={{
+                            width: `${
+                              (event.currentParticipants / event.maxParticipants) * 100
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {event.isPublished ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                          <Eye size={12} />
+                          Đã xuất bản
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">Chưa</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleEditEvent(event)}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          title="Chỉnh sửa"
                         >
                           <Edit size={16} />
-                          Chỉnh sửa
                         </button>
                         {event.status === 'DRAFT' && (
                           <button
                             onClick={() => handleSubmitForApproval(event.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                            title="Gửi phê duyệt"
                           >
                             <Send size={16} />
-                            Gửi phê duyệt
                           </button>
                         )}
                         {event.status === 'APPROVED' && !event.isPublished && (
                           <button
                             onClick={() => handlePublishEvent(event.id)}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                            title="Xuất bản"
                           >
                             <Eye size={16} />
-                            Xuất bản
                           </button>
                         )}
                         <button
                           onClick={() => handleDuplicateEvent(event)}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                          title="Nhân bản"
                         >
                           <Copy size={16} />
-                          Nhân bản
                         </button>
                         <button
                           onClick={() => handleDeleteEvent(event.id)}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          title="Xóa"
                         >
                           <Trash2 size={16} />
-                          Xóa
                         </button>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-4">{getStatusBadge(event.status)}</div>
-
-                <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                  {event.description}
-                </p>
-
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-gray-400" />
-                    <span>
-                      {new Date(event.startDate).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-gray-400" />
-                    <span>
-                      {new Date(event.startDate).toLocaleTimeString('vi-VN', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  {event.venueName && (
-                    <div className="flex items-center gap-2">
-                      <MapPin size={16} className="text-gray-400" />
-                      <span>{event.venueName}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Users size={16} className="text-gray-400" />
-                    <span>
-                      {event.currentParticipants}/{event.maxParticipants} người
-                    </span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-1.5 ml-2">
-                      <div
-                        className="bg-[#F27125] h-1.5 rounded-full"
-                        style={{
-                          width: `${
-                            (event.currentParticipants / event.maxParticipants) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() =>
-                      (window.location.href = `/organizer/events/${event.id}`)
-                    }
-                    className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                  >
-                    Xem chi tiết
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {/* Event Form Modal */}
       {isModalOpen && (

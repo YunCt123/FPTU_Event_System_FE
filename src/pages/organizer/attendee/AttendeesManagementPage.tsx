@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Download,
   Search,
   Filter,
   CheckCircle,
@@ -12,34 +11,69 @@ import {
   FileSpreadsheet,
   Send,
 } from 'lucide-react';
-
-interface Attendee {
-  id: number;
-  studentId: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  registeredAt: string;
-  checkInStatus: 'CHECKED_IN' | 'NOT_CHECKED_IN' | 'CANCELLED';
-  checkInTime?: string;
-  seat?: string;
-  notes?: string;
-}
+import type { Attendee, CheckInStatus } from '../../../types/Attendee';
+import type { Event } from '../../../types/Event';
 
 const AttendeesManagementPage = () => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<
-    'ALL' | 'CHECKED_IN' | 'NOT_CHECKED_IN' | 'CANCELLED'
-  >('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | CheckInStatus>('ALL');
   const [selectedAttendees, setSelectedAttendees] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    // Mock data - Replace with actual API call
+    // Mock events data - Replace with actual API call
+    const mockEvents: Event[] = [
+      {
+        id: 1,
+        title: 'Workshop: AI & Machine Learning',
+        description: 'Hội thảo về AI và Machine Learning cho sinh viên',
+        eventType: 'WORKSHOP',
+        status: 'APPROVED',
+        startDate: '2024-12-10T09:00:00',
+        endDate: '2024-12-10T17:00:00',
+        registrationDeadline: '2024-12-08T23:59:59',
+        maxParticipants: 100,
+        currentParticipants: 85,
+        organizerId: 1,
+        requiresApproval: true,
+        isPublished: true,
+      },
+      {
+        id: 2,
+        title: 'Tech Conference 2024',
+        description: 'Hội nghị công nghệ thường niên',
+        eventType: 'CONFERENCE',
+        status: 'APPROVED',
+        startDate: '2024-12-15T08:00:00',
+        endDate: '2024-12-16T18:00:00',
+        registrationDeadline: '2024-12-12T23:59:59',
+        maxParticipants: 200,
+        currentParticipants: 150,
+        organizerId: 1,
+        requiresApproval: true,
+        isPublished: true,
+      },
+    ];
+    setEvents(mockEvents);
+    if (mockEvents.length > 0) {
+      setSelectedEventId(mockEvents[0].id);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      setAttendees([]);
+      return;
+    }
+
+    // Mock data - Replace with actual API call filtered by selectedEventId
     const mockAttendees: Attendee[] = [
       {
         id: 1,
+        eventId: selectedEventId,
         studentId: 'SE160001',
         fullName: 'Nguyễn Văn A',
         email: 'anvse160001@fpt.edu.vn',
@@ -51,6 +85,7 @@ const AttendeesManagementPage = () => {
       },
       {
         id: 2,
+        eventId: selectedEventId,
         studentId: 'SE160002',
         fullName: 'Trần Thị B',
         email: 'bttse160002@fpt.edu.vn',
@@ -61,6 +96,7 @@ const AttendeesManagementPage = () => {
       },
       {
         id: 3,
+        eventId: selectedEventId,
         studentId: 'SE160003',
         fullName: 'Lê Văn C',
         email: 'clvse160003@fpt.edu.vn',
@@ -72,6 +108,7 @@ const AttendeesManagementPage = () => {
       },
       {
         id: 4,
+        eventId: selectedEventId,
         studentId: 'SE160004',
         fullName: 'Phạm Thị D',
         email: 'dptse160004@fpt.edu.vn',
@@ -81,6 +118,7 @@ const AttendeesManagementPage = () => {
       },
       {
         id: 5,
+        eventId: selectedEventId,
         studentId: 'SE160005',
         fullName: 'Hoàng Văn E',
         email: 'ehvse160005@fpt.edu.vn',
@@ -92,7 +130,7 @@ const AttendeesManagementPage = () => {
     ];
     setAttendees(mockAttendees);
     setFilteredAttendees(mockAttendees);
-  }, []);
+  }, [selectedEventId]);
 
   useEffect(() => {
     let filtered = attendees;
@@ -225,13 +263,47 @@ const AttendeesManagementPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Người tham dự</h1>
           <p className="text-gray-600 mt-1">
-            Theo dõi, quản lý và xuất danh sách người tham dự
+            Theo dõi, quản lý và xuất danh sách người tham dự theo sự kiện
           </p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* Event Selector */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Chọn Sự kiện
+        </label>
+        <select
+          value={selectedEventId || ''}
+          onChange={(e) => setSelectedEventId(Number(e.target.value))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
+        >
+          {events.length === 0 ? (
+            <option value="">Không có sự kiện nào</option>
+          ) : (
+            events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title} - {new Date(event.startDate).toLocaleDateString('vi-VN')}
+              </option>
+            ))
+          )}
+        </select>
+      </div>
+
+      {!selectedEventId ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <User className="mx-auto text-gray-400 mb-4" size={48} />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Vui lòng chọn sự kiện
+          </h3>
+          <p className="text-gray-600">
+            Chọn một sự kiện để xem danh sách người tham dự
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Tổng đăng ký</div>
           <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
@@ -441,19 +513,8 @@ const AttendeesManagementPage = () => {
           </table>
         </div>
       </div>
-
-      {/* Export Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <Download className="text-blue-600 mt-0.5" size={20} />
-          <div>
-            <h4 className="font-semibold text-blue-900">Xuất danh sách điểm danh</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              Xuất file Excel để theo dõi điểm danh và chấm điểm cho sinh viên. File bao gồm đầy đủ thông tin: Mã SV, Họ tên, Email, SĐT, Trạng thái check-in và Ghế ngồi.
-            </p>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

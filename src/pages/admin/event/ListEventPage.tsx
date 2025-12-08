@@ -1,117 +1,163 @@
-import { Search, Filter, Eye, SquarePen } from "lucide-react";
+import { Search, Filter, Eye, Trash2, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
-import EditEventModal from "../../../components/admin/event/EditEventModal";
-
-interface Event {
-  id: number;
-  name: string;
-  organizer: string;
-  date: string;
-  venue: string;
-  status: string;
-  description: string;
-  image: string;
-}
+import ConfirmModal from "../../../components/common/ConfirmModal";
+import eventService from "../../../services/eventService";
+import type { GetEventResponse } from "../../../types/Event";
+import { toast } from "react-toastify";
 
 const ListEventPage = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<GetEventResponse[]>([]);
 
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const mockEvents: Event[] = [
-      {
-        id: 1,
-        name: "Tech Conference 2025",
-        organizer: "FPT University",
-        date: "2025-12-10",
-        venue: "Hall A",
-        status: "Đang xử lý",
-        description: "A comprehensive technology conference",
-        image: "https://thanhnien.mediacdn.vn/Uploaded/dieutrang-qc/2022_04_24/fpt2-7865.jpg",
-      },
-      {
-        id: 2,
-        name: "Music Festival Summer",
-        organizer: "Student Club",
-        date: "2025-08-15",
-        venue: "Room 105",
-        status: "Đã duyệt",
-        description: "An exciting summer music festival",
-        image: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800",
-      },
-      {
-        id: 3,
-        name: "Startup Pitching Day",
-        organizer: "Innovation Hub",
-        date: "2025-07-22",
-        venue: "Room 202",
-        status: "Bị từ chối",
-        description: "Entrepreneurs showcase ideas",
-        image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800",
-      },
-      {
-        id: 4,
-        name: "AI Robotics Workshop",
-        organizer: "Tech Labs",
-        date: "2025-06-14",
-        venue: "Room 231",
-        status: "Đang xử lý",
-        description: "Hands-on AI workshop",
-        image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800",
-      },
-      {
-        id: 5,
-        name: "Charity Marathon",
-        organizer: "Community Group",
-        date: "2025-05-30",
-        venue: "Hall B",
-        status: "Đã duyệt",
-        description: "Marathon for education",
-        image: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?w=800",
-      },
-    ];
-    setEvents(mockEvents);
+    fetchEvents();
   }, []);
+
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    try {
+      const response = await eventService.getAllEvents({ status: "PUBLISHED" });
+      if(response){
+        setEvents(response.data.data);
+        console.log("response loaded", response);
+      }
+    } catch (error: any) {
+      console.error("Error fetching events:", error);
+      toast.error("Không thể tải danh sách sự kiện.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredEvents = events.filter((e) => {
     const matchesStatus =
       statusFilter === "" || statusFilter === "all" || e.status === statusFilter;
     const matchesSearch =
       searchTerm === "" ||
-      e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.organizer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.venue.toLowerCase().includes(searchTerm.toLowerCase());
+      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.venue?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
 
-  const handleEditSubmit = async (formData: Event) => {
+  const handleApproveEvent = async (eventId: string | number, status: string) => {
     setSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Updated event:", formData);
-    alert("Cập nhật sự kiện thành công!");
-    setSubmitting(false);
-    setShowEditModal(false);
-    // TODO: Call API to update event
+    try {
+      console.log("Approving event:", eventId);
+      
+      // Gọi API thực
+      const response = await eventService.patchEvent(String(eventId), { status : "PUBLISHED" });
+      
+      console.log("Approve response:", response);
+      
+      if (response) {
+        toast.success("Duyệt sự kiện thành công!");
+        
+        // Cập nhật state local
+        setEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === eventId ? { ...e, status: "PUBLISHED" } : e
+          )
+        );
+        
+        // Fetch lại data từ server
+        fetchEvents();
+      } 
+    } catch (error: any) {
+      console.error("Error approving event:", error);
+      console.error("Error response:", error.response?.data);
+      toast.error(error.response?.data?.message || "Duyệt sự kiện thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectEvent = async (eventId: string | number) => {
+    setSubmitting(true);
+    try {
+      console.log("Rejecting event:", eventId);
+      
+      // Gọi API thực
+      const response = await eventService.patchEvent(String(eventId), { status: "CANCELED" });
+      
+      console.log("Reject response:", response);
+      
+      if (response) {
+        toast.success("Từ chối sự kiện thành công!");
+        
+        // Cập nhật state local
+        setEvents(prevEvents => 
+          prevEvents.map(e => 
+            e.id === eventId ? { ...e, status: "CANCELED" } : e
+          )
+        );
+        
+        // Fetch lại data từ server
+        fetchEvents();
+      } 
+    } catch (error: any) {
+      console.error("Error rejecting event:", error);
+      console.error("Error response:", error.response?.data);
+      toast.error(error.response?.data?.message || "Từ chối sự kiện thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    
+    setSubmitting(true);
+    try {
+      const response = await eventService.deleteEvent(selectedEvent.id);
+      
+      if (response.status == 200) {
+        toast.success("Xóa sự kiện thành công!");
+        
+        setEvents(prevEvents => prevEvents.filter(e => e.id !== selectedEvent.id));
+        
+        setShowDeleteConfirm(false);
+        setSelectedEvent(null);
+        
+        await fetchEvents();
+      } else {
+        toast.error(response.data.message || "Xóa sự kiện thất bại!");
+      }
+    } catch (error: any) {
+      console.error("Error deleting event:", error);
+      toast.error(error.response?.data?.message || "Xóa sự kiện thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, string> = {
-      "Đã duyệt": "bg-green-100 text-green-700",
-      "Đang xử lý": "bg-yellow-100 text-yellow-700",
-      "Bị từ chối": "bg-red-100 text-red-700",
+      "PUBLISHED": "bg-green-100 text-green-700",
+      "PENDING": "bg-yellow-100 text-yellow-700",
+      "CANCELED": "bg-red-100 text-red-700",
+      "DRAFT": "bg-gray-100 text-gray-700",
+    };
+
+    const statusLabel: Record<string, string> = {
+      "PUBLISHED": "Đã duyệt",
+      "PENDING": "Đang xử lý",
+      "CANCELED": "Bị từ chối",
+      "DRAFT": "Nháp",
     };
 
     return (
       <span className={`px-3 py-1 rounded-lg text-sm font-medium ${statusConfig[status] || "bg-gray-100 text-gray-700"}`}>
-        {status}
+        {statusLabel[status] || status}
       </span>
     );
   };
@@ -120,7 +166,7 @@ const ListEventPage = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Event Approval List</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Danh sách sự kiện</h1>
         <p className="text-gray-600 mt-1">Quản lý phê duyệt sự kiện</p>
       </div>
 
@@ -145,9 +191,9 @@ const ListEventPage = () => {
             className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full text-gray-700 cursor-pointer"
           >
             <option value="all">Tất cả</option>
-            <option value="Đang xử lý">Đang xử lý</option>
-            <option value="Đã duyệt">Đã duyệt</option>
-            <option value="Bị từ chối">Bị từ chối</option>
+            <option value="PENDING">Đang xử lý</option>
+            <option value="PUBLISHED">Đã duyệt</option>
+            <option value="CANCELED">Bị từ chối</option>
           </select>
         </div>
       </div>
@@ -158,10 +204,10 @@ const ListEventPage = () => {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">STT</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Tên sự kiện</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ban tổ chức</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ngày tổ chức</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ngày tạo</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Địa điểm</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Trạng thái</th>
                 <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Thao tác</th>
@@ -169,20 +215,28 @@ const ListEventPage = () => {
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {filteredEvents.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    Đang tải...
+                  </td>
+                </tr>
+              ) : filteredEvents.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
               ) : (
-                filteredEvents.map((e) => (
+                filteredEvents.map((e, index) => (
                   <tr key={e.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.id}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.organizer}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.date}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.venue}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{index + 1}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{e.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{e.organizer.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {new Date(e.createdAt).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{e.venue?.name || "-"}</td>
                     <td className="px-6 py-4 text-sm">{getStatusBadge(e.status)}</td>
 
                     <td className="px-6 py-4">
@@ -190,10 +244,10 @@ const ListEventPage = () => {
                         <button
                           onClick={() => {
                             setSelectedEvent(e);
-                            setShowDetailModal(true);
+                            setShowDetailModal(true);                        
                           }}
                           className="text-blue-600 hover:text-blue-800 p-1 rounded-md hover:bg-blue-50 transition-colors"
-                          title="View Details"
+                          title="Xem chi tiết"
                         >
                           <Eye size={20} />
                         </button>
@@ -201,12 +255,13 @@ const ListEventPage = () => {
                         <button
                           onClick={() => {
                             setSelectedEvent(e);
-                            setShowEditModal(true);
+                            setShowDeleteConfirm(true);
                           }}
-                          className="text-green-600 hover:text-green-800 p-1 rounded-md hover:bg-green-50 transition-colors"
-                          title="Edit Event"
+                          className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
+                          title="Xóa"
+                          disabled={submitting}
                         >
-                          <SquarePen size={20} />
+                          <Trash2 size={20} />
                         </button>
                       </div>
                     </td>
@@ -226,52 +281,98 @@ const ListEventPage = () => {
 
       {/* Detail Modal */}
       {showDetailModal && selectedEvent && (
-        <EventModal title="Event Details" onClose={() => setShowDetailModal(false)}>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">ID:</span>
-              <span>{selectedEvent.id}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Tên:</span>
-              <span>{selectedEvent.name}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Ban tổ chức:</span>
-              <span>{selectedEvent.organizer}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Ngày:</span>
-              <span>{selectedEvent.date}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Địa điểm:</span>
-              <span>{selectedEvent.venue}</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="font-semibold min-w-[100px]">Trạng thái:</span>
-              {getStatusBadge(selectedEvent.status)}
-            </div>
-            {selectedEvent.description && (
+        <EventModal title="Chi tiết sự kiện" onClose={() => setShowDetailModal(false)}>
+          <div className="space-y-4">
+            {/* Thông tin chi tiết */}
+            <div className="space-y-3">
               <div className="flex gap-2">
-                <span className="font-semibold min-w-[100px]">Mô tả:</span>
-                <span>{selectedEvent.description}</span>
+                <span className="font-semibold min-w-[120px]">ID:</span>
+                <span>{selectedEvent.id}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Tên sự kiện:</span>
+                <span>{selectedEvent.title}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Ban tổ chức:</span>
+                <span>{selectedEvent.organizer.name}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Ngày tạo:</span>
+                <span>{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Địa điểm:</span>
+                <span>{selectedEvent.venue?.name || "-"}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold min-w-[120px]">Trạng thái:</span>
+                {getStatusBadge(selectedEvent.status)}
+              </div>
+              {selectedEvent.description && (
+                <div className="flex gap-2">
+                  <span className="font-semibold min-w-[120px]">Mô tả:</span>
+                  <span>{selectedEvent.description}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {selectedEvent.status === "PENDING" && (
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    handleApproveEvent(selectedEvent.id, "PUBLISHED");
+                    setShowDetailModal(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Check size={18} />
+                  {submitting ? "Đang xử lý..." : "Duyệt"}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleRejectEvent(selectedEvent.id);
+                    setShowDetailModal(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <X size={18} />
+                  {submitting ? "Đang xử lý..." : "Từ chối"}
+                </button>
+              </div>
+            )}
+
+            {(selectedEvent.status === "PUBLISHED" || selectedEvent.status === "CANCELED") && (
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-500 text-center">
+                  {selectedEvent.status === "PUBLISHED" 
+                    ? "Sự kiện đã được duyệt" 
+                    : "Sự kiện đã bị từ chối"}
+                </p>
               </div>
             )}
           </div>
         </EventModal>
       )}
 
-      {/* Edit Modal */}
-      {showEditModal && selectedEvent && (
-        <EventModal title="Chỉnh sửa sự kiện" onClose={() => setShowEditModal(false)}>
-          <EditEventModal
-            initialData={selectedEvent}
-            onSubmit={handleEditSubmit}
-            submitting={submitting}
-          />
-        </EventModal>
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xóa sự kiện"
+        message={`Bạn có chắc chắn muốn xóa sự kiện "${selectedEvent?.title}"? Hành động này không thể hoàn tác!`}
+        confirmText={submitting ? "Đang xóa..." : "Xóa"}
+        cancelText="Hủy"
+        onConfirm={handleDeleteEvent}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setSelectedEvent(null);
+        }}
+        type="danger"
+      />
     </div>
   );
 };

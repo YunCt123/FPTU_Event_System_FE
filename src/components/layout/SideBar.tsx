@@ -35,39 +35,35 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
-      path: '/admin/dashboard',
+      path: '/admin/dashboard-events',
+      // children: [
+      //   {
+      //     id: 'events-doashboard',
+      //     label: 'Thống kê sự kiện',
+      //     icon: <Building2 size={18} />,
+      //     path: '/admin/dashboard-events',
+      //   }
+      // ],
     },
     {
       id: 'events',
       label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
-      children: [
-        {
-          id: 'events-list',
-          label: 'Danh sách sự kiện',
-          icon: <Building2 size={18} />,
-          path: '/admin/list-events',
-        },
-        {
-          id: 'events-doashboard',
-          label: 'Tổng kết sự kiện',
-          icon: <Building2 size={18} />,
-          path: '/admin/dashboard-events',
-        }
-      ],
+      path: '/admin/list-events'
+      // children: [
+      //   {
+      //     id: 'events-list',
+      //     label: 'Danh sách sự kiện',
+      //     icon: <Building2 size={18} />,
+      //     path: '/admin/list-events',
+      //   },
+      // ],
     },
     {
       id: 'venues',   
       label: 'Quản lý Địa điểm',
       icon: <Building2 size={20} />,
-      children: [
-        {
-          id: 'venues-list',
-          label: 'Danh sách hội trường',
-          icon: <Building2 size={18} />,
-          path: '/admin/venues',
-        },
-      ],
+      path: '/admin/venues',
     },
     {
       id: 'organizers',

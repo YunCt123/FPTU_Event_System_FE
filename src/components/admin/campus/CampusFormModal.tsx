@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import type { Campus, CampusStatus } from '../../../types/Campus';
+import type { Campus, Status } from '../../../types/Campus';
 
 interface CampusFormModalProps {
   campus: Campus | null;
@@ -12,17 +12,17 @@ interface FormData {
   code: string;
   name: string;
   address: string;
-  city: string;
-  description: string;
-  imageUrl: string;
-  status: CampusStatus;
+  capacity?: number;
+  image: string;
+  status: Status;
 }
 
 interface FormErrors {
   code?: string;
   name?: string;
   address?: string;
-  city?: string;
+  capacity?: number;
+  image?: string;
 }
 
 const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) => {
@@ -30,10 +30,9 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
     code: '',
     name: '',
     address: '',
-    city: '',
-    description: '',
-    imageUrl: '',
-    status: 'ACTIVE',
+    capacity: undefined,
+    image: '',
+    status: 'Active',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -45,9 +44,8 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
         code: campus.code,
         name: campus.name,
         address: campus.address,
-        city: campus.city,
-        description: campus.description || '',
-        imageUrl: campus.imageUrl || '',
+        capacity: campus.capacity ?? undefined,
+        image: campus.image || '',
         status: campus.status,
       });
     }
@@ -58,8 +56,6 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
 
     if (!formData.code.trim()) {
       newErrors.code = 'Mã campus là bắt buộc';
-    } else if (!/^[A-Z0-9]+$/.test(formData.code)) {
-      newErrors.code = 'Mã campus chỉ được chứa chữ hoa và số';
     }
 
     if (!formData.name.trim()) {
@@ -70,10 +66,6 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
       newErrors.address = 'Địa chỉ là bắt buộc';
     }
 
-    if (!formData.city.trim()) {
-      newErrors.city = 'Thành phố là bắt buộc';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -82,7 +74,14 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Handle capacity as number
+    if (name === 'capacity') {
+      const numValue = value === '' ? undefined : parseInt(value, 10);
+      setFormData((prev) => ({ ...prev, [name]: numValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     
     // Clear error for this field
     if (errors[name as keyof FormErrors]) {
@@ -108,13 +107,10 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
         code: formData.code.toUpperCase(),
         name: formData.name,
         address: formData.address,
-        city: formData.city,
-        description: formData.description || undefined,
-        imageUrl: formData.imageUrl || undefined,
+        capacity: formData.capacity,
+        image: formData.image,
         status: formData.status,
-        isActive: formData.status === 'ACTIVE',
-        createdAt: campus?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        venues: campus?.venues || [],
       };
 
       onSuccess(campusData);
@@ -185,23 +181,23 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
             </div>
           </div>
 
-          {/* City */}
+         {/* Capacity */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Thành phố <span className="text-red-500">*</span>
+              Sức chứa
             </label>
             <input
-              type="text"
-              name="city"
-              value={formData.city}
+              type="number"
+              name="capacity"
+              value={formData.capacity ?? ''}
               onChange={handleChange}
-              placeholder="VD: Hồ Chí Minh, Hà Nội, Đà Nẵng"
+              placeholder="VD: 2000"
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.city ? 'border-red-500' : 'border-gray-300'
+                errors.capacity ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.city && (
-              <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+            {errors.capacity && (
+              <p className="text-red-500 text-sm mt-1">{errors.capacity}</p>
             )}
           </div>
 
@@ -225,21 +221,6 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
             )}
           </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mô tả
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Mô tả về campus (tùy chọn)"
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            />
-          </div>
-
           {/* Image URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -247,16 +228,16 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
             </label>
             <input
               type="text"
-              name="imageUrl"
-              value={formData.imageUrl}
+              name="image"
+              value={formData.image}
               onChange={handleChange}
               placeholder="https://example.com/image.jpg"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            {formData.imageUrl && (
+            {formData.image && (
               <div className="mt-2">
                 <img
-                  src={formData.imageUrl}
+                  src={formData.image}
                   alt="Preview"
                   className="w-full h-48 object-cover rounded-lg"
                   onError={(e) => {
@@ -267,7 +248,7 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
             )}
           </div>
 
-          {/* Status */}
+          {/* Status
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Trạng thái
@@ -278,10 +259,10 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="ACTIVE">Hoạt động</option>
-              <option value="INACTIVE">Ngừng hoạt động</option>
+              <option value="Active">Hoạt động</option>
+              <option value="Inactive">Ngừng hoạt động</option>
             </select>
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">

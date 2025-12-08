@@ -1,43 +1,53 @@
-export type VenueStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
+import type { Campus } from "./Campus";
+
+export type VenueStatus = 'Active' | 'Maintenance' | 'Inactive';
 
 export type SeatType = 'empty' | 'regular' | 'vip';
 
 export interface Seat {
-  row: number;
-  col: number;
-  type: SeatType;
+  id : number;
+  rowLabel: number;
+  colLabel: number;
+  seatType: SeatType;
   label?: string;
-}
-
-export interface SeatMapData {
-  rows: number;
-  cols: number;
-  seats: Seat[][];
-  rowLabels: string[];
+  isActive?: boolean;
 }
 
 export interface Venue {
   id: number;
   name: string;
-  description?: string;
-  capacity: number;
+  location: string;
+  row: number;
+  column: number;
+  hasSeats: boolean;
+  mapImageUrl: string | null;
   status: VenueStatus;
-  imageUrl?: string;
-  isActive: boolean;
-  seatMap?: SeatMapData;
-  createdAt?: string;
-  updatedAt?: string;
+  campusId: Campus['id'];
 }
 
 export interface CreateVenueRequest {
   name: string;
-  description?: string;
-  capacity: number;
-  status: VenueStatus;
-  imageUrl?: string;
-  seatMap?: SeatMapData;
+  location: string;
+  row: number;
+  column: number;
+  hasSeats: boolean;
+  mapImageUrl?: string;
+  campusId: number;
 }
 
-export interface UpdateVenueRequest extends CreateVenueRequest {
-  id: number;
+export interface CreateVenueResponse {
+  message: string;
+  venue: Venue;
+}
+
+
+export interface UpdateVenueRequest {
+  name: string;
+  location: string;
+  mapImageUrl?: string;
+}
+
+export interface UpdateVenueResponse {
+  message: string;
+  venue: Venue;
 }
