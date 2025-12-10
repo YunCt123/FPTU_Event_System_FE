@@ -127,9 +127,9 @@ export const apiUtils = {
    * @param data - Request body
    * @param config - Additional axios config
    */
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse <T>>  {
     const response = await api.patch(url, data, config);
-    return response  as AxiosResponse<T>
+    return response as AxiosResponse<T>;
   },
 
   /**
