@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from "react";
 import StatsCard from "../../../components/admin/dashboard/StatsCard";
 import BarChartBox from "../../../components/admin/dashboard/BarChartBox";
-import LineChartBox from "../../../components/admin/dashboard/LineChartBox";
 import PieChartBox from "../../../components/admin/dashboard/PieChartBox";
 import { Calendar, Clock, CheckCircle, XCircle, TrendingUp, Users } from "lucide-react";
 import eventService from "../../../services/eventService";
 import type { meta } from "../../../types/Event";
-
 
 const DashboardPage = () => {
   const [responseData, setResponseData] = useState<any>();
   const [statusData, setStatusData] = useState<{ name: string; value: number }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [yearInput, setYearInput] = useState<string>(new Date().getFullYear().toString());
+
+  // Generate list of years (từ 2020 đến năm hiện tại + 2)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2020 + 3 }, (_, i) => 2020 + i);
 
   useEffect(() => {
     fetchData();
@@ -21,18 +26,19 @@ const DashboardPage = () => {
     const interval = setInterval(fetchData, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedYear]); // Thêm selectedYear vào dependency
 
   const fetchData = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      // Fetch tất cả events
       const response = await eventService.getAllEvents({});
-      if (response) {
+      
+      if (response && response.data) {
         setResponseData(response.data);
-        
-        // Tính toán statusData từ response thực tế
         const events = response.data.data || [];
+        
+        // Tính statusData
         const published = events.filter((e: any) => e.status === "PUBLISHED").length;
         const pending = events.filter((e: any) => e.status === "PENDING").length;
         const canceled = events.filter((e: any) => e.status === "CANCELED").length;
@@ -42,68 +48,57 @@ const DashboardPage = () => {
           { name: "Đang xử lý", value: pending },
           { name: "Đã từ chối", value: canceled },
         ]);
+
+        // Tính monthly data theo startTime (không phải createdAt)
+        const monthCounts: Record<number, number> = {};
+        
+        for (let i = 1; i <= 12; i++) {
+          monthCounts[i] = 0;
+        }
+        
+        events.forEach((event: any) => {
+          try {
+            const eventDate = new Date(event.startTime);
+            const year = eventDate.getFullYear();
+            const month = eventDate.getMonth() + 1;
+            
+            console.log(`Event: ${event.title}, StartTime: ${event.startTime}, Year: ${year}, Month: ${month}`);
+            
+            if (year === selectedYear) {
+              monthCounts[month]++;
+            }
+          } catch (err) {
+            console.error("Error parsing event startTime:", event, err);
+          }
+        });
+        
+        const calculatedMonthlyData = Object.keys(monthCounts)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .map(month => ({
+            name: `T${month}`,
+            value: monthCounts[parseInt(month)]
+          }));
+
+        setMonthlyData(calculatedMonthlyData);
       }
-
-      // Fetch monthly statistics
-      const currentYear = new Date().getFullYear();
-      const monthlyResponse = await eventService.getTotalEventsByMoth({ year: currentYear });
+    } catch (error: any) {
+      console.error("Error fetching dashboard data:", error);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       
-      if (monthlyResponse && monthlyResponse.data) {
-        // Map API response to chart format
-        const monthMap: Record<string, string> = {
-          "January": "T1",
-          "February": "T2",
-          "March": "T3",
-          "April": "T4",
-          "May": "T5",
-          "June": "T6",
-          "July": "T7",
-          "August": "T8",
-          "September": "T9",
-          "October": "T10",
-          "November": "T11",
-          "December": "T12"
-        };
-
-        const formattedMonthlyData = monthlyResponse.data.data.map((item: { month: string; totalEvents: number }) => ({
-          name: monthMap[item.month] || item.month,
-          value: item.totalEvents
-        }));
-
-        setMonthlyData(formattedMonthlyData);
-      }
-    } catch (error) {
-      console.error("Error fetching statistics:", error);
-      
-      // Fallback to empty data if error
-      setMonthlyData([
-        { name: "T1", value: 0 },
-        { name: "T2", value: 0 },
-        { name: "T3", value: 0 },
-        { name: "T4", value: 0 },
-        { name: "T5", value: 0 },
-        { name: "T6", value: 0 },
-        { name: "T7", value: 0 },
-        { name: "T8", value: 0 },
-        { name: "T9", value: 0 },
-        { name: "T10", value: 0 },
-        { name: "T11", value: 0 },
-        { name: "T12", value: 0 },
+      // Fallback data
+      setMonthlyData(Array.from({ length: 12 }, (_, i) => ({ 
+        name: `T${i + 1}`, 
+        value: 0 
+      })));
+      setStatusData([
+        { name: "Đã duyệt", value: 0 },
+        { name: "Đang xử lý", value: 0 },
+        { name: "Đã từ chối", value: 0 },
       ]);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Mock data cho participants (giữ nguyên hoặc tạo API riêng)
-  const participantsData = [
-    { name: "T7", value: 450 },
-    { name: "T8", value: 520 },
-    { name: "T9", value: 680 },
-    { name: "T10", value: 590 },
-    { name: "T11", value: 750 },
-    { name: "T12", value: 820 },
-  ];
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, string> = {
@@ -152,6 +147,22 @@ const DashboardPage = () => {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <XCircle size={20} />
+            <span>{error}</span>
+          </div>
+          <button 
+            onClick={fetchData}
+            className="text-sm font-medium hover:underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard 
@@ -189,18 +200,101 @@ const DashboardPage = () => {
 
       {/* Charts Grid - 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <BarChartBox
-          title="Số lượng sự kiện theo tháng"
-          subtitle={`Thống kê 12 tháng năm ${new Date().getFullYear()}`}
-          unit="sự kiện"
-          data={monthlyData}
-        />
+        {isLoading ? (
+          <>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* BarChart với Year Selector */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
+              <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Số lượng sự kiện theo tháng</h3>
+                    <p className="text-sm text-gray-500 mt-1">Thống kê 12 tháng trong năm</p>
+                  </div>
+                  
+                  {/* Year Selector với Previous/Next buttons */}
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="year-input" className="text-sm font-medium text-gray-700">
+                      Năm:
+                    </label>
+                    <input
+                      id="year-input"
+                      type="text"
+                      inputMode="numeric"
+                      value={yearInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Chỉ cho phép số
+                        if (value === '' || /^\d{0,4}$/.test(value)) {
+                          setYearInput(value);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const year = parseInt(e.target.value);
+                        if (!isNaN(year) && year >= 2000 && year <= 2100) {
+                          setSelectedYear(year);
+                          setYearInput(year.toString());
+                        } else {
+                          // Reset về giá trị hiện tại
+                          setYearInput(selectedYear.toString());
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const year = parseInt(yearInput);
+                          if (!isNaN(year) && year >= 2000 && year <= 2100) {
+                            setSelectedYear(year);
+                          } else {
+                            setYearInput(selectedYear.toString());
+                          }
+                          e.currentTarget.blur();
+                        }
+                        // Cho phép Escape để cancel
+                        if (e.key === 'Escape') {
+                          setYearInput(selectedYear.toString());
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      className="w-24 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center"
+                      placeholder="2025"
+                      maxLength={4}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <BarChartBox
+                  title=""
+                  subtitle=""
+                  // unit="sự kiện"
+                  data={monthlyData}
+                />
+              </div>
+            </div>
 
-        <PieChartBox
-          title="Phân bố trạng thái sự kiện"
-          subtitle="Tổng quan theo trạng thái hiện tại"
-          data={statusData}
-        />
+            {/* PieChart */}
+            <PieChartBox
+              title="Phân bố trạng thái sự kiện"
+              subtitle="Tổng quan theo trạng thái hiện tại"
+              data={statusData}
+            />
+          </>
+        )}
       </div>
 
       {/* Recent Events Table */}
@@ -230,7 +324,7 @@ const DashboardPage = () => {
                   Người tham gia
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Ngày tổ chức
+                  Thời gian tổ chức
                 </th>
               </tr>
             </thead>
@@ -307,12 +401,12 @@ const DashboardPage = () => {
           </div>
           <p className="text-3xl font-bold">
             {responseData?.data?.filter((e: any) => {
-              const eventDate = new Date(e.createdAt);
+              const eventDate = new Date(e.startTime);
               const now = new Date();
               return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear();
             }).length || 0}
           </p>
-          <p className="text-xs opacity-75 mt-2">Được tạo trong tháng</p>
+          <p className="text-xs opacity-75 mt-2">Diễn ra trong tháng</p>
         </div>
       </div>
     </div>
