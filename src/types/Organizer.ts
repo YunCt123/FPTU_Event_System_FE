@@ -5,6 +5,14 @@ export interface Campus {
   address: string;
 } ;
 
+export interface Owner {
+  id:number;
+  userName: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface Organizer {
   id: number;
   name: string;
@@ -25,7 +33,7 @@ export interface OrganizerResponse {
   updatedAt: string;
   campusId: number;
   ownerId?: number;
-  owner?: any; // Nếu có schema owner thì thay vào đây
+  owner?: Owner; 
   campus?: Campus;
 };
 

@@ -1,0 +1,391 @@
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { useSearchParams } from 'react-router-dom';
+import userService from '../../../services/userService';
+import type { User } from '../../../types/User';
+import { UserStar, UserCog, User as UserIcon, Search, Loader, Trash2, Edit, Eye, X, Check } from 'lucide-react';
+import UserDetailModal from './UserDetailModal';
+import ConfirmModal from '../../common/ConfirmModal';
+
+const UserListTable = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const roleFromUrl = searchParams.get('role') as 'event_organizer' | 'staff' | 'student' | null;
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'event_organizer' | 'staff' | 'student'>(roleFromUrl || 'event_organizer');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+   const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    userId: number | null;
+  }>({ isOpen: false, userId: null });
+
+  const roleLabels = {
+    event_organizer: 'Event Organizer',
+    staff: 'Staff',
+    student: 'Student'
+  };
+
+  const handleDelete = (id: number) => {
+    setConfirmModal({ isOpen: true, userId: id });
+  };
+
+  const cancelDelete = () => {
+    setConfirmModal({ isOpen: false, organizerId: null });
+  };
+
+  const roleIcons = {
+    event_organizer: <UserStar size={20} className="text-purple-600" />,
+    staff: <UserCog size={20} className="text-blue-600" />,
+    student: <UserIcon size={20} className="text-green-600" />
+  };
+
+  const handleStatusUser = async (id: number, status: string) => {
+    try {
+      const response = await userService.patchUserStatus(id, { status });
+      if (response.data) {
+        toast.success('Cập nhật trạng thái người dùng thành công');
+        fetchUsers();
+      } else {
+        toast.error('Cập nhật trạng thái người dùng thất bại');
+      }
+    } catch (error: any) {
+      console.error('Error updating user status:', error);
+      toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+    }
+  };
+
+  useEffect(() => {
+    if (roleFromUrl && roleFromUrl !== activeTab) {
+      setActiveTab(roleFromUrl);
+    }
+  }, [roleFromUrl]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [activeTab]);
+
+  useEffect(() => {
+    filterUsers();
+    console.log("object", roleFromUrl);
+  }, [users, searchTerm, statusFilter]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await userService.getUsers({ roleName: activeTab });
+      if (response.data.data) {
+        // Filter out users with PENDING status
+        const approvedUsers = response.data.data.filter((user: User) => user.status !== 'PENDING');
+        const pendingUsers = response.data.data.filter((user: User) => user.status === 'PENDING');
+        setPendingUsers(pendingUsers);
+        setUsers(approvedUsers);
+      }
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast.error('Không thể tải danh sách người dùng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    const userIdConfirm = confirmModal.userId;
+    if (!userIdConfirm) return;
+    try {
+        const reponse = await userService.patchUserDeactivate(userIdConfirm);
+        if(reponse.data){
+            toast.success('Vô hiệu người dùng thành công');
+        }else{
+            toast.error('Vô hiệu người dùng thất bại');
+        }
+        fetchUsers();
+    } catch (error: any) {
+        console.error('Error deactivating user:', error);
+        toast.error('Có lỗi xảy ra khi vô hiệu người dùng');
+    }
+  };
+
+  const handleViewDetail = (user: User) => {
+    setSelectedUser(user);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  const filterUsers = () => {
+    let filtered = users;
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.userName.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term) ||
+        user.firstName.toLowerCase().includes(term) ||
+        user.lastName.toLowerCase().includes(term) ||
+        user.studentCode?.toLowerCase().includes(term)
+      );
+    }
+
+    // Filter by status
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(user => user.isActive);
+    } else if (statusFilter === 'inactive') {
+      filtered = filtered.filter(user => !user.isActive);
+    }
+
+    setFilteredUsers(filtered);
+  };
+
+  const getCampusName = (campusId: number) => {
+    const campuses: { [key: number]: string } = {
+      1: 'FU - Hòa Lạc',
+      2: 'FU - Hồ Chí Minh',
+      3: 'FU - Đà Nẵng',
+      4: 'FU - Cần Thơ',
+      5: 'FU - Quy Nhơn'
+    };
+    return campuses[campusId] || 'N/A';
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm">
+      {/* Search Bar */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none bg-white"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Vô hiệu hóa</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Pending Users Section */}
+      {pendingUsers.length > 0 && (
+        <div className="p-4 border-b border-gray-200 bg-yellow-50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Người dùng chờ duyệt ({pendingUsers.length})
+              </h3>
+          
+            </div>
+          </div>
+          <div className="space-y-3">
+            {pendingUsers.map((user) => (
+              <div key={user.id} className="bg-white p-3 rounded-lg border border-yellow-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {user.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.userName}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-semibold">
+                      {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    title="Chấp nhận"
+                    onClick={() => handleStatusUser(user.id, 'APPROVED')}
+                  >
+                    <Check size={16} />
+                    <span>Chấp nhận</span>
+                  </button>
+                  <button
+                    className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                    title="Từ chối"
+                    onClick={() => handleStatusUser(user.id, 'REJECTED')}
+                  >
+                    <X size={16} />
+                    <span>Từ chối</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewDetail(user)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    title="Chi tiết"
+                  >
+                    <Eye size={16} />
+                    <span>Chi tiết</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader className="animate-spin text-[#F27125]" size={40} />
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
+              {roleIcons[activeTab]}
+            </div>
+            <p className="text-gray-500">
+              {searchTerm ? 'Không tìm thấy người dùng phù hợp' : `Chưa có ${roleLabels[activeTab]} nào`}
+            </p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Người dùng
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Campus
+                </th>
+                
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Email
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-gray-700">{user.id}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      {user.avatar ? (
+                        <img 
+                          src={user.avatar} 
+                          alt={user.userName}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
+                          {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">@{user.userName}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-700">
+                      {getCampusName(user.campus?.id)}
+                    </span>
+                  </td>                
+                  <td className="px-6 py-4">   
+                    <a
+                        href={`mailto:${user.email}`}
+                        className="text-sm text-[#F27125] hover:text-[#d95c0b] hover:underline"
+                      >{user.email}</a>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`
+                      inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                      ${user.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                      }
+                    `}>
+                      {user.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleViewDetail(user)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Xem chi tiết"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Footer */}
+      {!loading && filteredUsers.length > 0 && (
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <p className="text-sm text-gray-600">
+            Tổng số: <span className="font-semibold">{filteredUsers.length}</span> {roleLabels[activeTab]}
+          </p>
+        </div>
+      )}
+
+      {/* User Detail Modal */}
+      <UserDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        user={selectedUser}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="Xác nhận dừng hoạt động"
+        message="Bạn có chắc chắn muốn dừng hoạt động người dùng này?"
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        type="danger"
+        onConfirm={handleDeactivate}
+        onCancel={cancelDelete}
+      />
+    </div>
+  );
+};
+
+export default UserListTable;
