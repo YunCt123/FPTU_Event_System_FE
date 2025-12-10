@@ -28,6 +28,7 @@ const ListEventPage = () => {
       if(response){
         setEvents(response.data.data);
         console.log("response loaded", response);
+        console.log(response.data.meta?.total);
       }
     } catch (error: any) {
       console.error("Error fetching events:", error);

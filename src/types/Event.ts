@@ -112,6 +112,15 @@ export interface GetEventResponse {
   eventStaffs: eventStaff[];
   checkinCount: number;
 }
+export interface GetTotalEventsResponse {
+  data: GetEventResponse
+  meta?: meta;
+}
+
+export interface GetTotalEventsByMothResponse {
+  month: string;
+  totalEvents: number;
+}
 
 export interface CreateEventRequest {
   title: string;
