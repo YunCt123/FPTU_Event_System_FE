@@ -1,6 +1,6 @@
 import { apiUtils } from '../api/axios';
 import { USER_URL } from '../constants/apiEndPoints';
-import type { User } from '../types/User';
+import type { GetUsersStatusResponse, PatchUserResponse, User } from '../types/User';
 import type { ApiResponse } from '../types/ApiResponse';
 import type { AxiosResponse } from 'axios';
 
@@ -16,8 +16,15 @@ const userService = {
         return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}`,  params );
     },
 
-    
-    
+    async patchUserDeactivate(id: number): Promise<AxiosResponse<ApiResponse<PatchUserResponse>>> {
+        return await apiUtils.patch<ApiResponse<PatchUserResponse>>(`${USER_URL}${id}/deactivate`);
+    },
+
+    async patchUserStatus(id: number, data:{status: string}): Promise<AxiosResponse<ApiResponse<GetUsersStatusResponse>>> {
+        return await apiUtils.patch<ApiResponse<GetUsersStatusResponse>>(`${USER_URL}${id}/status`, data);
+    }
+
+      
 };
 
 export default userService;

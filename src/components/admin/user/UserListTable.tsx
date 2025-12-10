@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useSearchParams } from 'react-router-dom';
 import userService from '../../../services/userService';
 import type { User } from '../../../types/User';
-import { UserStar, UserCog, User as UserIcon, Search, Loader, Mail, Phone, MapPin } from 'lucide-react';
+import { UserStar, UserCog, User as UserIcon, Search, Loader, Trash2, Edit, Eye, X, Check } from 'lucide-react';
+import UserDetailModal from './UserDetailModal';
+import ConfirmModal from '../../common/ConfirmModal';
 
 const UserListTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,6 +15,14 @@ const UserListTable = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'event_organizer' | 'staff' | 'student'>(roleFromUrl || 'event_organizer');
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+   const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    userId: number | null;
+  }>({ isOpen: false, userId: null });
 
   const roleLabels = {
     event_organizer: 'Event Organizer',
@@ -20,10 +30,33 @@ const UserListTable = () => {
     student: 'Student'
   };
 
+  const handleDelete = (id: number) => {
+    setConfirmModal({ isOpen: true, userId: id });
+  };
+
+  const cancelDelete = () => {
+    setConfirmModal({ isOpen: false, organizerId: null });
+  };
+
   const roleIcons = {
     event_organizer: <UserStar size={20} className="text-purple-600" />,
     staff: <UserCog size={20} className="text-blue-600" />,
     student: <UserIcon size={20} className="text-green-600" />
+  };
+
+  const handleStatusUser = async (id: number, status: string) => {
+    try {
+      const response = await userService.patchUserStatus(id, { status });
+      if (response.data) {
+        toast.success('Cập nhật trạng thái người dùng thành công');
+        fetchUsers();
+      } else {
+        toast.error('Cập nhật trạng thái người dùng thất bại');
+      }
+    } catch (error: any) {
+      console.error('Error updating user status:', error);
+      toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+    }
   };
 
   useEffect(() => {
@@ -39,14 +72,18 @@ const UserListTable = () => {
   useEffect(() => {
     filterUsers();
     console.log("object", roleFromUrl);
-  }, [users, searchTerm]);
+  }, [users, searchTerm, statusFilter]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response = await userService.getUsers({ roleName: activeTab });
       if (response.data.data) {
-        setUsers(response.data.data);
+        // Filter out users with PENDING status
+        const approvedUsers = response.data.data.filter((user: User) => user.status !== 'PENDING');
+        const pendingUsers = response.data.data.filter((user: User) => user.status === 'PENDING');
+        setPendingUsers(pendingUsers);
+        setUsers(approvedUsers);
       }
     } catch (error: any) {
       console.error('Error fetching users:', error);
@@ -56,20 +93,55 @@ const UserListTable = () => {
     }
   };
 
+  const handleDeactivate = async () => {
+    const userIdConfirm = confirmModal.userId;
+    if (!userIdConfirm) return;
+    try {
+        const reponse = await userService.patchUserDeactivate(userIdConfirm);
+        if(reponse.data){
+            toast.success('Vô hiệu người dùng thành công');
+        }else{
+            toast.error('Vô hiệu người dùng thất bại');
+        }
+        fetchUsers();
+    } catch (error: any) {
+        console.error('Error deactivating user:', error);
+        toast.error('Có lỗi xảy ra khi vô hiệu người dùng');
+    }
+  };
+
+  const handleViewDetail = (user: User) => {
+    setSelectedUser(user);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedUser(null);
+  };
+
   const filterUsers = () => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(users);
-      return;
+    let filtered = users;
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.userName.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term) ||
+        user.firstName.toLowerCase().includes(term) ||
+        user.lastName.toLowerCase().includes(term) ||
+        user.studentCode?.toLowerCase().includes(term)
+      );
     }
 
-    const term = searchTerm.toLowerCase();
-    const filtered = users.filter(user => 
-      user.userName.toLowerCase().includes(term) ||
-      user.email.toLowerCase().includes(term) ||
-      user.firstName.toLowerCase().includes(term) ||
-      user.lastName.toLowerCase().includes(term) ||
-      user.studentCode?.toLowerCase().includes(term)
-    );
+    // Filter by status
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(user => user.isActive);
+    } else if (statusFilter === 'inactive') {
+      filtered = filtered.filter(user => !user.isActive);
+    }
+
     setFilteredUsers(filtered);
   };
 
@@ -88,17 +160,93 @@ const UserListTable = () => {
     <div className="bg-white rounded-xl shadow-sm">
       {/* Search Bar */}
       <div className="p-4 border-b border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none"
-          />
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none bg-white"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Vô hiệu hóa</option>
+          </select>
         </div>
       </div>
+
+      {/* Pending Users Section */}
+      {pendingUsers.length > 0 && (
+        <div className="p-4 border-b border-gray-200 bg-yellow-50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Người dùng chờ duyệt ({pendingUsers.length})
+              </h3>
+          
+            </div>
+          </div>
+          <div className="space-y-3">
+            {pendingUsers.map((user) => (
+              <div key={user.id} className="bg-white p-3 rounded-lg border border-yellow-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {user.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.userName}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-semibold">
+                      {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                    title="Chấp nhận"
+                    onClick={() => handleStatusUser(user.id, 'APPROVED')}
+                  >
+                    <Check size={16} />
+                    <span>Chấp nhận</span>
+                  </button>
+                  <button
+                    className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                    title="Từ chối"
+                    onClick={() => handleStatusUser(user.id, 'REJECTED')}
+                  >
+                    <X size={16} />
+                    <span>Từ chối</span>
+                  </button>
+                  <button
+                    onClick={() => handleViewDetail(user)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    title="Chi tiết"
+                  >
+                    <Eye size={16} />
+                    <span>Chi tiết</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto">
@@ -133,7 +281,7 @@ const UserListTable = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Trạng thái
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
                   Hành động
                 </th>
               </tr>
@@ -186,9 +334,22 @@ const UserListTable = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-600">
-                      {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-                    </span>
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleViewDetail(user)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Xem chi tiết"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                   </td>
                 </tr>
               ))}
@@ -205,6 +366,24 @@ const UserListTable = () => {
           </p>
         </div>
       )}
+
+      {/* User Detail Modal */}
+      <UserDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        user={selectedUser}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="Xác nhận dừng hoạt động"
+        message="Bạn có chắc chắn muốn dừng hoạt động người dùng này?"
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        type="danger"
+        onConfirm={handleDeactivate}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import {
   UserCog,
   UserStar,
   User,
+  UserX,
 } from 'lucide-react';
 
 interface SideBarProps {
@@ -82,7 +83,6 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'users',
       label: 'Quản lý Người dùng',
       icon: <UserCog size={20} />,
-      path: '/admin/users',
       children: [
         {
           id: 'event-organizers',
@@ -101,7 +101,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
           label: 'Student',
           icon: <User size={18} />,
           path: '/admin/users?role=student',
-        }
+        },
       ],
     },
   ];
@@ -268,7 +268,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
         <div className="flex items-center gap-3">
           <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = "/admin/dashboard")}
           >
           <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
               F
