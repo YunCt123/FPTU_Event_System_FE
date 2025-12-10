@@ -22,6 +22,7 @@ export interface User {
   isActive: boolean;
   roleName: "student" | "admin" | "staff" | "event_organizer";
   campusId: number;
+  campus: Campus;
 }
 
 export interface GetPendingUsersResponse {

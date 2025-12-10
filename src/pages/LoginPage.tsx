@@ -60,6 +60,8 @@ const LoginPage = () => {
             navigate("/home");
             break;
         }
+      }else{
+        toast.error("Email or password is incorrect!");
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 
