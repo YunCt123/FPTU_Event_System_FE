@@ -56,11 +56,35 @@ export interface meta{
 }
 
 export interface eventSpeaker{
+  id:number;
+  topic: string;
+  speaker: Speaker;
+}
 
+export interface Speaker{
+  id: number;
+  name: string;
+  bio?: string;
+  avatarUrl?: string;
+  type: string;
+  company?: string;
 }
 
 export interface eventStaff{
+  id:number;
+  createdAt: string;
+  userId: number;
+  user: User;
+}
 
+export interface User{
+  id: number;
+  userName: string;
+  email: string;
+  firstName: string; 
+  lastName: string;
+  avatar?: string;
+  roleName: "student" | "admin" | "staff" | "event_organizer";
 }
 
 export interface GetEventResponse {
@@ -86,6 +110,7 @@ export interface GetEventResponse {
   host: host;
   eventSpeakers: eventSpeaker[];
   eventStaffs: eventStaff[];
+  checkinCount: number;
 }
 export interface GetTotalEventsResponse {
   data: GetEventResponse

@@ -11,16 +11,16 @@ interface UserDetailModalProps {
 const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user }) => {
   if (!isOpen || !user) return null;
 
-  const getCampusName = (campusId: number) => {
-    const campuses: { [key: number]: string } = {
-      1: 'FU - Hòa Lạc',
-      2: 'FU - Hồ Chí Minh',
-      3: 'FU - Đà Nẵng',
-      4: 'FU - Cần Thơ',
-      5: 'FU - Quy Nhơn'
-    };
-    return campuses[campusId] || 'N/A';
-  };
+  // const getCampusName = (campusId: number) => {
+  //   const campuses: { [key: number]: string } = {
+  //     1: 'FU - Hòa Lạc',
+  //     2: 'FU - Hồ Chí Minh',
+  //     3: 'FU - Đà Nẵng',
+  //     4: 'FU - Cần Thơ',
+  //     5: 'FU - Quy Nhơn'
+  //   };
+  //   return campuses[campusId] || 'N/A';
+  // };
 
   const getRoleLabel = (role: string) => {
     const roles: { [key: string]: string } = {
@@ -43,7 +43,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div 
@@ -198,7 +198,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                 <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
                     <label className="font-medium text-gray-500 uppercase text-[10px]">Campus</label>
-                    <p className="text-gray-900 font-semibold text-xs">🏫 {getCampusName(user.campus?.id || user.campusId)}</p>
+                    <p className="text-gray-900 font-semibold text-xs">{user.campus?.name || user.campusId}</p>
                   </div>
                   {user.studentCode && (
                     <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -240,7 +240,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                     <p className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
                       user.isActive ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
                     }`}>
-                      {user.isActive ? '✓ Hoạt động' : '✕ Vô hiệu'}
+                      {user.isActive ? 'Hoạt động' : 'Vô hiệu'}
                     </p>
                   </div>
                   {/* <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded border border-blue-200">
