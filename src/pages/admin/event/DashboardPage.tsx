@@ -170,7 +170,6 @@ const DashboardPage = () => {
           value={responseData?.meta?.total || 0}
           icon={Calendar}
           color="blue"
-          trend={{ value: 12, isPositive: true }}
         />
         
         <StatsCard 
@@ -178,7 +177,6 @@ const DashboardPage = () => {
           value={responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
           icon={Clock}
           color="yellow"
-          trend={{ value: 5, isPositive: false }}
         />
         
         <StatsCard 
@@ -186,7 +184,6 @@ const DashboardPage = () => {
           value={responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
           icon={CheckCircle}
           color="green"
-          trend={{ value: 18, isPositive: true }}
         />
         
         <StatsCard 
@@ -194,7 +191,6 @@ const DashboardPage = () => {
           value={responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
           icon={XCircle}
           color="red"
-          trend={{ value: 3, isPositive: false }}
         />
       </div>
 
@@ -353,7 +349,9 @@ const DashboardPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Users size={16} className="text-gray-400" />
-                      <span className="text-sm text-gray-900">{event.registeredCount || 0} người</span>
+                      <span className="text-sm text-gray-900">
+                        {event.checkinCount || 0} người
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -376,9 +374,9 @@ const DashboardPage = () => {
             <Users size={24} className="opacity-80" />
           </div>
           <p className="text-3xl font-bold">
-            {responseData?.data?.reduce((sum: number, e: any) => sum + (e.registeredCount || 0), 0) || 0}
+            {responseData?.data?.reduce((sum: number, e: any) => sum + (e.checkinCount || 0), 0) || 0}
           </p>
-          <p className="text-xs opacity-75 mt-2">Tổng đăng ký tham gia</p>
+          <p className="text-xs opacity-75 mt-2">Tổng check-in tham gia</p>
         </div>
 
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
