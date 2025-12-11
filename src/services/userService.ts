@@ -22,6 +22,14 @@ const userService = {
 
     async patchUserStatus(id: number, data:{status: string}): Promise<AxiosResponse<ApiResponse<GetUsersStatusResponse>>> {
         return await apiUtils.patch<ApiResponse<GetUsersStatusResponse>>(`${USER_URL}${id}/status`, data);
+    },
+
+    async getUserById(id: number): Promise<AxiosResponse<ApiResponse<User>>> {
+        return await apiUtils.get<ApiResponse<User>>(`${USER_URL}${id}`);
+    },
+
+    async getStaffUser(): Promise<AxiosResponse<ApiResponse<User[]>>> {
+        return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}staff`);
     }
 
       

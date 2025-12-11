@@ -69,21 +69,25 @@ export interface meta{
   totalPages: number;
 }
 
-export interface speaker{
-  id: number;
-  name: string;
-  bio: string;
-  avatar: string;
-  type: string;
-  company: string;
-}
+export interface eventSpeaker{
 
-export interface checkIncount{
-  checkInCount: number;
 }
 
 export interface eventStaff{
+  id:number;
+  createdAt: string;
+  userId: number;
+  user: User;
+}
 
+export interface User{
+  id: number;
+  userName: string;
+  email: string;
+  firstName: string; 
+  lastName: string;
+  avatar?: string;
+  roleName: "student" | "admin" | "staff" | "event_organizer";
 }
 
 export interface GetEventResponse {
@@ -109,7 +113,6 @@ export interface GetEventResponse {
   host: host;
   eventSpeakers: eventSpeaker[];
   eventStaffs: eventStaff[];
-  checkInCount: checkIncount;
 }
 
 export interface GetTotalEventsResponse {

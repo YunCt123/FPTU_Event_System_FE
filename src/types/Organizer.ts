@@ -1,3 +1,5 @@
+import type { GetEventResponse } from "./Event";
+
 export interface Campus {
   id: number;
   name: string;
@@ -49,3 +51,15 @@ export interface OrganizerRequest {
 export interface OrganizerDeleteResponse {
     message: string;
 };
+
+export interface OrganizerEventsResponse {
+  data: GetEventResponse[];
+  meta?: meta;
+};
+
+export interface meta{
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

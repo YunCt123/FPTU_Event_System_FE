@@ -13,7 +13,10 @@ import {
   UserStar,
   User,
   UserX,
+  LogOut,
 } from 'lucide-react';
+
+import Logout from '../auth/Logout';
 
 interface SideBarProps {
   userRole: 'admin' | 'organizer';
@@ -262,32 +265,44 @@ const SideBar = ({ userRole }: SideBarProps) => {
     );
   };
 
+  
+
   return (
     <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 shrink-0">
+      <div className="p-6 border-b border-gray-200 shrink-0 gap-5">
         <div className="flex items-center gap-3">
           <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/admin/dashboard")}
+            onClick={() => (window.location.href = "/home")}
           >
-          <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
               F
             </div>
-          <div>
-            <h2 className="font-bold text-gray-900">FPT-Event</h2>
-            <p className="text-xs text-gray-500">
-              {userRole === 'admin' ? 'Admin Panel' : 'Organizer Panel'}
-            </p>
-          </div>
+            <div>
+              <h2 className="font-bold text-gray-900">FPT-Event</h2>
+              <p className="text-xs text-gray-500">
+                {userRole === "admin" ? "Admin Panel" : "Organizer Panel"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Menu - Scrollable */}
-      <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
-        {menuItems.map((item) => renderMenuItem(item))}
-      </nav>
+      <div className="p-4 space-y-2 flex-1 overflow-y-auto flex-col justify-between">
+        <nav className="space-y-2">
+          {menuItems.map((item) => renderMenuItem(item))}
+        </nav>
+        <div className="border-t border-gray-100 mt-1 pt-1 ">
+          <button
+            onClick={Logout}
+            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+          >
+            <LogOut size={16} /> Đăng xuất
+          </button>
+        </div>
+      </div>
 
       {/* Footer - Always at bottom */}
       <div className="p-4 border-t border-gray-200 shrink-0 bg-white">

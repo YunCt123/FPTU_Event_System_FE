@@ -45,6 +45,7 @@ const UserListTable = () => {
   };
 
   const handleStatusUser = async (id: number, status: string) => {
+    setLoading(true);
     try {
       const response = await userService.patchUserStatus(id, { status });
       if (response.data) {
@@ -56,6 +57,8 @@ const UserListTable = () => {
     } catch (error: any) {
       console.error('Error updating user status:', error);
       toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,6 +99,7 @@ const UserListTable = () => {
   const handleDeactivate = async () => {
     const userIdConfirm = confirmModal.userId;
     if (!userIdConfirm) return;
+    setLoading(true);
     try {
         const reponse = await userService.patchUserDeactivate(userIdConfirm);
         if(reponse.data){
@@ -107,6 +111,9 @@ const UserListTable = () => {
     } catch (error: any) {
         console.error('Error deactivating user:', error);
         toast.error('Có lỗi xảy ra khi vô hiệu người dùng');
+    } finally {
+        setLoading(false);
+        setConfirmModal({ isOpen: false, userId: null });
     }
   };
 
