@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'react-toastify';
-import type { Venue, VenueStatus, CreateVenueRequest, UpdateVenueRequest } from '../../../types/Venue';
-import type { Campus } from '../../../types/Campus';
-import VenueFormModal from '../../../components/admin/venue/VenueFormModal';
-import ConfirmModal from '../../../components/common/ConfirmModal';
-import { venueService, campusService } from '../../../services';
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
+import type {
+  Venue,
+  VenueStatus,
+  CreateVenueRequest,
+  UpdateVenueRequest,
+} from "../../../types/Venue";
+import type { Campus } from "../../../types/Campus";
+import VenueFormModal from "../../../components/admin/venue/VenueFormModal";
+import ConfirmModal from "../../../components/common/ConfirmModal";
+import { venueService, campusService } from "../../../services";
 
 const AdminVenuePage = () => {
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -35,33 +40,35 @@ const AdminVenuePage = () => {
     try {
       const response = await campusService.getAllCampuses();
       setCampuses(response.data);
-      
+
       // Auto-select first campus if available
       if (response.data.length > 0) {
         setSelectedCampusId(response.data[0].id);
       }
     } catch (error: any) {
-      console.error('Error fetching campuses:', error);
-      toast.error('Không thể tải danh sách campus');
+      console.error("Error fetching campuses:", error);
+      toast.error("Không thể tải danh sách campus");
     }
   };
 
   const fetchVenues = async () => {
     if (!selectedCampusId) return;
-    
+
     try {
       setIsLoading(true);
       const response = await venueService.getAllVenues();
-      
+
       // Filter venues by selected campus
       const filteredVenues = response.data.filter(
         (venue: Venue) => venue.campusId === selectedCampusId
       );
-      
+
       setVenues(filteredVenues);
     } catch (error: any) {
-      console.error('Error fetching venues:', error);
-      toast.error(error?.response?.data?.message || 'Không thể tải danh sách venue');
+      console.error("Error fetching venues:", error);
+      toast.error(
+        error?.response?.data?.message || "Không thể tải danh sách venue"
+      );
       setVenues([]);
     } finally {
       setIsLoading(false);
@@ -88,14 +95,14 @@ const AdminVenuePage = () => {
 
     try {
       await venueService.deleteVenue(venueId);
-      
-      toast.success('Xóa venue thành công!');
-      
+
+      toast.success("Xóa venue thành công!");
+
       // Refresh the venue list from API after delete
       await fetchVenues();
     } catch (error: any) {
-      console.error('Error deleting venue:', error);
-      toast.error(error?.response?.data?.message || 'Không thể xóa venue');
+      console.error("Error deleting venue:", error);
+      toast.error(error?.response?.data?.message || "Không thể xóa venue");
     } finally {
       setConfirmModal({ isOpen: false, venueId: null });
     }
@@ -119,16 +126,16 @@ const AdminVenuePage = () => {
           location: newVenue.location,
           mapImageUrl: newVenue.mapImageUrl || undefined,
         };
-        
+
         await venueService.updateVenue(newVenue.id, updateData);
-        toast.success('Cập nhật venue thành công!');
+        toast.success("Cập nhật venue thành công!");
       } else {
         // Add new venue - must have campusId
         if (!selectedCampusId) {
-          toast.error('Vui lòng chọn campus trước khi thêm venue');
+          toast.error("Vui lòng chọn campus trước khi thêm venue");
           return;
         }
-        
+
         const createData: CreateVenueRequest = {
           name: newVenue.name,
           location: newVenue.location,
@@ -138,31 +145,37 @@ const AdminVenuePage = () => {
           mapImageUrl: newVenue.mapImageUrl || undefined,
           campusId: selectedCampusId,
         };
-        
+
         await venueService.createVenue(createData);
-        toast.success('Thêm venue thành công!');
+        toast.success("Thêm venue thành công!");
       }
-      
+
       // Refresh the venue list from API after create/update
       await fetchVenues();
+
       handleModalClose();
     } catch (error: any) {
-      console.error('Error saving venue:', error);
-      toast.error(error?.response?.data?.message || 'Không thể lưu venue');
+      console.error("Error saving venue:", error);
+      toast.error(error?.response?.data?.message || "Không thể lưu venue");
     }
   };
 
   const getStatusBadge = (status: VenueStatus) => {
     const statusConfig = {
-      Active: { label: 'Hoạt động', class: 'bg-green-100 text-green-800' },
-      Maintenance: { label: 'Đang sửa chữa', class: 'bg-yellow-100 text-yellow-800' },
-      Inactive: { label: 'Ngừng hoạt động', class: 'bg-red-100 text-red-800' }
+      ACTIVE: { label: "Hoạt động", class: "bg-green-100 text-green-800" },
+      MAINTENANCE: {
+        label: "Đang sửa chữa",
+        class: "bg-yellow-100 text-yellow-800",
+      },
+      INACTIVE: { label: "Ngừng hoạt động", class: "bg-red-100 text-red-800" },
     };
 
-    const config = statusConfig[status] || statusConfig.Inactive;
+    const config = statusConfig[status] || statusConfig.ACTIVE;
 
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.class}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-medium ${config.class}`}
+      >
         {config.label}
       </span>
     );
@@ -174,7 +187,9 @@ const AdminVenuePage = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Venue</h1>
-          <p className="text-gray-600 mt-1">Quản lý danh sách hội trường và địa điểm tổ chức sự kiện</p>
+          <p className="text-gray-600 mt-1">
+            Quản lý danh sách hội trường và địa điểm tổ chức sự kiện
+          </p>
         </div>
         <button
           onClick={handleCreate}
@@ -192,7 +207,7 @@ const AdminVenuePage = () => {
           Chọn Campus <span className="text-red-500">*</span>
         </label>
         <select
-          value={selectedCampusId || ''}
+          value={selectedCampusId || ""}
           onChange={(e) => setSelectedCampusId(Number(e.target.value))}
           className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
         >
@@ -216,13 +231,27 @@ const AdminVenuePage = () => {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Hình ảnh</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Tên Venue</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Vị trí</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Sơ đồ ghế</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Trạng thái</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">Thao tác</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  ID
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Hình ảnh
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Tên Venue
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Vị trí
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Sơ đồ ghế
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -237,20 +266,31 @@ const AdminVenuePage = () => {
                 </tr>
               ) : !selectedCampusId ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Vui lòng chọn campus để xem danh sách venues
                   </td>
                 </tr>
               ) : venues.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Campus này chưa có venue nào. Nhấn "Thêm Venue" để bắt đầu.
                   </td>
                 </tr>
               ) : (
                 venues.map((venue) => (
-                  <tr key={venue.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{venue.id}</td>
+                  <tr
+                    key={venue.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {venue.id}
+                    </td>
                     <td className="px-6 py-4">
                       {venue.mapImageUrl ? (
                         <img
@@ -260,20 +300,30 @@ const AdminVenuePage = () => {
                         />
                       ) : (
                         <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No image</span>
+                          <span className="text-gray-400 text-xs">
+                            No image
+                          </span>
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{venue.name}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {venue.name}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{venue.location}</div>
+                      <div className="text-sm text-gray-900">
+                        {venue.location}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {venue.hasSeats ? `${venue.row} x ${venue.column}` : 'Không có ghế'}
+                      {venue.hasSeats
+                        ? `${venue.row} x ${venue.column}`
+                        : "Không có ghế"}
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(venue.status)}</td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(venue.status)}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button

@@ -326,7 +326,7 @@ const EventManagementPage = () => {
                   <tr key={event.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-linear from-orange-400 to-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 bg-linear from-orange-400 to-red-500 rounded-lg flex items-center justify-center shrink-0">
                           <Calendar className="text-white" size={24} />
                         </div>
                         <div className="min-w-0 flex-1">
