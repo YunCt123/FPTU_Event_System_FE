@@ -1,4 +1,12 @@
-export type EventStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
+export type EventStatus = 
+  | 'DRAFT' 
+  | 'PENDING' 
+  | 'APPROVED' 
+  | 'REJECTED' 
+  | 'CANCELLED' 
+  | 'CANCELED'  // THÊM
+  | 'COMPLETED'
+  | 'PUBLISHED'; // THÊM
 export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
 
 export interface Event {
