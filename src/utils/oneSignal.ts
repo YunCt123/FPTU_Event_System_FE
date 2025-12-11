@@ -25,7 +25,8 @@ export type NotificationType =
   | "event_approved"
   | "event_rejected"
   | "one_day"
-  | "thirty_min";
+  | "thirty_min"
+  | "incident_reported";
 
 /**
  * Interface cho notification data từ backend
@@ -36,6 +37,10 @@ export interface NotificationData {
   startTime?: string;
   endTime?: string;
   status?: "PENDING" | "PUBLISHED" | "CANCELED";
+  // Thêm fields cho incident_reported
+  incidentId?: string;
+  severity?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  reporterName?: string;
 }
 
 /**
@@ -260,6 +265,14 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
 
       case "thirty_min":
         toast.warning("⏰ Sự kiện sắp diễn ra trong 30 phút!");
+        if (data.eventId) navigateToEvent(data.eventId);
+        break;
+
+      case "incident_reported":
+        // Thông báo sự cố mới (cho Admin và Organizer)
+        const severityText = data.severity || "MEDIUM";
+        const reporterText = data.reporterName ? ` - Người báo: ${data.reporterName}` : "";
+        toast.error(`🚨 Báo cáo sự cố mới - Mức độ: ${severityText}${reporterText}`);
         if (data.eventId) navigateToEvent(data.eventId);
         break;
 
