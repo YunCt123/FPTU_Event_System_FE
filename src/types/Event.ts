@@ -103,6 +103,7 @@ export interface GetEventResponse {
   status: string;
   maxCapacity: number;
   registeredCount: number;
+  checkinCount: number; // THÊM FIELD NÀY
   isGlobal: boolean;
   createdAt: string;
   hostId: number;
