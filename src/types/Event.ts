@@ -33,11 +33,20 @@ export interface organizer{
   logoUrl?: string;
 }
 
+export interface campus{
+  id: number;
+  name: string;
+  code: string;
+  addres: string;
+}
+
 export interface venue{
   id: number;
   name: string;
   location: string;
   hasSeats: boolean;
+  campusId?: number;
+  campus: campus;
 }
 
 export interface host{
@@ -46,6 +55,11 @@ export interface host{
   email: string;
   firtName: string;
   lastName: string;
+} 
+
+export interface eventSpeaker{
+  id: number;
+  topic: string;
 }
 
 export interface meta{
@@ -55,8 +69,17 @@ export interface meta{
   totalPages: number;
 }
 
-export interface eventSpeaker{
+export interface speaker{
+  id: number;
+  name: string;
+  bio: string;
+  avatar: string;
+  type: string;
+  company: string;
+}
 
+export interface checkIncount{
+  checkInCount: number;
 }
 
 export interface eventStaff{
@@ -86,7 +109,9 @@ export interface GetEventResponse {
   host: host;
   eventSpeakers: eventSpeaker[];
   eventStaffs: eventStaff[];
+  checkInCount: checkIncount;
 }
+
 export interface GetTotalEventsResponse {
   data: GetEventResponse
   meta?: meta;
@@ -97,6 +122,10 @@ export interface GetTotalEventsByMothResponse {
   totalEvents: number;
 }
 
+export interface GetTotalRegisteredEventsResponse {
+  date: string;
+  totalRegistrations: number;
+}
 export interface CreateEventRequest {
   title: string;
   description: string;
