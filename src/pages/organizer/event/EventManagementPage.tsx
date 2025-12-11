@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
+import { organizerService } from '../../../services';
+import { toast } from 'react-toastify';
 
 const EventManagementPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -23,70 +25,116 @@ const EventManagementPage = () => {
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'ALL'>('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch events on mount
   useEffect(() => {
-    // Mock data - Replace with actual API call
-    const mockEvents: Event[] = [
-      {
-        id: 1,
-        title: 'Workshop: AI & Machine Learning',
-        description: 'Hội thảo về AI và Machine Learning cho sinh viên',
-        eventType: 'WORKSHOP',
-        status: 'APPROVED',
-        startDate: '2024-12-10T09:00:00',
-        endDate: '2024-12-10T17:00:00',
-        registrationDeadline: '2024-12-08T23:59:59',
-        maxParticipants: 100,
-        currentParticipants: 85,
-        venueId: 1,
-        venueName: 'Hội trường A',
-        campusId: 1,
-        campusName: 'FPT Hà Nội',
-        organizerId: 1,
-        organizerName: 'CLB AI FPT',
-        requiresApproval: true,
-        isPublished: true,
-      },
-      {
-        id: 2,
-        title: 'Tech Conference 2024',
-        description: 'Hội nghị công nghệ thường niên',
-        eventType: 'CONFERENCE',
-        status: 'PENDING',
-        startDate: '2024-12-15T08:00:00',
-        endDate: '2024-12-16T18:00:00',
-        registrationDeadline: '2024-12-12T23:59:59',
-        maxParticipants: 200,
-        currentParticipants: 150,
-        campusId: 1,
-        campusName: 'FPT Hà Nội',
-        organizerId: 1,
-        requiresApproval: true,
-        isPublished: false,
-      },
-      {
-        id: 3,
-        title: 'Football Tournament 2024',
-        description: 'Giải bóng đá sinh viên',
-        eventType: 'SPORTS',
-        status: 'DRAFT',
-        startDate: '2024-12-20T14:00:00',
-        endDate: '2024-12-20T18:00:00',
-        registrationDeadline: '2024-12-18T23:59:59',
-        maxParticipants: 150,
-        currentParticipants: 45,
-        venueId: 2,
-        venueName: 'Sân vận động',
-        campusId: 1,
-        organizerId: 1,
-        requiresApproval: true,
-        isPublished: false,
-      },
-    ];
-    setEvents(mockEvents);
-    setFilteredEvents(mockEvents);
+    fetchEventsByOrganizer();
   }, []);
 
+  const fetchEventsByOrganizer = async () => {
+    setIsLoading(true);
+    try {
+      console.log('📡 Fetching events...');
+      console.log('Token:', localStorage.getItem('token'));
+      console.log('User:', localStorage.getItem('user'));
+      
+      const response = await organizerService.getOrganizerEvents();
+      
+      console.log('Full Response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
+      console.log('Response data.data:', response.data?.data);
+      
+      if (response && response.data && response.data.data) {
+        const apiData = response.data.data;
+        console.log('Events data:', apiData);
+        
+        // Check if apiData is array or object
+        let eventsArray: any[] = [];
+        
+        if (Array.isArray(apiData.data)) {
+          eventsArray = apiData.data;
+        } else if (Array.isArray(apiData)) {
+          eventsArray = apiData;
+        } else {
+          console.error('Unexpected data structure:', apiData);
+          toast.error('Cấu trúc dữ liệu không đúng');
+          setEvents([]);
+          setFilteredEvents([]);
+          return;
+        }
+
+        if (eventsArray.length === 0) {
+          console.log('No events found');
+          setEvents([]);
+          setFilteredEvents([]);
+          return;
+        }
+
+        // Map response data to Event type
+        const mappedEvents: Event[] = eventsArray.map((event: any) => {
+          console.log('Mapping event:', event);
+          console.log('Event status from API:', event.status); // THÊM dòng này
+          return {
+            id: parseInt(event.id) || event.id,
+            title: event.title || 'Untitled Event',
+            description: event.description || '',
+            eventType: event.eventType || 'WORKSHOP',
+            status: (event.status || 'DRAFT') as EventStatus,
+            startDate: event.startTime || event.startDate,
+            endDate: event.endTime || event.endDate,
+            registrationDeadline: event.endTimeRegistration || event.registrationDeadline,
+            maxParticipants: event.maxCapacity || 0,
+            currentParticipants: event.registeredCount || 0,
+            venueId: event.venueId,
+            venueName: event.venue?.name || 'Chưa có',
+            campusId: event.venue?.campusId,
+            campusName: event.venue?.campus?.name || '',
+            organizerId: event.organizerId,
+            organizerName: event.organizer?.name || '',
+            requiresApproval: true,
+            isPublished: event.status === 'PUBLISHED',
+          };
+        });
+
+        console.log('Mapped events:', mappedEvents);
+        setEvents(mappedEvents);
+        setFilteredEvents(mappedEvents);
+      } else {
+        console.error('Invalid response structure:', response);
+        toast.error('Không thể tải dữ liệu sự kiện');
+        setEvents([]);
+        setFilteredEvents([]);
+      }
+    } catch (error: any) {
+      console.log('❌ Error occurred');
+      console.log('Error:', error);
+      console.log('Error response:', error.response);
+      console.log('Error status:', error.response?.status);
+      console.log('Error data:', error.response?.data);
+      console.log('Error message:', error.message);
+      
+      // Chi tiết error message
+      if (error.response?.status === 401) {
+        toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        // Redirect to login
+        window.location.href = '/login';
+      } else if (error.response?.status === 403) {
+        toast.error('Bạn không có quyền truy cập.');
+      } else if (error.response?.status === 404) {
+        toast.error('Không tìm thấy API endpoint.');
+      } else {
+        toast.error(error.response?.data?.message || 'Đã xảy ra lỗi khi tải sự kiện.');
+      }
+      
+      setEvents([]);
+      setFilteredEvents([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
     let filtered = events;
 
@@ -107,7 +155,7 @@ const EventManagementPage = () => {
 
   const getStatusBadge = (status: EventStatus) => {
     const statusConfig: Record<
-      EventStatus,
+      string, // ĐỔI từ EventStatus sang string
       { label: string; className: string }
     > = {
       DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-700' },
@@ -122,9 +170,23 @@ const EventManagementPage = () => {
         label: 'Hoàn thành',
         className: 'bg-blue-100 text-blue-700',
       },
+      // THÊM CÁC STATUS KHÁC TỪ BACKEND
+      PUBLISHED: {
+        label: 'Đã xuất bản',
+        className: 'bg-blue-100 text-blue-700',
+      },
+      CANCELED: { // backend có thể dùng CANCELED thay vì CANCELLED
+        label: 'Đã hủy',
+        className: 'bg-gray-100 text-gray-700',
+      },
     };
 
-    const config = statusConfig[status];
+    // ✅ FALLBACK nếu status không tồn tại
+    const config = statusConfig[status] || {
+      label: status || 'Không xác định',
+      className: 'bg-gray-100 text-gray-700',
+    };
+
     return (
       <span
         className={`px-2 py-1 text-xs font-medium rounded-full ${config.className}`}
@@ -185,6 +247,18 @@ const EventManagementPage = () => {
     approved: events.filter((e) => e.status === 'APPROVED').length,
     published: events.filter((e) => e.isPublished).length,
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F27125] mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -326,7 +400,7 @@ const EventManagementPage = () => {
                   <tr key={event.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-linear from-orange-400 to-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
                           <Calendar className="text-white" size={24} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -462,6 +536,7 @@ const EventManagementPage = () => {
             }
             setIsModalOpen(false);
             setSelectedEvent(null);
+            fetchEventsByOrganizer(); // Refresh data
           }}
         />
       )}

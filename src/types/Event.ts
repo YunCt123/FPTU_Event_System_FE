@@ -1,4 +1,12 @@
-export type EventStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
+export type EventStatus = 
+  | 'DRAFT' 
+  | 'PENDING' 
+  | 'APPROVED' 
+  | 'REJECTED' 
+  | 'CANCELLED' 
+  | 'CANCELED'  // THÊM
+  | 'COMPLETED'
+  | 'PUBLISHED'; // THÊM
 export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
 
 export interface Event {
@@ -33,11 +41,20 @@ export interface organizer{
   logoUrl?: string;
 }
 
+export interface campus{
+  id: number;
+  name: string;
+  code: string;
+  addres: string;
+}
+
 export interface venue{
   id: number;
   name: string;
   location: string;
   hasSeats: boolean;
+  campusId?: number;
+  campus: campus;
 }
 
 export interface host{
@@ -46,6 +63,11 @@ export interface host{
   email: string;
   firtName: string;
   lastName: string;
+} 
+
+export interface eventSpeaker{
+  id: number;
+  topic: string;
 }
 
 export interface meta{
@@ -60,7 +82,20 @@ export interface eventSpeaker{
 }
 
 export interface eventStaff{
+  id:number;
+  createdAt: string;
+  userId: number;
+  user: User;
+}
 
+export interface User{
+  id: number;
+  userName: string;
+  email: string;
+  firstName: string; 
+  lastName: string;
+  avatar?: string;
+  roleName: "student" | "admin" | "staff" | "event_organizer";
 }
 
 export interface GetEventResponse {
@@ -76,6 +111,7 @@ export interface GetEventResponse {
   status: string;
   maxCapacity: number;
   registeredCount: number;
+  checkinCount: number; // THÊM FIELD NÀY
   isGlobal: boolean;
   createdAt: string;
   hostId: number;
@@ -88,6 +124,20 @@ export interface GetEventResponse {
   eventStaffs: eventStaff[];
 }
 
+export interface GetTotalEventsResponse {
+  data: GetEventResponse
+  meta?: meta;
+}
+
+export interface GetTotalEventsByMothResponse {
+  month: string;
+  totalEvents: number;
+}
+
+export interface GetTotalRegisteredEventsResponse {
+  date: string;
+  totalRegistrations: number;
+}
 export interface CreateEventRequest {
   title: string;
   description: string;
