@@ -6,6 +6,11 @@ import authService from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import { GOOGLE_URL } from "../constants/apiEndPoints";
 import RegisterUserModal from "../components/auth/RegisterUserModal";
+import {
+  requestNotificationPermission,
+  registerSubscriptionWithBackend,
+  isPushNotificationsEnabled,
+} from "../utils/oneSignal";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,6 +21,48 @@ const LoginPage = () => {
 
   const handleGoogleLogin = () => {
     window.location.href = GOOGLE_URL;
+  };
+
+  // Hàm xử lý đăng ký notification sau khi login
+  const handleNotificationSubscription = async () => {
+    try {
+      console.log("🔔 Bắt đầu đăng ký notification...");
+
+      // Kiểm tra xem user đã cho phép notification chưa
+      const isEnabled = await isPushNotificationsEnabled();
+      console.log("📋 Push notifications enabled:", isEnabled);
+
+      if (!isEnabled) {
+        // Nếu chưa cho phép, xin quyền trước
+        console.log("🔔 Xin quyền notification...");
+        await requestNotificationPermission();
+
+        // Đợi để user click Allow/Block và OneSignal xử lý
+        console.log("⏳ Đợi user cho phép notification...");
+
+        // Retry nhiều lần để đợi subscriptionId
+        for (let i = 0; i < 10; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const result = await registerSubscriptionWithBackend();
+          if (result) {
+            console.log("✅ Đăng ký thành công sau", i + 1, "giây");
+            return;
+          }
+          console.log(`⏳ Retry ${i + 1}/10...`);
+        }
+        console.log(
+          "⚠️ Không thể đăng ký sau 10 giây. User có thể chưa cho phép notification."
+        );
+        return;
+      }
+
+      // Đăng ký subscription với backend
+      console.log("📤 Đăng ký subscription với backend...");
+      const result = await registerSubscriptionWithBackend();
+      console.log("📤 Kết quả đăng ký:", result);
+    } catch (error) {
+      console.error("❌ Failed to handle notification subscription:", error);
+    }
   };
 
   const handleLogin = async () => {
@@ -29,24 +76,31 @@ const LoginPage = () => {
       const response = await authService.login({ email, password });
       console.log(response.status);
 
-      
       if (response.status == 201) {
         console.log(response);
         const { accessToken } = response.data;
-        
+
         // Decode accessToken để lấy thông tin user
         const decodedToken: any = jwtDecode(accessToken);
         console.log("Decoded token:", decodedToken);
-        
+
         // Lưu token và thông tin user
         localStorage.setItem("token", accessToken);
         localStorage.setItem("user", JSON.stringify(decodedToken));
-        
+
         toast.success("Login successfully!");
-        
+
+        // Đăng ký nhận thông báo OneSignal sau khi login thành công
+        handleNotificationSubscription();
+
         // Điều hướng dựa trên role từ decoded token
-        const userRole = decodedToken.role || decodedToken.roleName || decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-        
+        const userRole =
+          decodedToken.role ||
+          decodedToken.roleName ||
+          decodedToken[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ];
+
         switch (userRole) {
           case "admin":
             navigate("/admin/dashboard");
@@ -60,27 +114,26 @@ const LoginPage = () => {
             navigate("/home");
             break;
         }
-      }else{
+      } else {
         toast.error("Email or password is incorrect!");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.data?.message || 
-                          "Email or password is incorrect!";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.data?.message ||
+        "Email or password is incorrect!";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
       <div className="flex flex-col items-center justify-center px-10 lg:px-24 py-16 prose">
-        
         <div className="w-full max-w-md border border-gray-300 p-4 rounded-lg">
           <div className="flex justify-center  mb-6">
-            <img src={FPTLogo} alt="FPT Logo" 
-            className="w-32  " />
+            <img src={FPTLogo} alt="FPT Logo" className="w-32  " />
           </div>
           <h1 className="flex justify-center text-[#F27125] text-5xl font-bold mb-10 text-center lg:text-left">
             FPT Events
@@ -101,10 +154,7 @@ const LoginPage = () => {
             <div className="mb-10">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium">Password</label>
-                <a
-                  href="#"
-                  className="text-sm text-blue-600 hover:underline"
-                >
+                <a href="#" className="text-sm text-blue-600 hover:underline">
                   Forgot your password?
                 </a>
               </div>
@@ -126,9 +176,11 @@ const LoginPage = () => {
             </button>
 
             <div className="flex items-center space-x-2 my-6">
-                <div className="grow border-t border-gray-300"></div>
-                <span className="shrink text-xs text-gray-500 font-medium">HOẶC</span>
-                <div className="grow border-t border-gray-300"></div>
+              <div className="grow border-t border-gray-300"></div>
+              <span className="shrink text-xs text-gray-500 font-medium">
+                HOẶC
+              </span>
+              <div className="grow border-t border-gray-300"></div>
             </div>
 
             {/* GOOGLE */}
@@ -137,7 +189,7 @@ const LoginPage = () => {
               disabled={isLoading}
               className="w-full bg-white text-gray-700 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium space-x-3"
             >
-              <img 
+              <img
                 src="https://www.svgrepo.com/show/353817/google-icon.svg"
                 alt="Google"
                 className="w-5 h-5"
@@ -147,7 +199,7 @@ const LoginPage = () => {
             {/* Footer */}
             <p className="text-gray-600 text-sm mt-8 text-center">
               Bạn chưa có tài khoản?{" "}
-              <button 
+              <button
                 onClick={() => setIsRegisterOpen(true)}
                 className="text-[#F27125] font-semibold hover:underline"
               >
