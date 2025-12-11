@@ -268,13 +268,18 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
         if (data.eventId) navigateToEvent(data.eventId);
         break;
 
-      case "incident_reported":
+      case "incident_reported": {
         // Thông báo sự cố mới (cho Admin và Organizer)
         const severityText = data.severity || "MEDIUM";
-        const reporterText = data.reporterName ? ` - Người báo: ${data.reporterName}` : "";
-        toast.error(`🚨 Báo cáo sự cố mới - Mức độ: ${severityText}${reporterText}`);
+        const reporterText = data.reporterName
+          ? ` - Người báo: ${data.reporterName}`
+          : "";
+        toast.error(
+          `🚨 Báo cáo sự cố mới - Mức độ: ${severityText}${reporterText}`
+        );
         if (data.eventId) navigateToEvent(data.eventId);
         break;
+      }
 
       default:
         if (data.eventId) navigateToEvent(data.eventId);
