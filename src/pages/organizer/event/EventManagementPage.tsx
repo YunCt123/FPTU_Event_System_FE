@@ -32,25 +32,34 @@ const EventManagementPage = () => {
     fetchEventsByOrganizer();
   }, []);
 
+  // Thêm hàm normalize status
+  const normalizeStatus = (status: string): EventStatus => {
+    const statusMap: Record<string, EventStatus> = {
+      'DRAFT': 'DRAFT',
+      'PENDING': 'PENDING',
+      'APPROVED': 'APPROVED',
+      'REJECTED': 'REJECTED',
+      'COMPLETED': 'COMPLETED',
+      // Map các status khác từ backend
+      'PUBLISHED': 'APPROVED', // Published coi như Approved
+      'CANCELLED': 'REJECTED', // Cancelled coi như Rejected
+      'CANCELED': 'REJECTED',
+    };
+    
+    return statusMap[status.toUpperCase()] || 'DRAFT';
+  };
+
   const fetchEventsByOrganizer = async () => {
     setIsLoading(true);
     try {
       console.log('📡 Fetching events...');
-      console.log('Token:', localStorage.getItem('token'));
-      console.log('User:', localStorage.getItem('user'));
       
       const response = await organizerService.getOrganizerEvents();
-      
-      console.log('Full Response:', response);
-      console.log('Response status:', response.status);
-      console.log('Response data:', response.data);
-      console.log('Response data.data:', response.data?.data);
       
       if (response && response.data && response.data.data) {
         const apiData = response.data.data;
         console.log('Events data:', apiData);
         
-        // Check if apiData is array or object
         let eventsArray: any[] = [];
         
         if (Array.isArray(apiData.data)) {
@@ -74,14 +83,17 @@ const EventManagementPage = () => {
 
         // Map response data to Event type
         const mappedEvents: Event[] = eventsArray.map((event: any) => {
-          console.log('Mapping event:', event);
-          console.log('Event status from API:', event.status); // THÊM dòng này
+          const originalStatus = event.status || 'DRAFT';
+          const normalizedStatus = normalizeStatus(originalStatus);
+          
+          console.log(`Event: ${event.title}, Original Status: ${originalStatus}, Normalized: ${normalizedStatus}`);
+          
           return {
             id: parseInt(event.id) || event.id,
             title: event.title || 'Untitled Event',
             description: event.description || '',
             eventType: event.eventType || 'WORKSHOP',
-            status: (event.status || 'DRAFT') as EventStatus,
+            status: normalizedStatus, // SỬ DỤNG NORMALIZED STATUS
             startDate: event.startTime || event.startDate,
             endDate: event.endTime || event.endDate,
             registrationDeadline: event.endTimeRegistration || event.registrationDeadline,
@@ -99,6 +111,14 @@ const EventManagementPage = () => {
         });
 
         console.log('Mapped events:', mappedEvents);
+        console.log('Status distribution:', {
+          DRAFT: mappedEvents.filter(e => e.status === 'DRAFT').length,
+          PENDING: mappedEvents.filter(e => e.status === 'PENDING').length,
+          APPROVED: mappedEvents.filter(e => e.status === 'APPROVED').length,
+          REJECTED: mappedEvents.filter(e => e.status === 'REJECTED').length,
+          COMPLETED: mappedEvents.filter(e => e.status === 'COMPLETED').length,
+        });
+        
         setEvents(mappedEvents);
         setFilteredEvents(mappedEvents);
       } else {
@@ -115,10 +135,8 @@ const EventManagementPage = () => {
       console.log('Error data:', error.response?.data);
       console.log('Error message:', error.message);
       
-      // Chi tiết error message
       if (error.response?.status === 401) {
         toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-        // Redirect to login
         window.location.href = '/login';
       } else if (error.response?.status === 403) {
         toast.error('Bạn không có quyền truy cập.');
@@ -136,6 +154,11 @@ const EventManagementPage = () => {
   };
   
   useEffect(() => {
+    console.log('🔍 Filtering events...');
+    console.log('Search query:', searchQuery);
+    console.log('Status filter:', statusFilter);
+    console.log('Total events:', events.length);
+    
     let filtered = events;
 
     if (searchQuery) {
@@ -144,44 +167,40 @@ const EventManagementPage = () => {
           event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           event.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      console.log('After search filter:', filtered.length);
     }
 
     if (statusFilter !== 'ALL') {
-      filtered = filtered.filter((event) => event.status === statusFilter);
+      console.log('Filtering by status:', statusFilter);
+      filtered = filtered.filter((event) => {
+        console.log(`Event "${event.title}" status: ${event.status}, matches: ${event.status === statusFilter}`);
+        return event.status === statusFilter;
+      });
+      console.log('After status filter:', filtered.length);
     }
 
+    console.log('Final filtered events:', filtered.length);
     setFilteredEvents(filtered);
   }, [searchQuery, statusFilter, events]);
 
   const getStatusBadge = (status: EventStatus) => {
     const statusConfig: Record<
-      string, // ĐỔI từ EventStatus sang string
+      string,
       { label: string; className: string }
     > = {
       DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-700' },
       PENDING: {
-        label: 'Chờ duyệt',
+        label: 'Đang xử lý',
         className: 'bg-yellow-100 text-yellow-700',
       },
       APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700' },
-      REJECTED: { label: 'Từ chối', className: 'bg-red-100 text-red-700' },
-      CANCELLED: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-700' },
+      REJECTED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
       COMPLETED: {
         label: 'Hoàn thành',
         className: 'bg-blue-100 text-blue-700',
       },
-      // THÊM CÁC STATUS KHÁC TỪ BACKEND
-      PUBLISHED: {
-        label: 'Đã xuất bản',
-        className: 'bg-blue-100 text-blue-700',
-      },
-      CANCELED: { // backend có thể dùng CANCELED thay vì CANCELLED
-        label: 'Đã hủy',
-        className: 'bg-gray-100 text-gray-700',
-      },
     };
 
-    // ✅ FALLBACK nếu status không tồn tại
     const config = statusConfig[status] || {
       label: status || 'Không xác định',
       className: 'bg-gray-100 text-gray-700',
@@ -189,11 +208,12 @@ const EventManagementPage = () => {
 
     return (
       <span
-        className={`px-2 py-1 text-xs font-medium rounded-full ${config.className}`}
+        className={`inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-full min-w-[100px] ${config.className}`}
       >
         {config.label}
       </span>
     );
+
   };
 
   const handleCreateEvent = () => {
@@ -245,7 +265,8 @@ const EventManagementPage = () => {
     draft: events.filter((e) => e.status === 'DRAFT').length,
     pending: events.filter((e) => e.status === 'PENDING').length,
     approved: events.filter((e) => e.status === 'APPROVED').length,
-    published: events.filter((e) => e.isPublished).length,
+    rejected: events.filter((e) => e.status === 'REJECTED').length,
+    completed: events.filter((e) => e.status === 'COMPLETED').length,
   };
 
   // Loading state
@@ -279,8 +300,8 @@ const EventManagementPage = () => {
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* Stats - Cập nhật lại */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Tổng sự kiện</div>
           <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
@@ -290,7 +311,7 @@ const EventManagementPage = () => {
           <div className="text-2xl font-bold text-gray-600 mt-1">{stats.draft}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Chờ duyệt</div>
+          <div className="text-sm text-gray-600">Đang xử lý</div>
           <div className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -298,8 +319,12 @@ const EventManagementPage = () => {
           <div className="text-2xl font-bold text-green-600 mt-1">{stats.approved}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Đã xuất bản</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.published}</div>
+          <div className="text-sm text-gray-600">Bị từ chối</div>
+          <div className="text-2xl font-bold text-red-600 mt-1">{stats.rejected}</div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600">Hoàn thành</div>
+          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.completed}</div>
         </div>
       </div>
 
@@ -323,7 +348,7 @@ const EventManagementPage = () => {
             </div>
           </div>
 
-          {/* Status Filter */}
+          {/* Status Filter - Cập nhật dropdown */}
           <div className="flex items-center gap-2">
             <Filter size={20} className="text-gray-400" />
             <select
@@ -333,9 +358,9 @@ const EventManagementPage = () => {
             >
               <option value="ALL">Tất cả trạng thái</option>
               <option value="DRAFT">Nháp</option>
-              <option value="PENDING">Chờ duyệt</option>
+              <option value="PENDING">Đang xử lý</option>
               <option value="APPROVED">Đã duyệt</option>
-              <option value="REJECTED">Từ chối</option>
+              <option value="REJECTED">Bị từ chối</option>
               <option value="COMPLETED">Hoàn thành</option>
             </select>
           </div>
@@ -346,27 +371,24 @@ const EventManagementPage = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Sự kiện
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Thời gian
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Địa điểm
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Người tham gia
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Xuất bản
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Hành động
                 </th>
               </tr>
@@ -397,116 +419,148 @@ const EventManagementPage = () => {
                 </tr>
               ) : (
                 filteredEvents.map((event) => (
-                  <tr key={event.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Calendar className="text-white" size={24} />
+                  <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <Calendar className="text-white" size={22} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
+                          <h3 className="text-sm font-bold text-gray-900 leading-tight mb-1">
                             {event.title}
                           </h3>
-                          <p className="text-xs text-gray-600 line-clamp-1 mt-0.5">
+                          <p className="text-xs text-gray-600 line-clamp-1">
                             {event.description}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(event.status)}</td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-gray-900">
-                          <Calendar size={14} className="text-gray-400" />
-                          {new Date(event.startDate).toLocaleDateString('vi-VN')}
+                    <td className="px-6 py-4 align-middle text-center">
+                      {getStatusBadge(event.status)}
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-orange-500 flex-shrink-0" />
+                          <span className="text-sm font-bold text-gray-900">{new Date(event.startDate).toLocaleDateString('vi-VN')}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                          <Clock size={12} className="text-gray-400" />
-                          {new Date(event.startDate).toLocaleTimeString('vi-VN', {
+                        {/* <div className="flex items-center gap-2">
+                          <Clock size={13} className="text-orange-500 flex-shrink-0" />
+                          <span className="text-xs font-medium text-gray-600">{new Date(event.startDate).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
-                          })}
+                          })}</span>
+                        </div> */}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex justify-center">
+                        {event.venueName ? (
+                          <div className="flex items-start gap-2">
+                            {/* <MapPin size={14} className="text-orange-500 flex-shrink-0 mt-0.5" /> */}
+                            <div className="space-y-0.5">
+                              <div className="text-sm font-bold text-gray-900 leading-tight">
+                                {event.venueName}
+                              </div>
+                              {event.campusName && (
+                                <div className="text-xs text-gray-600 font-medium leading-tight">
+                                 {event.campusName}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <MapPin size={14} className="flex-shrink-0" />
+                            <span className="text-sm italic">Chưa có địa điểm</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex flex-col items-center gap-1.5 max-w-[150px] mx-auto">
+                        <div className="flex items-center gap-2">
+                          <Users size={14} className="text-orange-500 flex-shrink-0" />
+                          <span className="text-sm font-bold text-gray-900">
+                            {event.currentParticipants}
+                          </span>
+                          <span className="text-xs text-gray-600 font-medium">
+                            / {event.maxParticipants}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-gradient-to-r from-orange-400 to-orange-600 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(
+                                (event.currentParticipants / event.maxParticipants) * 100,
+                                100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-600 font-medium">
+                          {event.maxParticipants - event.currentParticipants > 0 
+                            ? `Còn ${event.maxParticipants - event.currentParticipants} chỗ`
+                            : '🔴 Đã đầy'}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      {event.venueName ? (
-                        <div className="flex items-center gap-2 text-sm text-gray-900">
-                          <MapPin size={14} className="text-gray-400" />
-                          <span className="line-clamp-1">{event.venueName}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">Chưa có</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Users size={14} className="text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {event.currentParticipants}/{event.maxParticipants}
-                        </span>
+                    {/* <td className="px-6 py-4">
+                      <div className="flex items-center justify-center">
+                        {event.isPublished ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-200">
+                            <Eye size={14} />
+                            Đã xuất bản
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-gray-50 text-gray-500 border border-gray-200">
+                            <Eye size={14} className="opacity-50" />
+                            Chưa xuất bản
+                          </span>
+                        )}
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                        <div
-                          className="bg-[#F27125] h-1.5 rounded-full"
-                          style={{
-                            width: `${
-                              (event.currentParticipants / event.maxParticipants) * 100
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {event.isPublished ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-                          <Eye size={12} />
-                          Đã xuất bản
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">Chưa</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                    </td> */}
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleEditEvent(event)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Chỉnh sửa"
                         >
-                          <Edit size={16} />
+                          <Edit size={18} />
                         </button>
                         {event.status === 'DRAFT' && (
                           <button
                             onClick={() => handleSubmitForApproval(event.id)}
-                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             title="Gửi phê duyệt"
                           >
-                            <Send size={16} />
+                            <Send size={18} />
                           </button>
                         )}
                         {event.status === 'APPROVED' && !event.isPublished && (
                           <button
                             onClick={() => handlePublishEvent(event.id)}
-                            className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                             title="Xuất bản"
                           >
-                            <Eye size={16} />
+                            <Eye size={18} />
                           </button>
                         )}
-                        <button
+                        {/* <button
                           onClick={() => handleDuplicateEvent(event)}
-                          className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                          className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                           title="Nhân bản"
                         >
-                          <Copy size={16} />
-                        </button>
+                          <Copy size={18} />
+                        </button> */}
                         <button
                           onClick={() => handleDeleteEvent(event.id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Xóa"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
@@ -540,6 +594,24 @@ const EventManagementPage = () => {
           }}
         />
       )}
+
+      {/* Thêm button test filter */}
+      <button 
+        onClick={() => {
+          console.log('=== DEBUG FILTER ===');
+          console.log('All events:', events);
+          console.log('Filtered events:', filteredEvents);
+          console.log('Status filter:', statusFilter);
+          console.log('Events by status:');
+          ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'].forEach(status => {
+            const count = events.filter(e => e.status === status).length;
+            console.log(`  ${status}: ${count} events`);
+          });
+        }}
+        className="px-4 py-2 bg-gray-200 rounded"
+      >
+        Debug Filter
+      </button>
     </div>
   );
 };

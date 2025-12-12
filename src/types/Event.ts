@@ -1,12 +1,9 @@
 export type EventStatus = 
-  | 'DRAFT' 
-  | 'PENDING' 
-  | 'APPROVED' 
-  | 'REJECTED' 
-  | 'CANCELLED' 
-  | 'CANCELED'  // THÊM
-  | 'COMPLETED'
-  | 'PUBLISHED'; // THÊM
+  | 'DRAFT'      // Nháp
+  | 'PENDING'    // Đang xử lý
+  | 'APPROVED'   // Đã duyệt
+  | 'REJECTED'   // Bị từ chối
+  | 'COMPLETED'; // Hoàn thành
 export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
 
 export interface Event {
