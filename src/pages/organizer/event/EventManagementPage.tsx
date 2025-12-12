@@ -382,7 +382,7 @@ const EventManagementPage = () => {
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Thời gian
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide min-w-[140px]">
                   Địa điểm
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">
@@ -454,16 +454,15 @@ const EventManagementPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 align-middle">
-                      <div className="flex justify-center">
+                      <div className="flex justify-center min-w-[140px]">
                         {event.venueName ? (
                           <div className="flex items-start gap-2">
-                            {/* <MapPin size={14} className="text-orange-500 flex-shrink-0 mt-0.5" /> */}
                             <div className="space-y-0.5">
-                              <div className="text-sm font-bold text-gray-900 leading-tight">
+                              <div className="text-sm font-bold text-gray-900 whitespace-nowrap">
                                 {event.venueName}
                               </div>
                               {event.campusName && (
-                                <div className="text-xs text-gray-600 font-medium leading-tight">
+                                <div className="text-xs text-gray-600 font-medium whitespace-nowrap">
                                  {event.campusName}
                                 </div>
                               )}
@@ -472,7 +471,7 @@ const EventManagementPage = () => {
                         ) : (
                           <div className="flex items-center gap-2 text-gray-400">
                             <MapPin size={14} className="flex-shrink-0" />
-                            <span className="text-sm italic">Chưa có địa điểm</span>
+                            <span className="text-sm italic whitespace-nowrap">Chưa có địa điểm</span>
                           </div>
                         )}
                       </div>
