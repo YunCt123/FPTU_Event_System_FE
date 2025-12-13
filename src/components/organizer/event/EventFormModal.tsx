@@ -260,27 +260,27 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           isPublished: false,
         };
 
-        console.log("✅ Event created successfully:", savedEvent);
+        console.log("Event created successfully:", savedEvent);
         toast.success("Tạo sự kiện thành công!");
         onSuccess(savedEvent);
       } else {
-        console.error("❌ API returned success=false:", response.data);
+        console.error("API returned success=false:", response.data);
         throw new Error(response.data.message || "Không thể tạo sự kiện");
       }
     } catch (error: any) {
-      console.error("❌ Error submitting form:", error);
-      console.error("❌ Error name:", error.name);
-      console.error("❌ Error message:", error.message);
-      console.error("❌ Error response:", error.response);
-      console.error("❌ Error response data:", error.response?.data);
-      console.error("❌ Error response status:", error.response?.status);
-      console.error("❌ Error response headers:", error.response?.headers);
-      console.error("❌ Error config:", error.config);
+      console.error("Error submitting form:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
+      console.error("Error response status:", error.response?.status);
+      console.error("Error response headers:", error.response?.headers);
+      console.error("Error config:", error.config);
 
       // Log validation errors từ backend nếu có
       if (error.response?.data?.errors) {
         console.error(
-          "❌ Validation errors from backend:",
+          "Validation errors from backend:",
           error.response.data.errors
         );
       }
@@ -311,7 +311,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         errorMessage = error.message;
       }
 
-      console.error("❌ Final error message:", errorMessage);
+      console.error("Final error message:", errorMessage);
       toast.error(errorMessage);
     } finally {
       console.log("=== SUBMIT END ===");

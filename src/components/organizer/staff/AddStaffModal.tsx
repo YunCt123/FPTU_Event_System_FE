@@ -7,13 +7,14 @@ import { X, Search, UserPlus, Users } from "lucide-react";
 interface AddStaffModalProps {
   staffList: eventStaff[];
   eventId: string;
+  eventCampusId?: number;
   isOpen: boolean;
   onClose: () => void;
   onStaffAdded: () => void;
 }
 
 
-const AddStaffModal = ({ staffList, eventId, isOpen, onClose, onStaffAdded }: AddStaffModalProps) => {
+const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onStaffAdded }: AddStaffModalProps) => {
     const [allStaff, setAllStaff] = useState<User[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -39,11 +40,19 @@ const AddStaffModal = ({ staffList, eventId, isOpen, onClose, onStaffAdded }: Ad
         }
     }, [isOpen]);
 
-    // Lọc staff chưa có trong event
+    // Lọc staff chưa có trong event và cùng campus
     const availableStaff = useMemo(() => {
         const existingStaffIds = new Set(staffList.map(s => s.user.id));
-        return allStaff.filter(staff => !existingStaffIds.has(staff.id));
-    }, [allStaff, staffList]);
+        return allStaff.filter(staff => {
+            // Kiểm tra staff chưa được thêm vào event
+            if (existingStaffIds.has(staff.id)) return false;
+            
+            // Nếu event có campusId, chỉ hiển thị staff cùng campus
+            if (eventCampusId && staff.campus?.id !== eventCampusId) return false;
+            
+            return true;
+        });
+    }, [allStaff, staffList, eventCampusId]);
 
     // Tìm kiếm staff
     const filteredStaff = useMemo(() => {
