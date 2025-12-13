@@ -49,7 +49,11 @@ const userService = {
         }
     ): Promise<AxiosResponse<ApiResponse<AttendanceReponse>>> {
         return await apiUtils.get<ApiResponse<AttendanceReponse>>(`${TICKET_URL}events/${eventId}/attendees`, {param} );
-    }
+    },
+
+    async getUserInUse() : Promise<AxiosResponse<ApiResponse<User>>> {
+        return await apiUtils.get<ApiResponse<User>>(`${USER_URL}me`);
+    },
       
 };
 
