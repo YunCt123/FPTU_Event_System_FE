@@ -1,6 +1,9 @@
-import type { Campus } from "./Organizer";
-
-export type EventStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
+export type EventStatus = 
+  | 'DRAFT'      // Nháp
+  | 'PENDING'    // Đang xử lý
+  | 'APPROVED'   // Đã duyệt
+  | 'REJECTED'   // Bị từ chối
+  | 'COMPLETED'; // Hoàn thành
 export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
 
 export interface Event {
@@ -35,11 +38,20 @@ export interface organizer{
   logoUrl?: string;
 }
 
+export interface campus{
+  id: number;
+  name: string;
+  code: string;
+  addres: string;
+}
+
 export interface venue{
   id: number;
   name: string;
   location: string;
   hasSeats: boolean;
+  campusId?: number;
+  campus: campus;
 }
 
 export interface host{
@@ -48,6 +60,11 @@ export interface host{
   email: string;
   firtName: string;
   lastName: string;
+} 
+
+export interface eventSpeaker{
+  id: number;
+  topic: string;
 }
 
 export interface meta{
@@ -58,18 +75,7 @@ export interface meta{
 }
 
 export interface eventSpeaker{
-  id:number;
-  topic: string;
-  speaker: Speaker;
-}
 
-export interface Speaker{
-  id: number;
-  name: string;
-  bio?: string;
-  avatarUrl?: string;
-  type: string;
-  company?: string;
 }
 
 export interface eventStaff{
@@ -104,6 +110,7 @@ export interface GetEventResponse {
   status: string;
   maxCapacity: number;
   registeredCount: number;
+  checkinCount: number; // THÊM FIELD NÀY
   isGlobal: boolean;
   createdAt: string;
   hostId: number;
@@ -114,8 +121,8 @@ export interface GetEventResponse {
   host: host;
   eventSpeakers: eventSpeaker[];
   eventStaffs: eventStaff[];
-  checkinCount: number;
 }
+
 export interface GetTotalEventsResponse {
   data: GetEventResponse
   meta?: meta;
@@ -126,6 +133,10 @@ export interface GetTotalEventsByMothResponse {
   totalEvents: number;
 }
 
+export interface GetTotalRegisteredEventsResponse {
+  date: string;
+  totalRegistrations: number;
+}
 export interface CreateEventRequest {
   title: string;
   description: string;

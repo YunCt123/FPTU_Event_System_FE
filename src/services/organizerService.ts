@@ -1,7 +1,12 @@
 import { apiUtils } from '../api/axios';
 import { EVENT_URL, ORGANIZER_URL } from '../constants/apiEndPoints';
 import type { AxiosResponse } from 'axios';
-import type { OrganizerResponse, OrganizerRequest, OrganizerDeleteResponse, OrganizerEventsResponse } from '../types/Organizer';
+import type { 
+  OrganizerResponse, 
+  OrganizerRequest, 
+  OrganizerDeleteResponse, 
+  OrganizerEventsAPIResponse 
+} from '../types/Organizer';
 import type { ApiResponse } from '../types/ApiResponse';
 import type { CreateStaffResponse, DeleteStaffResponse } from '../types/Staff';
 
@@ -28,11 +33,8 @@ const organizerService = {
         limit?: number;
         search?: string;
         status?: string;
-        organizerId?: number;
-        venueId?: number;
-        category?: string;
-    }): Promise<AxiosResponse<ApiResponse<OrganizerEventsResponse>>> {
-        return await apiUtils.get<ApiResponse<OrganizerEventsResponse>>(`${EVENT_URL}my-events`, { params });
+    }): Promise<AxiosResponse<ApiResponse<OrganizerEventsAPIResponse>>> {
+        return await apiUtils.get<ApiResponse<OrganizerEventsAPIResponse>>(`${EVENT_URL}my-events`, { params });
     },
 
     async postEventStaff(
@@ -49,7 +51,6 @@ const organizerService = {
     ): Promise<AxiosResponse<ApiResponse<DeleteStaffResponse>>> {
         return await apiUtils.delete<ApiResponse<DeleteStaffResponse>>(`${EVENT_URL}${eventId}/staff/${userId}`);
     }
-    
 };
 
 export default organizerService;
