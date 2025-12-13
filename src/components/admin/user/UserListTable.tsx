@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { useSearchParams } from 'react-router-dom';
 import userService from '../../../services/userService';
 import type { User } from '../../../types/User';
-import { UserStar, UserCog, User as UserIcon, Search, Loader, Trash2, Edit, Eye, X, Check } from 'lucide-react';
+import { UserStar, UserCog, User as UserIcon, Search, Loader, Trash2, Edit, Eye, X, Check, UserPlus } from 'lucide-react';
 import UserDetailModal from './UserDetailModal';
 import ConfirmModal from '../../common/ConfirmModal';
 
@@ -22,7 +22,13 @@ const UserListTable = () => {
    const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     userId: number | null;
-  }>({ isOpen: false, userId: null });
+    isDeactivate: boolean;
+  }>({ isOpen: false, userId: null, isDeactivate: true });
+  const [rejectModal, setRejectModal] = useState<{
+    isOpen: boolean;
+    userId: number | null;
+    reason: string;
+  }>({ isOpen: false, userId: null, reason: '' });
 
   const roleLabels = {
     event_organizer: 'Event Organizer',
@@ -31,11 +37,15 @@ const UserListTable = () => {
   };
 
   const handleDelete = (id: number) => {
-    setConfirmModal({ isOpen: true, userId: id });
+    setConfirmModal({ isOpen: true, userId: id, isDeactivate: true });
+  };
+
+  const handleActivate = (id: number) => {
+    setConfirmModal({ isOpen: true, userId: id, isDeactivate: false });
   };
 
   const cancelDelete = () => {
-    setConfirmModal({ isOpen: false, organizerId: null });
+    setConfirmModal({ isOpen: false, userId: null, isDeactivate: true });
   };
 
   const roleIcons = {
@@ -62,6 +72,42 @@ const UserListTable = () => {
     }
   };
 
+  const handleReject = (id: number) => {
+    setRejectModal({ isOpen: true, userId: id, reason: '' });
+  };
+
+  const confirmReject = async () => {
+    if (!rejectModal.userId) return;
+    if (!rejectModal.reason.trim()) {
+      toast.warning('Vui lòng nhập lý do từ chối');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await userService.patchUserStatus(rejectModal.userId, { 
+        status: 'REJECTED',
+        reason: rejectModal.reason 
+      });
+      if (response.data) {
+        toast.success('Từ chối người dùng thành công');
+        setRejectModal({ isOpen: false, userId: null, reason: '' });
+        fetchUsers();
+      } else {
+        toast.error('Từ chối người dùng thất bại');
+      }
+    } catch (error: any) {
+      console.error('Error rejecting user:', error);
+      toast.error('Có lỗi xảy ra khi từ chối người dùng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelReject = () => {
+    setRejectModal({ isOpen: false, userId: null, reason: '' });
+  };
+
   useEffect(() => {
     if (roleFromUrl && roleFromUrl !== activeTab) {
       setActiveTab(roleFromUrl);
@@ -82,8 +128,10 @@ const UserListTable = () => {
     try {
       const response = await userService.getUsers({ roleName: activeTab });
       if (response.data.data) {
-        // Filter out users with PENDING status
-        const approvedUsers = response.data.data.filter((user: User) => user.status !== 'PENDING');
+        // Filter out users with PENDING status and inactive users
+        const approvedUsers = response.data.data.filter((user: User) => 
+          user.status !== 'REJECTED'
+        );
         const pendingUsers = response.data.data.filter((user: User) => user.status === 'PENDING');
         setPendingUsers(pendingUsers);
         setUsers(approvedUsers);
@@ -101,19 +149,28 @@ const UserListTable = () => {
     if (!userIdConfirm) return;
     setLoading(true);
     try {
-        const reponse = await userService.patchUserDeactivate(userIdConfirm);
-        if(reponse.data){
-            toast.success('Vô hiệu người dùng thành công');
-        }else{
-            toast.error('Vô hiệu người dùng thất bại');
+        if (confirmModal.isDeactivate) {
+            const response = await userService.patchUserDeactivate(userIdConfirm);
+            if(response.data){
+                toast.success('Vô hiệu người dùng thành công');
+            }else{
+                toast.error('Vô hiệu người dùng thất bại');
+            }
+        } else {
+            const response = await userService.patchUserActivate(userIdConfirm);
+            if(response.data){
+                toast.success('Kích hoạt người dùng thành công');
+            }else{
+                toast.error('Kích hoạt người dùng thất bại');
+            }
         }
         fetchUsers();
     } catch (error: any) {
-        console.error('Error deactivating user:', error);
-        toast.error('Có lỗi xảy ra khi vô hiệu người dùng');
+        console.error('Error updating user status:', error);
+        toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
     } finally {
         setLoading(false);
-        setConfirmModal({ isOpen: false, userId: null });
+        setConfirmModal({ isOpen: false, userId: null, isDeactivate: true });
     }
   };
 
@@ -235,7 +292,7 @@ const UserListTable = () => {
                   <button
                     className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                     title="Từ chối"
-                    onClick={() => handleStatusUser(user.id, 'REJECTED')}
+                    onClick={() => handleReject(user.id)}
                   >
                     <X size={16} />
                     <span>Từ chối</span>
@@ -349,13 +406,23 @@ const UserListTable = () => {
                         >
                           <Eye size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {user.isActive ? (
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="V\u00f4 hi\u1ec7u h\u00f3a"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivate(user.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="K\u00edch ho\u1ea1t"
+                          >
+                            <UserPlus size={18} />
+                          </button>
+                        )}
                       </div>
                   </td>
                 </tr>
@@ -383,14 +450,53 @@ const UserListTable = () => {
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Xác nhận dừng hoạt động"
-        message="Bạn có chắc chắn muốn dừng hoạt động người dùng này?"
-        confirmText="Xác nhận"
+        title={confirmModal.isDeactivate ? "Xác nhận dừng hoạt động" : "Xác nhận kích hoạt"}
+        message={confirmModal.isDeactivate 
+          ? "Bạn có chắc chắn muốn dừng hoạt động người dùng này?" 
+          : "Bạn có chắc chắn muốn kích hoạt lại người dùng này?"}
+        confirmText={loading ? "Đang xử lý..." : "Xác nhận"}
         cancelText="Hủy"
-        type="danger"
+        type={confirmModal.isDeactivate ? "danger" : "info"}
         onConfirm={handleDeactivate}
         onCancel={cancelDelete}
       />
+
+      {/* Reject Modal */}
+      {rejectModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Từ chối người dùng</h3>
+              <p className="text-sm text-gray-600 mt-1">Vui lòng nhập lý do từ chối</p>
+            </div>
+            <div className="p-6">
+              <textarea
+                value={rejectModal.reason}
+                onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                placeholder="Nhập lý do từ chối..."
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={cancelReject}
+                disabled={loading}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmReject}
+                disabled={loading || !rejectModal.reason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Đang xử lý...' : 'Từ chối'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

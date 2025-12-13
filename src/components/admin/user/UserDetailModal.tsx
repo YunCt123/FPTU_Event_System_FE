@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Mail, Phone, MapPin, Calendar, User as UserIcon, Building2, CreditCard, Image } from 'lucide-react';
+import { X, Mail, Phone, MapPin, Calendar, User as UserIcon, Building2, CreditCard } from 'lucide-react';
 import type { User } from '../../../types/User';
 
 interface UserDetailModalProps {
@@ -88,7 +88,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
             {/* Left Column */}
             <div className="flex flex-col gap-2 h-full overflow-hidden">
               {/* Student Card - Takes up 2/3 of the space */}
-              {user.studentCardImage ? (
+              {user.avatar ? (
                 <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-[2] min-h-0 flex flex-col">
                   <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
                     <div className="p-0.5 bg-indigo-50 rounded">
@@ -98,7 +98,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                   </h3>
                   <div className="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-lg p-2 overflow-hidden">
                     <img 
-                      src={user.studentCardImage} 
+                      src={user.avatar} 
                       alt="Student Card"
                       className="max-w-full max-h-full rounded object-contain shadow-lg border border-white"
                     />
@@ -252,12 +252,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                       🕐 {new Date(user.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div> */} 
-                  {user.googleId && (
+                  {/* {user.googleId && (
                     <div className="p-1.5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded border border-indigo-200">
                       <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">🔗 Google ID</label>
                       <p className="text-gray-900 font-mono text-[10px] break-all">{user.googleId}</p>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
