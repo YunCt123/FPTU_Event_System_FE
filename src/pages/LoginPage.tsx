@@ -101,12 +101,7 @@ const LoginPage = () => {
             <div className="mb-10">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium">Password</label>
-                <a
-                  href="#"
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  Forgot your password?
-                </a>
+                
               </div>
               <input
                 type="password"
@@ -117,6 +112,7 @@ const LoginPage = () => {
                 className="mt-1 w-full border rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
+                
             <button
               onClick={handleLogin}
               disabled={isLoading}
@@ -124,7 +120,12 @@ const LoginPage = () => {
             >
               {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
-
+                <a
+                    href="#"
+                    className="text-sm text-blue-600 hover:underline"
+                >
+                  Quên mật khẩu
+                </a>
             <div className="flex items-center space-x-2 my-6">
                 <div className="grow border-t border-gray-300"></div>
                 <span className="shrink text-xs text-gray-500 font-medium">HOẶC</span>

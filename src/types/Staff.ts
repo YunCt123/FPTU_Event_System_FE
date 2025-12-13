@@ -51,3 +51,7 @@ export interface UpdateStaffRequest {
   status?: StaffStatus;
   hasAppAccess?: boolean;
 }
+
+export interface DeleteStaffResponse {
+  message: string;
+}

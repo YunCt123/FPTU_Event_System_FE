@@ -12,8 +12,6 @@ import {
   UserCog,
   UserStar,
   User,
-  UserX,
-  LogOut,
 } from 'lucide-react';
 
 import Logout from '../auth/Logout';

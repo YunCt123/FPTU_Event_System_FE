@@ -1,3 +1,5 @@
+import type { Campus } from "./Organizer";
+
 export type EventStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
 export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
 
@@ -85,6 +87,8 @@ export interface User{
   lastName: string;
   avatar?: string;
   roleName: "student" | "admin" | "staff" | "event_organizer";
+  isActive: boolean;
+  campus: Campus;
 }
 
 export interface GetEventResponse {

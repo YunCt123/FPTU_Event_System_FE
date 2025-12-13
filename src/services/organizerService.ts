@@ -3,7 +3,7 @@ import { EVENT_URL, ORGANIZER_URL } from '../constants/apiEndPoints';
 import type { AxiosResponse } from 'axios';
 import type { OrganizerResponse, OrganizerRequest, OrganizerDeleteResponse, OrganizerEventsResponse } from '../types/Organizer';
 import type { ApiResponse } from '../types/ApiResponse';
-import type { CreateStaffResponse } from '../types/Staff';
+import type { CreateStaffResponse, DeleteStaffResponse } from '../types/Staff';
 
 const organizerService = {
 
@@ -41,8 +41,14 @@ const organizerService = {
             userId: number;
     }): Promise<AxiosResponse<ApiResponse<CreateStaffResponse>>> {
         return await apiUtils.post<ApiResponse<CreateStaffResponse>>(`${EVENT_URL}${eventId}/staff`, data);
-    }
+    },
 
+    async deleteEventStaff(
+        eventId: string,
+        userId: number
+    ): Promise<AxiosResponse<ApiResponse<DeleteStaffResponse>>> {
+        return await apiUtils.delete<ApiResponse<DeleteStaffResponse>>(`${EVENT_URL}${eventId}/staff/${userId}`);
+    }
     
 };
 
