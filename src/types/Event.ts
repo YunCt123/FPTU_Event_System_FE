@@ -93,6 +93,8 @@ export interface User{
   lastName: string;
   avatar?: string;
   roleName: "student" | "admin" | "staff" | "event_organizer";
+  isActive: boolean;
+  campus: Campus;
 }
 
 export interface GetEventResponse {

@@ -16,7 +16,7 @@ const venueService = {
     return await apiUtils.post<Venue>(`${VENUE_URL}`, data);
   },
 
-  async updateVenue(id: number, data: UpdateVenueRequest): Promise<Venue> {
+  async updateVenue(id: number, data: UpdateVenueRequest): Promise<AxiosResponse<Venue>> {
     return await apiUtils.patch<Venue>(`${VENUE_URL}/${id}`, data);
   },
 

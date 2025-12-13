@@ -1,4 +1,3 @@
-import { type JSX } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 export interface RouteProps {
