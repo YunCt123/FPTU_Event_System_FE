@@ -137,7 +137,7 @@ useEffect(() => {
           ) : (
             events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.title} - {new Date(event.startDate).toLocaleDateString('vi-VN')}
+                {event.title} - {new Date(event.startTime).toLocaleDateString('vi-VN')}
               </option>
             ))
           )}

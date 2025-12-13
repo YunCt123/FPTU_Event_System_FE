@@ -28,6 +28,7 @@ import DashboardPage from "../pages/admin/event/DashboardPage";
 import EditEventPage from "../pages/admin/event/EditEventPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import UserList from "../pages/admin/user/UserList";
+import AccountPage from "../pages/AccountPage";
 
 
 const MainRoute: React.FC = () => {
@@ -52,14 +53,13 @@ const MainRoute: React.FC = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/about" element={<AboutPage />} />
-         
+          <Route path="/profile" element={<AccountPage/>} />
         </Route>
 
         {/* Auth-specific nested routes use AuthRoute (renders AuthLayout) */}
         <Route element={<AuthRoute />}>
            <Route path="/login" element={<LoginPage />} />
-           <Route  path="/auth/callback" element={<AuthCallback />} />
-           
+           <Route  path="/auth/callback" element={<AuthCallback />} />          
         </Route>
 
         {/* Admin routes */}

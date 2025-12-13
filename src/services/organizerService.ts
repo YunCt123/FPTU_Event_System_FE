@@ -51,6 +51,7 @@ const organizerService = {
     ): Promise<AxiosResponse<ApiResponse<DeleteStaffResponse>>> {
         return await apiUtils.delete<ApiResponse<DeleteStaffResponse>>(`${EVENT_URL}${eventId}/staff/${userId}`);
     }
+    
 };
 
 export default organizerService;
