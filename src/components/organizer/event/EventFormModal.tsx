@@ -1,6 +1,17 @@
-import { useState, useEffect } from 'react';
-import { X, Calendar, Users, MapPin, Clock } from 'lucide-react';
-import type { Event, EventType } from '../../../types/Event';
+import { useState, useEffect } from "react";
+import {
+  X,
+  Calendar,
+  MapPin,
+  Users,
+  Clock,
+  FileText,
+  Image as ImageIcon,
+  Tag,
+} from "lucide-react";
+import type { Event, CreateEventRequest } from "../../../types/Event";
+import { toast } from "react-toastify";
+import { organizerService } from "../../../services";
 
 interface EventFormModalProps {
   event: Event | null;
@@ -8,426 +19,639 @@ interface EventFormModalProps {
   onSuccess: (event: Event) => void;
 }
 
-interface FormData {
-  title: string;
-  description: string;
-  eventType: EventType;
-  startDate: string;
-  endDate: string;
-  registrationDeadline: string;
-  maxParticipants: number;
-  venueId: string;
-  campusId: string;
-  imageUrl: string;
-  requiresApproval: boolean;
-}
-
-interface FormErrors {
-  title?: string;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-  registrationDeadline?: string;
-  maxParticipants?: string;
-}
-
 const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
-  const [formData, setFormData] = useState<FormData>({
-    title: '',
-    description: '',
-    eventType: 'CONFERENCE',
-    startDate: '',
-    endDate: '',
-    registrationDeadline: '',
-    maxParticipants: 50,
-    venueId: '',
-    campusId: '',
-    imageUrl: '',
-    requiresApproval: true,
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    eventType: "", // ✅ Đổi default từ "WORKSHOP" thành ""
+    startDate: "",
+    endDate: "",
+    registrationDeadline: "",
+    endTimeRegister: "",
+    maxParticipants: 100,
+    venueId: "",
+    bannerUrl: "",
+    imageUrl: "",
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Initialize form with event data if editing
   useEffect(() => {
     if (event) {
+      console.log("Initializing form with event:", event);
       setFormData({
-        title: event.title,
-        description: event.description,
-        eventType: event.eventType,
-        startDate: event.startDate.split('T')[0],
-        endDate: event.endDate.split('T')[0],
-        registrationDeadline: event.registrationDeadline.split('T')[0],
-        maxParticipants: event.maxParticipants,
-        venueId: event.venueId?.toString() || '',
-        campusId: event.campusId?.toString() || '',
-        imageUrl: event.imageUrl || '',
-        requiresApproval: event.requiresApproval,
+        title: event.title || "",
+        description: event.description || "",
+        eventType: event.eventType || "", // ✅ Giữ nguyên value từ event
+        startDate: event.startDate
+          ? new Date(event.startDate).toISOString().slice(0, 16)
+          : "",
+        endDate: event.endDate
+          ? new Date(event.endDate).toISOString().slice(0, 16)
+          : "",
+        registrationDeadline: event.registrationDeadline
+          ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
+          : "",
+        endTimeRegister: event.registrationDeadline
+          ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
+          : "",
+        maxParticipants: event.maxParticipants || 100,
+        venueId: event.venueId?.toString() || "",
+        bannerUrl: "",
+        imageUrl: "",
       });
     }
   }, [event]);
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Tên sự kiện là bắt buộc';
+      newErrors.title = "Vui lòng nhập tên sự kiện";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Mô tả là bắt buộc';
+      newErrors.description = "Vui lòng nhập mô tả sự kiện";
+    }
+
+    // ✅ THÊM VALIDATION CHO EVENT TYPE
+    if (!formData.eventType.trim()) {
+      newErrors.eventType = "Vui lòng nhập loại sự kiện";
     }
 
     if (!formData.startDate) {
-      newErrors.startDate = 'Ngày bắt đầu là bắt buộc';
+      newErrors.startDate = "Vui lòng chọn thời gian bắt đầu";
     }
 
     if (!formData.endDate) {
-      newErrors.endDate = 'Ngày kết thúc là bắt buộc';
+      newErrors.endDate = "Vui lòng chọn thời gian kết thúc";
     }
 
-    if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
-      newErrors.endDate = 'Ngày kết thúc phải sau ngày bắt đầu';
+    if (formData.startDate && formData.endDate) {
+      if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+        newErrors.endDate = "Thời gian kết thúc phải sau thời gian bắt đầu";
+      }
     }
 
     if (!formData.registrationDeadline) {
-      newErrors.registrationDeadline = 'Hạn đăng ký là bắt buộc';
+      newErrors.registrationDeadline = "Vui lòng chọn thời gian mở đăng ký";
     }
 
-    if (formData.registrationDeadline && formData.startDate && formData.registrationDeadline > formData.startDate) {
-      newErrors.registrationDeadline = 'Hạn đăng ký phải trước ngày bắt đầu';
+    if (!formData.endTimeRegister) {
+      newErrors.endTimeRegister = "Vui lòng chọn thời gian đóng đăng ký";
     }
 
-    if (!formData.maxParticipants || formData.maxParticipants <= 0) {
-      newErrors.maxParticipants = 'Số lượng tham gia phải lớn hơn 0';
+    // VALIDATE: registrationDeadline < endTimeRegister <= startDate
+    if (formData.registrationDeadline && formData.endTimeRegister) {
+      if (
+        new Date(formData.endTimeRegister) <=
+        new Date(formData.registrationDeadline)
+      ) {
+        newErrors.endTimeRegister =
+          "Thời gian đóng đăng ký phải sau thời gian mở đăng ký";
+      }
+    }
+
+    if (formData.endTimeRegister && formData.startDate) {
+      if (new Date(formData.endTimeRegister) > new Date(formData.startDate)) {
+        newErrors.endTimeRegister =
+          "Thời gian đóng đăng ký phải trước hoặc bằng thời gian bắt đầu sự kiện";
+      }
+    }
+
+    if (formData.maxParticipants < 1) {
+      newErrors.maxParticipants = "Số lượng người tham gia phải lớn hơn 0";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log("=== SUBMIT START ===");
+    console.log("Form data:", formData);
+
     if (!validateForm()) {
+      console.log("❌ Validation failed");
+      toast.error("Vui lòng kiểm tra lại thông tin");
       return;
     }
 
+    console.log("✅ Validation passed");
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Log raw form values
+      console.log("📝 Raw form values:");
+      console.log("  startDate:", formData.startDate);
+      console.log("  endDate:", formData.endDate);
+      console.log("  registrationDeadline:", formData.registrationDeadline);
+      console.log("  endTimeRegister:", formData.endTimeRegister);
 
-      const eventData: Event = {
-        id: event?.id || Date.now(),
-        title: formData.title,
-        description: formData.description,
-        eventType: formData.eventType,
-        status: event?.status || 'DRAFT',
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: new Date(formData.endDate).toISOString(),
-        registrationDeadline: new Date(formData.registrationDeadline).toISOString(),
-        maxParticipants: formData.maxParticipants,
-        currentParticipants: event?.currentParticipants || 0,
-        venueId: formData.venueId ? parseInt(formData.venueId) : undefined,
-        venueName: event?.venueName,
-        campusId: formData.campusId ? parseInt(formData.campusId) : undefined,
-        campusName: event?.campusName,
-        organizerId: event?.organizerId || 1,
-        organizerName: event?.organizerName || 'FPT Event Club',
-        imageUrl: formData.imageUrl || undefined,
-        requiresApproval: formData.requiresApproval,
-        isPublished: event?.isPublished || false,
-        createdAt: event?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      // Helper function để format datetime cho API
+      const formatDateTime = (dateString: string): string => {
+        const date = new Date(dateString);
+        const offset = -date.getTimezoneOffset();
+        const sign = offset >= 0 ? "+" : "-";
+        const hours = Math.floor(Math.abs(offset) / 60)
+          .toString()
+          .padStart(2, "0");
+        const minutes = (Math.abs(offset) % 60).toString().padStart(2, "0");
+        return date.toISOString().slice(0, 19) + sign + hours + ":" + minutes;
       };
 
-      onSuccess(eventData);
-    } catch (error) {
-      console.error('Error saving event:', error);
+      // Map formData sang CreateEventRequest format theo Swagger
+      const requestData: CreateEventRequest = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.eventType,
+        bannerUrl: formData.bannerUrl?.trim() || undefined,
+        startTime: formatDateTime(formData.startDate),
+        endTime: formatDateTime(formData.endDate),
+        startTimeRegister: formatDateTime(formData.registrationDeadline),
+        endTimeRegister: formatDateTime(formData.endTimeRegister),
+        maxCapacity: Number(formData.maxParticipants),
+        isGlobal: true,
+        organizerId: 1,
+        venueId: Number(formData.venueId) || 1,
+        hostId: 1,
+        staffIds: [],
+        speakers: [],
+      };
+
+      console.log("📤 Request data:", requestData);
+      console.log("📤 Request JSON:");
+      console.log(JSON.stringify(requestData, null, 2));
+
+      // Log từng field để check
+      console.log("🔍 Field validation:");
+      console.log(
+        "  title:",
+        requestData.title,
+        "(length:",
+        requestData.title.length + ")"
+      );
+      console.log(
+        "  description:",
+        requestData.description.substring(0, 50) + "..."
+      );
+      console.log("  category:", requestData.category);
+      console.log("  startTime:", requestData.startTime);
+      console.log("  endTime:", requestData.endTime);
+      console.log("  startTimeRegister:", requestData.startTimeRegister);
+      console.log("  endTimeRegister:", requestData.endTimeRegister);
+      console.log(
+        "  maxCapacity:",
+        requestData.maxCapacity,
+        "(type:",
+        typeof requestData.maxCapacity + ")"
+      );
+      console.log(
+        "  venueId:",
+        requestData.venueId,
+        "(type:",
+        typeof requestData.venueId + ")"
+      );
+
+      // Gọi API để tạo sự kiện
+      const response = await organizerService.postEvent(requestData);
+
+      console.log("📥 API response:", response);
+      console.log("📥 Response data:", response.data);
+
+      if (response.data.success && response.data.data) {
+        const apiEvent = response.data.data;
+
+        const savedEvent: Event = {
+          id: parseInt(apiEvent.id),
+          title: apiEvent.title,
+          description: apiEvent.description,
+          eventType: formData.eventType as any,
+          status: (apiEvent.status as any) || "PENDING",
+          startDate: apiEvent.startTime,
+          endDate: apiEvent.endTime,
+          registrationDeadline: apiEvent.startTimeRegistration,
+          maxParticipants: apiEvent.maxCapacity,
+          currentParticipants: apiEvent.registeredCount || 0,
+          venueId: apiEvent.venueId,
+          venueName: apiEvent.venue?.name || "",
+          campusId: apiEvent.venue?.campusId,
+          campusName: apiEvent.venue?.campus?.name || "",
+          organizerId: apiEvent.organizerId,
+          organizerName: apiEvent.organizer?.name || "",
+          requiresApproval: true,
+          isPublished: false,
+        };
+
+        console.log("✅ Event created successfully:", savedEvent);
+        toast.success("Tạo sự kiện thành công!");
+        onSuccess(savedEvent);
+      } else {
+        console.error("❌ API returned success=false:", response.data);
+        throw new Error(response.data.message || "Không thể tạo sự kiện");
+      }
+    } catch (error: any) {
+      console.error("❌ Error submitting form:", error);
+      console.error("❌ Error name:", error.name);
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error response:", error.response);
+      console.error("❌ Error response data:", error.response?.data);
+      console.error("❌ Error response status:", error.response?.status);
+      console.error("❌ Error response headers:", error.response?.headers);
+      console.error("❌ Error config:", error.config);
+
+      // Log validation errors từ backend nếu có
+      if (error.response?.data?.errors) {
+        console.error(
+          "❌ Validation errors from backend:",
+          error.response.data.errors
+        );
+      }
+
+      // Parse error message từ API
+      let errorMessage = "Đã xảy ra lỗi khi lưu sự kiện";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        // Handle validation errors array
+        if (Array.isArray(error.response.data.errors)) {
+          errorMessage = error.response.data.errors
+            .map((e: any) => e.message || e)
+            .join(", ");
+        } else if (typeof error.response.data.errors === "object") {
+          errorMessage = Object.entries(error.response.data.errors)
+            .map(([field, msg]) => `${field}: ${msg}`)
+            .join(", ");
+        }
+      } else if (error.response?.data?.error) {
+        if (typeof error.response.data.error === "string") {
+          errorMessage = error.response.data.error;
+        } else if (Array.isArray(error.response.data.error)) {
+          errorMessage = error.response.data.error.join(", ");
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      console.error("❌ Final error message:", errorMessage);
+      toast.error(errorMessage);
     } finally {
+      console.log("=== SUBMIT END ===");
       setIsSubmitting(false);
     }
   };
 
-  const eventTypes: { value: EventType; label: string }[] = [
-    { value: 'CONFERENCE', label: 'Hội nghị' },
-    { value: 'WORKSHOP', label: 'Workshop' },
-    { value: 'SEMINAR', label: 'Hội thảo' },
-    { value: 'COMPETITION', label: 'Cuộc thi' },
-    { value: 'CULTURAL', label: 'Văn hóa' },
-    { value: 'SPORTS', label: 'Thể thao' },
-    { value: 'OTHER', label: 'Khác' },
-  ];
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {event ? 'Chỉnh sửa Sự kiện' : 'Tạo Sự kiện mới'}
-          </h2>
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Calendar className="text-white" size={24} />
+            </div>
+            <h2 className="text-2xl font-bold text-white">
+              {event ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
+            </h2>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
           >
             <X size={24} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title & Event Type */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Tên sự kiện */}
+            <div>
+              <label
+                htmlFor="title"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+              >
+                <FileText size={16} className="text-orange-500" />
                 Tên sự kiện <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
+                id="title"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="VD: Hội thảo Công nghệ AI 2024"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.title ? 'border-red-500' : 'border-gray-300'
-                }`}
+                placeholder="Nhập tên sự kiện..."
+                className={`w-full px-4 py-3 border ${
+                  errors.title ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                disabled={isSubmitting}
               />
               {errors.title && (
-                <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.title}</p>
               )}
             </div>
 
+            {/* Loại sự kiện - ĐỔI TỪ SELECT THÀNH INPUT */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Loại sự kiện
+              <label
+                htmlFor="eventType"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+              >
+                <Tag size={16} className="text-orange-500" />
+                Loại sự kiện <span className="text-red-500">*</span>
               </label>
-              <select
+              <input
+                type="text"
+                id="eventType"
                 name="eventType"
                 value={formData.eventType}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="VD: Workshop, Seminar, Conference, Hackathon..."
+                className={`w-full px-4 py-3 border ${
+                  errors.eventType ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                disabled={isSubmitting}
+              />
+              {errors.eventType && (
+                <p className="text-red-500 text-xs mt-1">{errors.eventType}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Nhập loại sự kiện theo ý bạn (VD: Workshop, Seminar, Conference, Hackathon, Training, Webinar...)
+              </p>
+            </div>
+
+            {/* Mô tả */}
+            <div>
+              <label
+                htmlFor="description"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
               >
-                {eventTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mô tả <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Mô tả chi tiết về sự kiện..."
-              rows={4}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                errors.description ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description}</p>
-            )}
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Calendar size={16} />
-                Ngày bắt đầu <span className="text-red-500">*</span>
+                <FileText size={16} className="text-orange-500" />
+                Mô tả sự kiện <span className="text-red-500">*</span>
               </label>
-              <input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.startDate ? 'border-red-500' : 'border-gray-300'
-                }`}
+                placeholder="Nhập mô tả chi tiết về sự kiện..."
+                rows={4}
+                className={`w-full px-4 py-3 border ${
+                  errors.description ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all`}
+                disabled={isSubmitting}
               />
-              {errors.startDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>
+              {errors.description && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.description}
+                </p>
               )}
             </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Calendar size={16} />
-                Ngày kết thúc <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.endDate ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.endDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>
-              )}
+            {/* Thời gian - Grid 2 cột */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Thời gian bắt đầu */}
+              <div>
+                <label
+                  htmlFor="startDate"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <Calendar size={16} className="text-orange-500" />
+                  Thời gian bắt đầu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  id="startDate"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border ${
+                    errors.startDate ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.startDate && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.startDate}
+                  </p>
+                )}
+              </div>
+
+              {/* Thời gian kết thúc */}
+              <div>
+                <label
+                  htmlFor="endDate"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <Calendar size={16} className="text-orange-500" />
+                  Thời gian kết thúc <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  id="endDate"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border ${
+                    errors.endDate ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.endDate && (
+                  <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Clock size={16} />
-                Hạn đăng ký <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="registrationDeadline"
-                value={formData.registrationDeadline}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.registrationDeadline ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.registrationDeadline && (
-                <p className="text-red-500 text-sm mt-1">{errors.registrationDeadline}</p>
-              )}
-            </div>
-          </div>
+            {/* Hạn đăng ký */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="registrationDeadline"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <Clock size={16} className="text-orange-500" />
+                  Thời gian mở đăng ký <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  id="registrationDeadline"
+                  name="registrationDeadline"
+                  value={formData.registrationDeadline}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border ${
+                    errors.registrationDeadline
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.registrationDeadline && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.registrationDeadline}
+                  </p>
+                )}
+              </div>
 
-          {/* Max Participants, Venue, Campus */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label
+                  htmlFor="endTimeRegister"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <Clock size={16} className="text-orange-500" />
+                  Thời gian đóng đăng ký <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  id="endTimeRegister"
+                  name="endTimeRegister"
+                  value={formData.endTimeRegister}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border ${
+                    errors.endTimeRegister
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.endTimeRegister && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.endTimeRegister}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Số lượng người tham gia */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Users size={16} />
-                Số lượng tối đa <span className="text-red-500">*</span>
+              <label
+                htmlFor="maxParticipants"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+              >
+                <Users size={16} className="text-orange-500" />
+                Số lượng người tham gia tối đa{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
+                id="maxParticipants"
                 name="maxParticipants"
                 value={formData.maxParticipants}
                 onChange={handleChange}
                 min="1"
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.maxParticipants ? 'border-red-500' : 'border-gray-300'
-                }`}
+                placeholder="100"
+                className={`w-full px-4 py-3 border ${
+                  errors.maxParticipants ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                disabled={isSubmitting}
               />
               {errors.maxParticipants && (
-                <p className="text-red-500 text-sm mt-1">{errors.maxParticipants}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.maxParticipants}
+                </p>
               )}
             </div>
 
+            {/* Địa điểm - TODO: Add venue selector */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <MapPin size={16} />
+              <label
+                htmlFor="venueId"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+              >
+                <MapPin size={16} className="text-orange-500" />
                 Địa điểm
               </label>
-              <input
-                type="text"
+              <select
+                id="venueId"
                 name="venueId"
                 value={formData.venueId}
                 onChange={handleChange}
-                placeholder="ID địa điểm"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                disabled={isSubmitting}
+              >
+                <option value="">Chọn địa điểm...</option>
+                <option value="1">FU HCM Hall A</option>
+                <option value="2">FU HCM Hall B</option>
+                <option value="3">FU HCM Auditorium</option>
+                {/* TODO: Load venues from API */}
+              </select>
             </div>
 
+            {/* Banner URL (optional) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Campus
+              <label
+                htmlFor="bannerUrl"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+              >
+                <ImageIcon size={16} className="text-orange-500" />
+                Banner URL (tùy chọn)
               </label>
               <input
-                type="text"
-                name="campusId"
-                value={formData.campusId}
+                type="url"
+                id="bannerUrl"
+                name="bannerUrl"
+                value={formData.bannerUrl}
                 onChange={handleChange}
-                placeholder="ID campus"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://example.com/banner.jpg"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                disabled={isSubmitting}
               />
             </div>
-          </div>
+          </form>
+        </div>
 
-          {/* Image URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Hình ảnh
-            </label>
-            <input
-              type="text"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {formData.imageUrl && (
-              <div className="mt-2">
-                <img
-                  src={formData.imageUrl}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Đang lưu...
+              </>
+            ) : event ? (
+              "Cập nhật"
+            ) : (
+              "Tạo sự kiện"
             )}
-          </div>
-
-          {/* Requires Approval */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="requiresApproval"
-              name="requiresApproval"
-              checked={formData.requiresApproval}
-              onChange={handleChange}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="requiresApproval" className="ml-2 text-sm text-gray-700">
-              Yêu cầu phê duyệt từ admin
-            </label>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ${
-                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {isSubmitting ? 'Đang lưu...' : event ? 'Cập nhật' : 'Tạo mới'}
-            </button>
-          </div>
-        </form>
+          </button>
+        </div>
       </div>
     </div>
   );

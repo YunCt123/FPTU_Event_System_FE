@@ -1,10 +1,17 @@
 export type EventStatus = 
-  | 'DRAFT'      // Nháp
   | 'PENDING'    // Đang xử lý
   | 'APPROVED'   // Đã duyệt
-  | 'REJECTED'   // Bị từ chối
+  | 'CANCELED'   // Bị từ chối
   | 'COMPLETED'; // Hoàn thành
-export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
+
+export type EventType = 
+'CONFERENCE' 
+| 'WORKSHOP' 
+| 'SEMINAR' 
+| 'COMPETITION' 
+| 'CULTURAL' 
+| 'SPORTS' 
+| 'OTHER';
 
 export interface Event {
   id: number;
@@ -74,13 +81,26 @@ export interface meta{
   totalPages: number;
 }
 
-export interface eventSpeaker{
+export interface speaker{
+  id: number;
+  name: string;
+  bio: string;
+  avatar: string;
+  type: string;
+  company: string;
+}
 
+export interface eventSpeaker{
+  id: number;
+  topic: string;
+  speakerId: number;
+  speaker: speaker;
 }
 
 export interface eventStaff{
   id:number;
   createdAt: string;
+  eventId: number;
   userId: number;
   user: User;
 }
@@ -108,7 +128,6 @@ export interface GetEventResponse {
   status: string;
   maxCapacity: number;
   registeredCount: number;
-  checkinCount: number; // THÊM FIELD NÀY
   isGlobal: boolean;
   createdAt: string;
   hostId: number;
@@ -119,6 +138,7 @@ export interface GetEventResponse {
   host: host;
   eventSpeakers: eventSpeaker[];
   eventStaffs: eventStaff[];
+  checkinCount: number; 
 }
 
 export interface GetTotalEventsResponse {
@@ -138,15 +158,22 @@ export interface GetTotalRegisteredEventsResponse {
 export interface CreateEventRequest {
   title: string;
   description: string;
-  eventType: EventType;
-  startDate: string;
-  endDate: string;
-  registrationDeadline: string;
-  maxParticipants: number;
+  category: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  startTimeRegister: string;
+  endTimeRegister: string;
+  maxCapacity: number;
+  isGlobal: boolean;
+  organizerId: number;
   venueId?: number;
-  campusId?: number;
-  imageUrl?: string;
-  requiresApproval: boolean;
+  hostId: number;
+  staffIds?: number[];
+  speakers?: {
+    speakerId: number;
+    topic: string;
+  }[];
 }
 
 export interface UpdateEventRequest extends CreateEventRequest {

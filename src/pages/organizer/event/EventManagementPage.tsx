@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Filter,
@@ -7,14 +7,13 @@ import {
   Trash2,
   Send,
   Eye,
-  Copy,
   Calendar,
   Users,
   MapPin,
-  Clock,
 } from 'lucide-react';
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
+import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService } from '../../../services';
 import { toast } from 'react-toastify';
 
@@ -26,6 +25,15 @@ const EventManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState<{
+    isOpen: boolean;
+    eventId: number | null;
+    eventTitle: string;
+  }>({
+    isOpen: false,
+    eventId: null,
+    eventTitle: '',
+  });
 
   // Fetch events on mount
   useEffect(() => {
@@ -35,18 +43,17 @@ const EventManagementPage = () => {
   // Thêm hàm normalize status
   const normalizeStatus = (status: string): EventStatus => {
     const statusMap: Record<string, EventStatus> = {
-      'DRAFT': 'DRAFT',
       'PENDING': 'PENDING',
       'APPROVED': 'APPROVED',
-      'REJECTED': 'REJECTED',
+      'REJECTED': 'CANCELED',
+      'CANCELED': 'CANCELED',
       'COMPLETED': 'COMPLETED',
       // Map các status khác từ backend
       'PUBLISHED': 'APPROVED', // Published coi như Approved
-      'CANCELLED': 'REJECTED', // Cancelled coi như Rejected
-      'CANCELED': 'REJECTED',
+      'CANCELLED': 'CANCELED', // Cancelled coi như Canceled
     };
     
-    return statusMap[status.toUpperCase()] || 'DRAFT';
+    return statusMap[status.toUpperCase()] || 'PENDING'; // Default to PENDING instead of DRAFT
   };
 
   const fetchEventsByOrganizer = async () => {
@@ -112,10 +119,9 @@ const EventManagementPage = () => {
 
         console.log('Mapped events:', mappedEvents);
         console.log('Status distribution:', {
-          DRAFT: mappedEvents.filter(e => e.status === 'DRAFT').length,
           PENDING: mappedEvents.filter(e => e.status === 'PENDING').length,
           APPROVED: mappedEvents.filter(e => e.status === 'APPROVED').length,
-          REJECTED: mappedEvents.filter(e => e.status === 'REJECTED').length,
+          CANCELED: mappedEvents.filter(e => e.status === 'CANCELED').length,
           COMPLETED: mappedEvents.filter(e => e.status === 'COMPLETED').length,
         });
         
@@ -188,13 +194,12 @@ const EventManagementPage = () => {
       string,
       { label: string; className: string }
     > = {
-      DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-700' },
       PENDING: {
         label: 'Đang xử lý',
         className: 'bg-yellow-100 text-yellow-700',
       },
       APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700' },
-      REJECTED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
+      CANCELED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
       COMPLETED: {
         label: 'Hoàn thành',
         className: 'bg-blue-100 text-blue-700',
@@ -222,6 +227,11 @@ const EventManagementPage = () => {
   };
 
   const handleEditEvent = (event: Event) => {
+    console.log('=== EDIT EVENT ===');
+    console.log('Event data:', event);
+    console.log('Event type:', typeof event);
+    console.log('Event keys:', Object.keys(event));
+    
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
@@ -242,31 +252,36 @@ const EventManagementPage = () => {
     );
   };
 
-  const handleDeleteEvent = (eventId: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
-      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+  const handleDeleteEvent = (eventId: number, eventTitle: string) => {
+    setDeleteModalState({
+      isOpen: true,
+      eventId,
+      eventTitle,
+    });
+  };
+
+  const handleSubmitDeleteRequest = async (eventId: number, reason: string) => {
+    try {
+      console.log('Submitting delete request:', { eventId, reason });
+      
+      // TODO: Call API để gửi yêu cầu xóa
+      // await organizerService.requestDeleteEvent(eventId, reason);
+      
+      toast.success('Đã gửi yêu cầu xóa sự kiện. Admin sẽ xem xét và phê duyệt.');
+      
+      // Close modal
+      setDeleteModalState({
+        isOpen: false,
+        eventId: null,
+        eventTitle: '',
+      });
+      
+      // Optionally refresh data
+      // fetchEventsByOrganizer();
+    } catch (error: any) {
+      console.error('Error submitting delete request:', error);
+      toast.error('Đã xảy ra lỗi khi gửi yêu cầu xóa.');
     }
-  };
-
-  const handleDuplicateEvent = (event: Event) => {
-    const newEvent = {
-      ...event,
-      id: Math.max(...events.map((e) => e.id)) + 1,
-      title: `${event.title} (Copy)`,
-      status: 'DRAFT' as EventStatus,
-      currentParticipants: 0,
-      isPublished: false,
-    };
-    setEvents((prev) => [...prev, newEvent]);
-  };
-
-  const stats = {
-    total: events.length,
-    draft: events.filter((e) => e.status === 'DRAFT').length,
-    pending: events.filter((e) => e.status === 'PENDING').length,
-    approved: events.filter((e) => e.status === 'APPROVED').length,
-    rejected: events.filter((e) => e.status === 'REJECTED').length,
-    completed: events.filter((e) => e.status === 'COMPLETED').length,
   };
 
   // Loading state
@@ -300,31 +315,27 @@ const EventManagementPage = () => {
         </button>
       </div>
 
-      {/* Stats - Cập nhật lại */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Tổng sự kiện</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Nháp</div>
-          <div className="text-2xl font-bold text-gray-600 mt-1">{stats.draft}</div>
+          <div className="text-2xl font-bold text-gray-900 mt-1">{events.length}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Đang xử lý</div>
-          <div className="text-2xl font-bold text-yellow-600 mt-1">{stats.pending}</div>
+          <div className="text-2xl font-bold text-yellow-600 mt-1">{events.filter((e) => e.status === 'PENDING').length}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Đã duyệt</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">{stats.approved}</div>
+          <div className="text-2xl font-bold text-green-600 mt-1">{events.filter((e) => e.status === 'APPROVED').length}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Bị từ chối</div>
-          <div className="text-2xl font-bold text-red-600 mt-1">{stats.rejected}</div>
+          <div className="text-2xl font-bold text-red-600 mt-1">{events.filter((e) => e.status === 'CANCELED').length}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Hoàn thành</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.completed}</div>
+          <div className="text-2xl font-bold text-blue-600 mt-1">{events.filter((e) => e.status === 'COMPLETED').length}</div>
         </div>
       </div>
 
@@ -357,7 +368,7 @@ const EventManagementPage = () => {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
             >
               <option value="ALL">Tất cả trạng thái</option>
-              <option value="DRAFT">Nháp</option>
+              {/* <option value="DRAFT">Nháp</option> */}
               <option value="PENDING">Đang xử lý</option>
               <option value="APPROVED">Đã duyệt</option>
               <option value="REJECTED">Bị từ chối</option>
@@ -429,9 +440,9 @@ const EventManagementPage = () => {
                           <h3 className="text-sm font-bold text-gray-900 leading-tight mb-1">
                             {event.title}
                           </h3>
-                          <p className="text-xs text-gray-600 line-clamp-1">
+                          {/* <p className="text-xs text-gray-600 line-clamp-1">
                             {event.description}
-                          </p>
+                          </p> */}
                         </div>
                       </div>
                     </td>
@@ -501,7 +512,7 @@ const EventManagementPage = () => {
                         <div className="text-xs text-gray-600 font-medium">
                           {event.maxParticipants - event.currentParticipants > 0 
                             ? `Còn ${event.maxParticipants - event.currentParticipants} chỗ`
-                            : '🔴 Đã đầy'}
+                            : 'Đã đầy'}
                         </div>
                       </div>
                     </td>
@@ -527,9 +538,10 @@ const EventManagementPage = () => {
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Chỉnh sửa"
                         >
-                          <Edit size={18} />
+                          <Edit size={18} 
+                        />
                         </button>
-                        {event.status === 'DRAFT' && (
+                        {/* {event.status === 'PENDING' && (
                           <button
                             onClick={() => handleSubmitForApproval(event.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -537,7 +549,7 @@ const EventManagementPage = () => {
                           >
                             <Send size={18} />
                           </button>
-                        )}
+                        )} */}
                         {event.status === 'APPROVED' && !event.isPublished && (
                           <button
                             onClick={() => handlePublishEvent(event.id)}
@@ -547,15 +559,8 @@ const EventManagementPage = () => {
                             <Eye size={18} />
                           </button>
                         )}
-                        {/* <button
-                          onClick={() => handleDuplicateEvent(event)}
-                          className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                          title="Nhân bản"
-                        >
-                          <Copy size={18} />
-                        </button> */}
                         <button
-                          onClick={() => handleDeleteEvent(event.id)}
+                          onClick={() => handleDeleteEvent(event.id, event.title)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Xóa"
                         >
@@ -573,29 +578,53 @@ const EventManagementPage = () => {
 
       {/* Event Form Modal */}
       {isModalOpen && (
-        <EventFormModal
-          event={selectedEvent}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedEvent(null);
-          }}
-          onSuccess={(savedEvent: Event) => {
-            if (selectedEvent) {
-              setEvents((prev) =>
-                prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
-              );
-            } else {
-              setEvents((prev) => [...prev, savedEvent]);
-            }
-            setIsModalOpen(false);
-            setSelectedEvent(null);
-            fetchEventsByOrganizer(); // Refresh data
-          }}
+        <ErrorBoundary>
+          <EventFormModal
+            event={selectedEvent}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedEvent(null);
+            }}
+            onSuccess={async (savedEvent: Event) => {
+              try {
+                if (selectedEvent) {
+                  setEvents((prev) =>
+                    prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
+                  );
+                  toast.success('Cập nhật sự kiện thành công!');
+                } else {
+                  toast.success('Tạo sự kiện thành công!');
+                }
+                
+                setIsModalOpen(false);
+                setSelectedEvent(null);
+                
+                // Refresh danh sách events sau khi tạo/cập nhật thành công
+                await fetchEventsByOrganizer();
+              } catch (error) {
+                console.error('Error in onSuccess:', error);
+              }
+            }}
+          />
+        </ErrorBoundary>
+      )}
+
+      {/* Delete Request Modal */}
+      {deleteModalState.isOpen && deleteModalState.eventId && (
+        <DeleteRequestModal
+          eventTitle={deleteModalState.eventTitle}
+          eventId={deleteModalState.eventId}
+          onClose={() => setDeleteModalState({
+            isOpen: false,
+            eventId: null,
+            eventTitle: '',
+          })}
+          onSubmit={handleSubmitDeleteRequest}
         />
       )}
 
-      {/* Thêm button test filter */}
-      <button 
+      {/* Debug Filter Button - XÓA HOẶC COMMENT SAU KHI DONE */}
+      {/* <button 
         onClick={() => {
           console.log('=== DEBUG FILTER ===');
           console.log('All events:', events);
@@ -610,9 +639,58 @@ const EventManagementPage = () => {
         className="px-4 py-2 bg-gray-200 rounded"
       >
         Debug Filter
-      </button>
+      </button> */}
     </div>
   );
 };
 
 export default EventManagementPage;
+
+// Tạo Error Boundary component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: any }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('EventFormModal Error:', error, errorInfo);
+    toast.error('Có lỗi xảy ra khi mở form chỉnh sửa');
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Lỗi</h2>
+            <p className="text-gray-700 mb-4">
+              Không thể mở form chỉnh sửa. Vui lòng thử lại.
+            </p>
+            <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
+              {JSON.stringify(this.state.error, null, 2)}
+            </pre>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+            >
+              Tải lại trang
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}

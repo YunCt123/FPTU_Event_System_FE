@@ -1,5 +1,3 @@
-import type { GetEventResponse } from "./Event";
-
 export interface Campus {
   id: number;
   name: string;

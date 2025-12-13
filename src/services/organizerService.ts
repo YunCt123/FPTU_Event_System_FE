@@ -9,6 +9,7 @@ import type {
 } from '../types/Organizer';
 import type { ApiResponse } from '../types/ApiResponse';
 import type { CreateStaffResponse } from '../types/Staff';
+import type { GetEventResponse, CreateEventRequest } from '../types/Event';
 
 const organizerService = {
 
@@ -34,7 +35,7 @@ const organizerService = {
         search?: string;
         status?: string;
     }): Promise<AxiosResponse<ApiResponse<OrganizerEventsAPIResponse>>> {
-        return await apiUtils.get<ApiResponse<OrganizerEventsAPIResponse>>(`${EVENT_URL}my-events`, { params });
+        return await apiUtils.get<ApiResponse<OrganizerEventsAPIResponse>>(`${EVENT_URL}/my-events`, params);
     },
 
     async postEventStaff(
@@ -43,7 +44,23 @@ const organizerService = {
             userId: number;
     }): Promise<AxiosResponse<ApiResponse<CreateStaffResponse>>> {
         return await apiUtils.post<ApiResponse<CreateStaffResponse>>(`${EVENT_URL}${eventId}/staff`, data);
+    },
+
+    async postEvent(data: CreateEventRequest): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
+      console.log('Calling POST /events/');
+      console.log('Data:', data);
+      
+      return await apiUtils.post<ApiResponse<GetEventResponse>>(
+        `${EVENT_URL}`, 
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
     }
+
 };
 
 export default organizerService;
