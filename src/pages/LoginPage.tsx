@@ -6,6 +6,7 @@ import authService from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import { GOOGLE_URL } from "../constants/apiEndPoints";
 import RegisterUserModal from "../components/auth/RegisterUserModal";
+import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+
 
   const handleGoogleLogin = () => {
     window.location.href = GOOGLE_URL;
@@ -76,11 +80,9 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
       <div className="flex flex-col items-center justify-center px-10 lg:px-24 py-16 prose">
-        
         <div className="w-full max-w-md border border-gray-300 p-4 rounded-lg">
           <div className="flex justify-center  mb-6">
-            <img src={FPTLogo} alt="FPT Logo" 
-            className="w-32  " />
+            <img src={FPTLogo} alt="FPT Logo" className="w-32  " />
           </div>
           <h1 className="flex justify-center text-[#F27125] text-5xl font-bold mb-10 text-center lg:text-left">
             FPT Events
@@ -98,21 +100,30 @@ const LoginPage = () => {
               />
             </div>
             {/* password */}
-            <div className="mb-10">
+            <div className="mb-10 ">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium">Password</label>
-                
               </div>
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="mt-1 w-full border rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-orange-500"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  className="mt-1 w-full border rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-orange-500"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-                
+
             <button
               onClick={handleLogin}
               disabled={isLoading}
@@ -120,16 +131,15 @@ const LoginPage = () => {
             >
               {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
-                <a
-                    href="#"
-                    className="text-sm text-blue-600 hover:underline"
-                >
-                  Quên mật khẩu
-                </a>
+            <a href="#" className="text-sm text-blue-600 hover:underline">
+              Quên mật khẩu
+            </a>
             <div className="flex items-center space-x-2 my-6">
-                <div className="grow border-t border-gray-300"></div>
-                <span className="shrink text-xs text-gray-500 font-medium">HOẶC</span>
-                <div className="grow border-t border-gray-300"></div>
+              <div className="grow border-t border-gray-300"></div>
+              <span className="shrink text-xs text-gray-500 font-medium">
+                HOẶC
+              </span>
+              <div className="grow border-t border-gray-300"></div>
             </div>
 
             {/* GOOGLE */}
@@ -138,7 +148,7 @@ const LoginPage = () => {
               disabled={isLoading}
               className="w-full bg-white text-gray-700 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium space-x-3"
             >
-              <img 
+              <img
                 src="https://www.svgrepo.com/show/353817/google-icon.svg"
                 alt="Google"
                 className="w-5 h-5"
@@ -148,7 +158,7 @@ const LoginPage = () => {
             {/* Footer */}
             <p className="text-gray-600 text-sm mt-8 text-center">
               Bạn chưa có tài khoản?{" "}
-              <button 
+              <button
                 onClick={() => setIsRegisterOpen(true)}
                 className="text-[#F27125] font-semibold hover:underline"
               >
