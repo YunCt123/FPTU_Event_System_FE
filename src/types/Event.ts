@@ -15,7 +15,7 @@ export type EventType =
 | 'OTHER';
 
 export interface Event {
-  id: number;
+  id: string; 
   title: string;
   description: string;
   eventType: EventType;
@@ -110,7 +110,7 @@ export interface GetEventResponse {
   id: string;
   title: string;
   description: string;
-  category?: string; // ✅ THÊM FIELD NÀY
+  category?: string;
   bannerUrl?: string;
   imageUrl?: string; 
   startTimeRegistration: string;
@@ -168,8 +168,27 @@ export interface CreateEventRequest {
   }[];
 }
 
-export interface UpdateEventRequest extends CreateEventRequest {
-  id: number;
+export type UpdateEventRequest = Partial<CreateEventRequest>;
+
+export interface UpdateEventRequest {
+  title?: string;
+  description?: string;
+  category?: string;
+  bannerUrl?: string;
+  startTime?: string;
+  endTime?: string;
+  startTimeRegister?: string;
+  endTimeRegister?: string;
+  maxCapacity?: number;
+  isGlobal?: boolean;
+  organizerId?: number;
+  venueId?: number;
+  hostId?: number;
+  staffIds?: number[];
+  speakers?: {
+    speakerId: number;
+    topic: string;
+  }[];
 }
 
 export interface EventModalProps {
@@ -185,27 +204,6 @@ export interface EventFormData {
   description: string;
   location: string;
   date: string;
-}
-
-export interface UpdateEventRequest {
-  title: string;
-  description: string;
-  category: string;
-  bannerUrl?: string;
-  startTime: string;
-  endTime: string;
-  startTimeRegister: string;
-  endTimeRegister: string;
-  maxCapacity: number;
-  isGlobal: boolean;
-  organizerId: number;
-  venueId?: number;
-  hostId: number;              
-  staffIds?: number[];         
-  speakers?: {                 
-    speakerId: number;
-    topic: string;
-  }[];
 }
 
 export interface UpdateEventResponse {

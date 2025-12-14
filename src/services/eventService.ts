@@ -34,12 +34,13 @@ const eventService = {
     async postEvent(data: CreateEventRequest): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
         return await apiUtils.post<ApiResponse<GetEventResponse>>(`${EVENT_URL}`, data);
     },
-    
-    async patchEventById(params?: {
+
+    async patchEventById({ id, data }: { 
         id: string;
-        data: UpdateEventRequest;
+        data: UpdateEventRequest; 
     }): Promise<AxiosResponse<ApiResponse<UpdateEventResponse>>> {
-        return await apiUtils.patch<ApiResponse<UpdateEventResponse>>(`${EVENT_URL}${params?.id}`, params?.data);
+        console.log('Patching event:', id, 'with data:', data);
+        return await apiUtils.patch<ApiResponse<UpdateEventResponse>>(`${EVENT_URL}${id}`, data);
     }
 
     // XÓA HOẶC COMMENT OUT hàm này
