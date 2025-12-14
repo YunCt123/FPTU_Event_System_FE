@@ -6,3 +6,4 @@ export const VENUE_URL = "/venue";
 export const GOOGLE_URL = "http://localhost:8080/auth/google";
 export const EVENT_URL = "/events/";
 export const NOTIFICATION_URL = "/notifications/";
+export const TICKET_URL = "/tickets/";
