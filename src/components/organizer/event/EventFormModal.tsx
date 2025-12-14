@@ -11,7 +11,7 @@ import {
   UserPlus,
   AlertCircle,
 } from "lucide-react";
-import type { Event, CreateEventRequest } from "../../../types/Event";
+import type { Event, CreateEventRequest, UpdateEventRequest } from "../../../types/Event";
 import type { User } from "../../../types/User";
 import type { Venue } from "../../../types/Venue";
 import { toast } from "react-toastify";
@@ -68,32 +68,112 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     }
   }, [organizerInfo]);
 
-  // Initialize form with event data if editing
+  // ✅ THÊM STATE ĐỂ LƯU DỮ LIỆU GỐC
+  const [originalData, setOriginalData] = useState<CreateEventRequest | null>(null);
+
+  // ✅ PRE-FILL FORM DATA KHI EDIT
   useEffect(() => {
-    if (event) {
-      console.log("Initializing form with event:", event);
-      setFormData({
-        title: event.title || "",
-        description: event.description || "",
-        eventType: event.eventType || "",
-        startDate: event.startDate
-          ? new Date(event.startDate).toISOString().slice(0, 16)
-          : "",
-        endDate: event.endDate
-          ? new Date(event.endDate).toISOString().slice(0, 16)
-          : "",
-        registrationDeadline: event.registrationDeadline
-          ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
-          : "",
-        endTimeRegister: event.registrationDeadline
-          ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
-          : "",
-        maxParticipants: event.maxParticipants || 100,
-        venueId: event.venueId?.toString() || "",
-        bannerUrl: "",
-        imageUrl: "",
-      });
-    }
+    const fetchInitialData = async () => {
+      if (event) {
+        console.log('📝 Editing event:', event);
+        
+        // ✅ FORMAT DATES TỪ ISO STRING SANG INPUT DATETIME-LOCAL
+        const formatToDatetimeLocal = (isoString: string): string => {
+          if (!isoString) return '';
+          const date = new Date(isoString);
+          // Format: YYYY-MM-DDTHH:mm
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        // ✅ SET FORM DATA VỚI DỮ LIỆU CŨ
+        const initialFormData = {
+          title: event.title || '',
+          description: event.description || '',
+          eventType: event.eventType || 'WORKSHOP',
+          bannerUrl: event.imageUrl || '',
+          startDate: formatToDatetimeLocal(event.startDate),
+          endDate: formatToDatetimeLocal(event.endDate),
+          registrationDeadline: formatToDatetimeLocal(event.registrationDeadline),
+          endTimeRegister: '', // ✅ CẦN LẤY TỪ API NẾU CÓ
+          maxParticipants: event.maxParticipants || 0,
+          venueId: event.venueId || 0,
+        };
+
+        console.log('📋 Initial form data:', initialFormData);
+
+        // ✅ NẾU CẦN LẤY THÊM CHI TIẾT TỪ API
+        try {
+          const response = await eventService.getEventById(String(event.id));
+          console.log('📡 Full event details from API:', response.data);
+
+          const fullEvent = response.data?.data || response.data;
+
+          // ✅ CẬP NHẬT VỚI DỮ LIỆU ĐẦY ĐỦ TỪ API
+          initialFormData.endTimeRegister = formatToDatetimeLocal(fullEvent.endTimeRegistration);
+          initialFormData.bannerUrl = fullEvent.bannerUrl || fullEvent.imageUrl || '';
+
+          // ✅ LƯU STAFF IDs ĐÃ CHỌN
+          if (fullEvent.eventStaffs && Array.isArray(fullEvent.eventStaffs)) {
+            const staffIds = fullEvent.eventStaffs.map((staff: any) => staff.userId);
+            setSelectedStaffIds(staffIds);
+            console.log('👥 Pre-selected staff IDs:', staffIds);
+          }
+
+          // ✅ LƯU DỮ LIỆU GỐC ĐỂ SO SÁNH SAU
+          setOriginalData({
+            title: fullEvent.title,
+            description: fullEvent.description,
+            category: fullEvent.category || event.eventType,
+            bannerUrl: fullEvent.bannerUrl || fullEvent.imageUrl,
+            startTime: fullEvent.startTime,
+            endTime: fullEvent.endTime,
+            startTimeRegister: fullEvent.startTimeRegistration || fullEvent.startTimeRegister,
+            endTimeRegister: fullEvent.endTimeRegistration || fullEvent.endTimeRegister,
+            maxCapacity: fullEvent.maxCapacity || event.maxParticipants,
+            isGlobal: fullEvent.isGlobal ?? true,
+            organizerId: fullEvent.organizerId || event.organizerId,
+            venueId: fullEvent.venueId || event.venueId,
+            hostId: fullEvent.hostId || 1,
+            staffIds: staffIds || [],
+            speakers: fullEvent.eventSpeakers?.map((es: any) => ({
+              speakerId: es.speakerId,
+              topic: es.topic,
+            })) || [],
+          });
+
+        } catch (error) {
+          console.error('❌ Error fetching full event details:', error);
+          // ✅ VẪN TIẾP TỤC VỚI DỮ LIỆU CƠ BẢN
+        }
+
+        setFormData(initialFormData);
+        console.log('✅ Form pre-filled with existing data');
+      } else {
+        console.log('➕ Creating new event - empty form');
+        // ✅ RESET FORM CHO TẠO MỚI
+        setFormData({
+          title: '',
+          description: '',
+          eventType: 'WORKSHOP',
+          bannerUrl: '',
+          startDate: '',
+          endDate: '',
+          registrationDeadline: '',
+          endTimeRegister: '',
+          maxParticipants: 0,
+          venueId: 0,
+        });
+        setSelectedStaffIds([]);
+        setOriginalData(null);
+      }
+    };
+
+    fetchInitialData();
   }, [event]);
 
   const fetchOrganizerInfo = async () => {
@@ -370,9 +450,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     console.log("=== SUBMIT START ===");
     console.log("Form data:", formData);
     console.log("Is editing:", !!event);
-    console.log("Event ID:", event?.id);
-    console.log("Selected staff IDs:", selectedStaffIds);
-    console.log("Organizer info:", organizerInfo);
 
     if (!validateForm()) {
       console.log("❌ Validation failed");
@@ -391,17 +468,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       return;
     }
 
-    if (selectedVenue.campusId !== organizerInfo.campusId) {
-      toast.error(
-        `Địa điểm phải thuộc campus ID: ${organizerInfo.campusId}. ` +
-        `Địa điểm bạn chọn thuộc campus ID: ${selectedVenue.campusId}`
-      );
-      return;
-    }
-
-    console.log("✅ Validation passed");
-    console.log("✅ Venue campus matches organizer campus:", organizerInfo.campusId);
-
     setIsSubmitting(true);
 
     try {
@@ -416,79 +482,153 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         return date.toISOString().slice(0, 19) + sign + hours + ":" + minutes;
       };
 
-      const requestData: CreateEventRequest = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.eventType,
-        bannerUrl: formData.bannerUrl?.trim() || undefined,
-        startTime: formatDateTime(formData.startDate),
-        endTime: formatDateTime(formData.endDate),
-        startTimeRegister: formatDateTime(formData.registrationDeadline),
-        endTimeRegister: formatDateTime(formData.endTimeRegister),
-        maxCapacity: Number(formData.maxParticipants),
-        isGlobal: true,
-        organizerId: organizerInfo.id,
-        venueId: Number(formData.venueId),
-        hostId: 1,
-        staffIds: selectedStaffIds,
-        speakers: [],
-      };
-
-      console.log("📤 Request data:", requestData);
-      console.log("📍 Selected venue:", selectedVenue);
-      console.log("🏢 Organizer campus:", organizerInfo.campusId);
-      console.log("🏢 Venue campus:", selectedVenue.campusId);
-
       let response;
       
-      // ✅ KIỂM TRA NẾU ĐANG EDIT HAY TẠO MỚI
       if (event) {
-        console.log("🔄 Updating existing event:", event.id);
-        // ✅ GỌI API PATCH UPDATE
+        // ✅ UPDATE MODE - CHỈ GỬI FIELDS ĐƯỢC PHÉP
+        console.log("🔄 UPDATE MODE");
+        
+        const eventIdString = String(event.id);
+        
+        if (!eventIdString || eventIdString.trim() === '') {
+          console.error("❌ Invalid event ID");
+          toast.error("ID sự kiện không hợp lệ");
+          return;
+        }
+
+        // ✅ CHỈ GỬI CÁC FIELD ĐƯỢC PHÉP KHI UPDATE
+        const updateData: UpdateEventRequest = {};
+
+        // SO SÁNH VÀ CHỈ GỬI NẾU THAY ĐỔI
+        if (originalData) {
+          const newTitle = formData.title.trim();
+          if (newTitle !== originalData.title) {
+            updateData.title = newTitle;
+          }
+
+          const newDescription = formData.description.trim();
+          if (newDescription !== originalData.description) {
+            updateData.description = newDescription;
+          }
+
+          const newCategory = formData.eventType;
+          if (newCategory !== originalData.category) {
+            updateData.category = newCategory;
+          }
+
+          const newBannerUrl = formData.bannerUrl?.trim();
+          if (newBannerUrl !== originalData.bannerUrl) {
+            updateData.bannerUrl = newBannerUrl;
+          }
+
+          const newStartTime = formatDateTime(formData.startDate);
+          if (newStartTime !== originalData.startTime) {
+            updateData.startTime = newStartTime;
+          }
+
+          const newEndTime = formatDateTime(formData.endDate);
+          if (newEndTime !== originalData.endTime) {
+            updateData.endTime = newEndTime;
+          }
+
+          const newStartTimeRegister = formatDateTime(formData.registrationDeadline);
+          if (newStartTimeRegister !== originalData.startTimeRegister) {
+            updateData.startTimeRegister = newStartTimeRegister;
+          }
+
+          const newEndTimeRegister = formatDateTime(formData.endTimeRegister);
+          if (newEndTimeRegister !== originalData.endTimeRegister) {
+            updateData.endTimeRegister = newEndTimeRegister;
+          }
+
+          const newMaxCapacity = Number(formData.maxParticipants);
+          if (newMaxCapacity !== originalData.maxCapacity) {
+            updateData.maxCapacity = newMaxCapacity;
+          }
+
+          const newVenueId = Number(formData.venueId);
+          if (newVenueId !== originalData.venueId) {
+            updateData.venueId = newVenueId;
+          }
+
+          // ⚠️ KHÔNG GỬI hostId, staffIds, speakers KHI UPDATE
+          console.log("⚠️ Skipping hostId, staffIds, speakers for UPDATE");
+        } else {
+          // KHÔNG CÓ ORIGINAL DATA - GỬI TẤT CẢ TRỪ hostId, staffIds, speakers
+          updateData.title = formData.title.trim();
+          updateData.description = formData.description.trim();
+          updateData.category = formData.eventType;
+          updateData.bannerUrl = formData.bannerUrl?.trim();
+          updateData.startTime = formatDateTime(formData.startDate);
+          updateData.endTime = formatDateTime(formData.endDate);
+          updateData.startTimeRegister = formatDateTime(formData.registrationDeadline);
+          updateData.endTimeRegister = formatDateTime(formData.endTimeRegister);
+          updateData.maxCapacity = Number(formData.maxParticipants);
+          updateData.venueId = Number(formData.venueId);
+          updateData.isGlobal = true;
+          updateData.organizerId = organizerInfo.id;
+        }
+
+        console.log("📤 Sending UPDATE data (without hostId/staffIds/speakers):", updateData);
+
+        if (Object.keys(updateData).length === 0) {
+          console.log("ℹ️ No changes detected");
+          toast.info("Không có thay đổi nào để lưu");
+          onClose();
+          return;
+        }
+
         response = await eventService.patchEventById({
-          id: event.id.toString(),
-          data: requestData
+          id: eventIdString,
+          data: updateData,
         });
+        
         console.log("✅ Update response:", response);
+        
       } else {
-        console.log("➕ Creating new event");
-        // ✅ GỌI API POST CREATE
+        // ✅ CREATE MODE - GỬI ĐẦY ĐỦ
+        console.log("➕ CREATE MODE - sending all fields");
+        
+        const requestData: CreateEventRequest = {
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          category: formData.eventType,
+          bannerUrl: formData.bannerUrl?.trim() || undefined,
+          startTime: formatDateTime(formData.startDate),
+          endTime: formatDateTime(formData.endDate),
+          startTimeRegister: formatDateTime(formData.registrationDeadline),
+          endTimeRegister: formatDateTime(formData.endTimeRegister),
+          maxCapacity: Number(formData.maxParticipants),
+          isGlobal: true,
+          organizerId: organizerInfo.id,
+          venueId: Number(formData.venueId),
+          hostId: 1,
+          staffIds: selectedStaffIds,
+          speakers: [],
+        };
+
+        console.log("📤 Sending CREATE data:", requestData);
+        
         response = await eventService.postEvent(requestData);
         console.log("✅ Create response:", response);
       }
 
-      console.log("📋 Full API response:", response);
-      console.log("Response status:", response.status);
-      console.log("Response statusText:", response.statusText);
-      console.log("Response data:", response.data);
-
-      // ✅ CHECK STATUS CODE THAY VÌ success FLAG
-      // Backend trả về status 201 (Created) hoặc 200 (OK) khi thành công
+      // ✅ XỬ LÝ SUCCESS RESPONSE
       if (response.status === 201 || response.status === 200) {
-        // ✅ XỬ LÝ NHIỀU TRƯỜNG HỢP CẤU TRÚC RESPONSE
         let apiEvent: any = null;
 
-        // Case 1: response.data.data (có wrapper)
         if (response.data?.data) {
           apiEvent = response.data.data;
-          console.log("✅ Case 1: Found event in response.data.data");
-        }
-        // Case 2: response.data (không có wrapper)
-        else if (response.data?.id || response.data?.title) {
+        } else if (response.data?.id || response.data?.title) {
           apiEvent = response.data;
-          console.log("✅ Case 2: Found event in response.data directly");
         }
-
-        console.log("✅ API Event data:", apiEvent);
 
         if (!apiEvent || !apiEvent.id) {
-          console.error("❌ No event data found in response");
           throw new Error("Không tìm thấy thông tin sự kiện trong response");
         }
 
-        // ✅ MAP DỮ LIỆU TỪ API
         const savedEvent: Event = {
-          id: parseInt(apiEvent.id),
+          id: String(apiEvent.id),
           title: apiEvent.title,
           description: apiEvent.description,
           eventType: (apiEvent.category || formData.eventType) as any,
@@ -501,7 +641,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           venueId: apiEvent.venueId || Number(formData.venueId),
           venueName: apiEvent.venue?.name || selectedVenue.name,
           campusId: apiEvent.venue?.campusId || selectedVenue.campusId,
-          campusName: apiEvent.venue?.campus?.name || organizerInfo.campusName || "",
+          campusName: apiEvent.venue?.campus?.name || organizerInfo.name || "",
           organizerId: apiEvent.organizerId || organizerInfo.id,
           organizerName: apiEvent.organizer?.name || organizerInfo.name,
           requiresApproval: true,
@@ -510,7 +650,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
         console.log("✅ Event saved successfully:", savedEvent);
         
-        // ✅ HIỂN THỊ TOAST PHÙ HỢP
         if (event) {
           toast.success(`Cập nhật sự kiện "${savedEvent.title}" thành công!`, {
             autoClose: 3000
@@ -523,39 +662,32 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         
         onSuccess(savedEvent);
       } else {
-        console.error("❌ Unexpected status code:", response.status);
         throw new Error(`Không thể lưu sự kiện. Status: ${response.status}`);
       }
     } catch (error: any) {
-      console.error("❌ Error submitting form:", error);
+      console.error("Error submitting form:", error);
       console.error("Error response:", error.response);
-      console.error("Error response data:", error.response?.data);
-      console.error("Error response status:", error.response?.status);
 
       let errorMessage = event 
         ? "Đã xảy ra lỗi khi cập nhật sự kiện" 
         : "Đã xảy ra lỗi khi tạo sự kiện";
 
-      // ✅ XỬ LÝ LỖI VENUE CONFLICT (400 BAD REQUEST)
+      // XỬ LÝ LỖI VENUE CONFLICT
       if (error.response?.status === 400) {
         const responseData = error.response.data;
         
-        // Check xem có phải lỗi venue conflict không
         if (responseData?.message) {
           const message = responseData.message;
           
-          // Lỗi venue đã được đặt
           if (message.includes("Venue đã được đặt") || 
               message.includes("venue is already booked") ||
-              message.includes("conflict") ||
-              message.includes("đã được sử dụng")) {
+              message.includes("conflict")) {
             
-            // ✅ PARSE THÔNG TIN TỪ ERROR MESSAGE
             const eventNameMatch = message.match(/"([^"]+)"/);
             const conflictEventName = eventNameMatch ? eventNameMatch[1] : "một sự kiện khác";
             
             errorMessage = 
-              `❌ Không thể đặt ${selectedVenue?.name || "địa điểm này"}!\n\n` +
+              `Không thể đặt ${selectedVenue?.name || "địa điểm này"}!\n\n` +
               `Địa điểm đã được sử dụng cho sự kiện "${conflictEventName}" trong cùng khung giờ.\n\n` +
               `Vui lòng:\n` +
               `• Chọn địa điểm khác, hoặc\n` +
@@ -567,56 +699,12 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                 whiteSpace: 'pre-line'
               }
             });
-            return; // ✅ Return để không hiển thị error message chung
+            return;
           }
         }
       }
 
-      // ✅ XỬ LÝ TRƯỜNG HỢP ĐẶC BIỆT: API TRẢ VỀ 201/200 NHƯNG THROW ERROR
-      if (error.response?.status === 201 || error.response?.status === 200) {
-        console.log("⚠️ API returned 201/200 but threw error, treating as success");
-        
-        let apiEvent: any = null;
-        if (error.response?.data?.data) {
-          apiEvent = error.response.data.data;
-        } else if (error.response?.data) {
-          apiEvent = error.response.data;
-        }
-
-        if (apiEvent && apiEvent.id) {
-          const savedEvent: Event = {
-            id: parseInt(apiEvent.id),
-            title: apiEvent.title,
-            description: apiEvent.description,
-            eventType: apiEvent.category as any,
-            status: apiEvent.status as any || "PENDING",
-            startDate: apiEvent.startTime,
-            endDate: apiEvent.endTime,
-            registrationDeadline: apiEvent.startTimeRegistration,
-            maxParticipants: apiEvent.maxCapacity,
-            currentParticipants: 0,
-            venueId: apiEvent.venueId,
-            venueName: apiEvent.venue?.name || "",
-            campusId: apiEvent.venue?.campusId || 0,
-            campusName: apiEvent.venue?.campus?.name || "",
-            organizerId: apiEvent.organizerId,
-            organizerName: apiEvent.organizer?.name || "",
-            requiresApproval: true,
-            isPublished: false,
-          };
-
-          if (event) {
-            toast.success(`Cập nhật sự kiện "${savedEvent.title}" thành công!`);
-          } else {
-            toast.success(`Tạo sự kiện "${savedEvent.title}" thành công!`);
-          }
-          
-          onSuccess(savedEvent);
-          return; // ✅ QUAN TRỌNG: Return để không hiển thị error toast
-        }
-      }
-
-      // ✅ XỬ LÝ CÁC LỖI KHÁC
+      // XỬ LÝ CÁC LỖI KHÁC
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
@@ -629,11 +717,8 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             .map(([field, msg]) => `${field}: ${msg}`)
             .join(", ");
         }
-      } else if (error.message) {
-        errorMessage = error.message;
       }
 
-      console.error("Final error message:", errorMessage);
       toast.error(errorMessage, {
         autoClose: 5000
       });

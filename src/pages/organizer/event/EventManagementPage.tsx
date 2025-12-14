@@ -81,6 +81,22 @@ const EventManagementPage = () => {
         });
 
         console.log(`✅ Page ${currentPage} response:`, response.data);
+        
+        // ✅ THÊM LOG ĐỂ DEBUG
+        console.log('Full response object:', response);
+        console.log('response.data type:', typeof response.data);
+        console.log('response.data keys:', Object.keys(response.data || {}));
+        
+        if (response.data?.data) {
+          console.log('response.data.data type:', typeof response.data.data);
+          console.log('response.data.data is array:', Array.isArray(response.data.data));
+          
+          if (Array.isArray(response.data.data) && response.data.data[0]) {
+            console.log('First event sample:', response.data.data[0]);
+            console.log('First event ID:', response.data.data[0].id);
+            console.log('First event ID type:', typeof response.data.data[0].id);
+          }
+        }
 
         // EXTRACT PAGINATION META
         if (response.data?.meta) {
@@ -122,32 +138,41 @@ const EventManagementPage = () => {
 
       // MAP DỮ LIỆU
       const mappedEvents: Event[] = allEvents.map((apiEvent: any, index: number) => {
-        let eventId: number = 0;
+        console.log(`\n=== Mapping event ${index + 1} ===`);
+        console.log('Raw apiEvent:', apiEvent);
+        console.log('apiEvent.id:', apiEvent.id, 'type:', typeof apiEvent.id);
+        
+        // ✅ FIX: ID LÀ STRING (UUID)
+        let eventId: string = '';
         
         if (apiEvent.id !== null && apiEvent.id !== undefined) {
-          if (typeof apiEvent.id === 'number') {
-            eventId = apiEvent.id;
-          } else if (typeof apiEvent.id === 'string') {
-            eventId = parseInt(apiEvent.id, 10);
-          }
+          eventId = String(apiEvent.id); // ✅ CONVERT SANG STRING
+          console.log('✅ Event ID (string):', eventId);
         }
         
-        if (isNaN(eventId) || eventId <= 0) {
-          console.error(`Event "${apiEvent.title}" has invalid ID:`, apiEvent.id);
-          eventId = 9000 + index;
+        // ✅ VALIDATE ID - PHẢI LÀ UUID HỢP LỆ
+        if (!eventId || eventId.trim() === '' || eventId === 'undefined' || eventId === 'null') {
+          console.error('❌ Invalid event ID:', {
+            rawId: apiEvent.id,
+            convertedId: eventId,
+            title: apiEvent.title,
+          });
+          return null; // ✅ FILTER OUT
         }
+        
+        console.log('✅ Final event ID:', eventId);
         
         const mappedStatus = normalizeStatus(apiEvent.status || 'PENDING');
         
         return {
-          id: eventId,
+          id: eventId, // ✅ STRING UUID
           title: apiEvent.title || '',
           description: apiEvent.description || '',
           eventType: apiEvent.category || apiEvent.eventType || 'OTHER',
           status: mappedStatus,
           startDate: apiEvent.startTime || apiEvent.startDate || '',
           endDate: apiEvent.endTime || apiEvent.endDate || '',
-          registrationDeadline: apiEvent.startTimeRegistration || apiEvent.registrationDeadline || '',
+          registrationDeadline: apiEvent.startTimeRegister || apiEvent.startTimeRegistration || apiEvent.registrationDeadline || '',
           maxParticipants: apiEvent.maxCapacity || apiEvent.maxParticipants || 0,
           currentParticipants: apiEvent.registeredCount || apiEvent.currentParticipants || 0,
           venueId: apiEvent.venueId || apiEvent.venue?.id || 0,
@@ -159,20 +184,13 @@ const EventManagementPage = () => {
           requiresApproval: apiEvent.requiresApproval ?? true,
           isPublished: apiEvent.isPublished ?? (apiEvent.status === 'PUBLISHED'),
         };
-      });
+      }).filter((event): event is Event => event !== null);
 
-      console.log('\n Total mapped events:', mappedEvents.length);
-      console.log('Status breakdown:', {
-        pending: mappedEvents.filter(e => e.status === 'PENDING').length,
-        approved: mappedEvents.filter(e => e.status === 'APPROVED').length,
-        canceled: mappedEvents.filter(e => e.status === 'CANCELED').length,
-        completed: mappedEvents.filter(e => e.status === 'COMPLETED').length,
-      });
+      console.log('\n✅ Total valid mapped events:', mappedEvents.length);
+      console.log('✅ All event IDs:', mappedEvents.map(e => e.id));
       
       setEvents(mappedEvents);
       setFilteredEvents(mappedEvents);
-      
-      console.log('Final events count:', mappedEvents.length);
       
     } catch (error: any) {
       console.error('Error fetching events:', error);
@@ -245,6 +263,18 @@ const EventManagementPage = () => {
   };
 
   const handleEditEvent = (event: Event) => {
+    console.log('📝 Editing event:', event);
+    console.log('Event ID:', event.id);
+    console.log('Event ID type:', typeof event.id);
+    
+    // ✅ VALIDATE STRING ID
+    if (!event || !event.id || typeof event.id !== 'string' || event.id.trim() === '') {
+      console.error('❌ Invalid event object or missing ID');
+      toast.error('Không thể chỉnh sửa sự kiện. Dữ liệu không hợp lệ.');
+      return;
+    }
+    
+    console.log('✅ Event validation passed');
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
@@ -566,3 +596,4 @@ class ErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
+
