@@ -13,7 +13,7 @@ import {
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
-import { organizerService } from '../../../services';
+import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
 
 const EventManagementPage = () => {
@@ -26,7 +26,7 @@ const EventManagementPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
-    eventId: number | null;
+    eventId: string | null; // ✅ ĐỔI THÀNH STRING
     eventTitle: string;
   }>({
     isOpen: false,
@@ -280,32 +280,84 @@ const EventManagementPage = () => {
   };
 
   const handleDeleteEvent = (event: Event) => {
+    console.log('🗑️ Requesting delete for event:', event);
+    
+    // ✅ VALIDATE EVENT ID
+    if (!event || !event.id || typeof event.id !== 'string') {
+      console.error('❌ Invalid event ID');
+      toast.error('Không thể gửi yêu cầu xóa. Dữ liệu không hợp lệ.');
+      return;
+    }
+
     setDeleteModalState({
       isOpen: true,
-      eventId: event.id,
+      eventId: event.id, // ✅ STRING UUID
       eventTitle: event.title,
     });
   };
 
+  // ✅ SỬA HÀM SUBMIT DELETE REQUEST
   const handleSubmitDeleteRequest = async (reason: string) => {
-    if (!deleteModalState.eventId) return;
+    if (!deleteModalState.eventId) {
+      toast.error('Không tìm thấy ID sự kiện');
+      return;
+    }
 
     try {
-      console.log('Submitting delete request:', {
+      console.log('📤 Submitting delete request:', {
         eventId: deleteModalState.eventId,
         reason,
       });
 
-      toast.success('Yêu cầu xóa sự kiện đã được gửi');
-      
+      // ✅ GỬI REQUEST LÊN SERVER
+      await eventService.requestDeleteEvent({
+        eventId: deleteModalState.eventId,
+        reason: reason.trim(),
+      });
+
+      toast.success('Đã gửi yêu cầu xóa sự kiện. Vui lòng chờ Admin phê duyệt.', {
+        autoClose: 5000,
+      });
+
+      // ✅ CẬP NHẬT TRẠNG THÁI LOCAL (OPTIONAL)
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === deleteModalState.eventId
+            ? { ...e, status: 'PENDING' as EventStatus } // Có thể thêm status mới "PENDING_DELETE"
+            : e
+        )
+      );
+
+      // ✅ ĐÓNG MODAL
       setDeleteModalState({
         isOpen: false,
         eventId: null,
         eventTitle: '',
       });
+
+      // ✅ REFRESH LẠI DANH SÁCH
+      await fetchEventsByOrganizer();
+      
     } catch (error: any) {
-      console.error('Error submitting delete request:', error);
-      toast.error('Không thể gửi yêu cầu xóa');
+      console.error('❌ Error submitting delete request:', error);
+      
+      let errorMessage = 'Không thể gửi yêu cầu xóa';
+      
+      if (error.response?.status === 400) {
+        errorMessage = error.response.data?.message || 'Yêu cầu không hợp lệ';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Không tìm thấy sự kiện';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền xóa sự kiện này';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage, {
+        autoClose: 5000,
+      });
+
+      throw error; // ✅ RE-THROW ĐỂ MODAL XỬ LÝ
     }
   };
 
@@ -540,13 +592,13 @@ const EventManagementPage = () => {
       {deleteModalState.isOpen && deleteModalState.eventId && (
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
-          eventId={deleteModalState.eventId}
+          eventId={deleteModalState.eventId} // ✅ STRING UUID
           onClose={() => setDeleteModalState({
             isOpen: false,
             eventId: null,
             eventTitle: '',
           })}
-          onSubmit={handleSubmitDeleteRequest}
+          onSubmit={handleSubmitDeleteRequest} // ✅ ĐÃ SỬA
         />
       )}
     </div>

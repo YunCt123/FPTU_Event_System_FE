@@ -41,7 +41,39 @@ const eventService = {
     }): Promise<AxiosResponse<ApiResponse<UpdateEventResponse>>> {
         console.log('Patching event:', id, 'with data:', data);
         return await apiUtils.patch<ApiResponse<UpdateEventResponse>>(`${EVENT_URL}${id}`, data);
-    }
+    },
+
+    async requestDeleteEvent(params: { 
+        eventId: string;
+        reason: string;
+    }): Promise<AxiosResponse<ApiResponse<any>>> {
+        console.log('📤 Sending delete request:', params);
+        return await apiUtils.post<ApiResponse<any>>(`${EVENT_URL}${params.eventId}/delete-request`, {
+            reason: params.reason
+        });
+    },
+
+    async getDeleteRequests(params?: {
+        page?: number;
+        limit?: number;
+        status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+    }): Promise<AxiosResponse<ApiResponse<any>>> {
+        return await apiUtils.get<ApiResponse<any>>(`${EVENT_URL}delete-requests`, params);
+    },
+
+    async approveDeleteRequest(params: {
+        requestId: string;
+        action: 'APPROVE' | 'REJECT';
+        note?: string;
+    }): Promise<AxiosResponse<ApiResponse<any>>> {
+        return await apiUtils.patch<ApiResponse<any>>(
+            `${EVENT_URL}delete-requests/${params.requestId}`,
+            {
+                action: params.action,
+                note: params.note
+            }
+        );
+    },
 
     // XÓA HOẶC COMMENT OUT hàm này
     // async getTotalEventsByMoth(param?:{

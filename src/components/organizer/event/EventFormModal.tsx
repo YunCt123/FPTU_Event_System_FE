@@ -90,41 +90,80 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           return `${year}-${month}-${day}T${hours}:${minutes}`;
         };
 
-        // ✅ SET FORM DATA VỚI DỮ LIỆU CŨ
-        const initialFormData = {
-          title: event.title || '',
-          description: event.description || '',
-          eventType: event.eventType || 'WORKSHOP',
-          bannerUrl: event.imageUrl || '',
-          startDate: formatToDatetimeLocal(event.startDate),
-          endDate: formatToDatetimeLocal(event.endDate),
-          registrationDeadline: formatToDatetimeLocal(event.registrationDeadline),
-          endTimeRegister: '', // ✅ CẦN LẤY TỪ API NẾU CÓ
-          maxParticipants: event.maxParticipants || 0,
-          venueId: event.venueId || 0,
-        };
-
-        console.log('📋 Initial form data:', initialFormData);
-
         // ✅ NẾU CẦN LẤY THÊM CHI TIẾT TỪ API
         try {
           const response = await eventService.getEventById(String(event.id));
           console.log('📡 Full event details from API:', response.data);
 
-          const fullEvent = response.data?.data || response.data;
+          const responseData = response.data as any;
+          const fullEvent = responseData?.data || responseData;
 
-          // ✅ CẬP NHẬT VỚI DỮ LIỆU ĐẦY ĐỦ TỪ API
-          initialFormData.endTimeRegister = formatToDatetimeLocal(fullEvent.endTimeRegistration);
-          initialFormData.bannerUrl = fullEvent.bannerUrl || fullEvent.imageUrl || '';
+          console.log('Full event object:', fullEvent);
+          console.log('startTimeRegistration:', fullEvent.startTimeRegistration);
+          console.log('endTimeRegistration:', fullEvent.endTimeRegistration);
+          console.log('Event prop registrationDeadline:', event.registrationDeadline);
 
           // ✅ LƯU STAFF IDs ĐÃ CHỌN
+          let staffIds: number[] = [];
           if (fullEvent.eventStaffs && Array.isArray(fullEvent.eventStaffs)) {
-            const staffIds = fullEvent.eventStaffs.map((staff: any) => staff.userId);
+            staffIds = fullEvent.eventStaffs.map((staff: any) => staff.userId);
             setSelectedStaffIds(staffIds);
             console.log('👥 Pre-selected staff IDs:', staffIds);
           }
 
-          // ✅ LƯU DỮ LIỆU GỐC ĐỂ SO SÁNH SAU
+          // ✅ XÁC ĐỊNH ĐÚNG FIELD endTimeRegistration
+          let endTimeRegisterValue = '';
+          
+          // Priority 1: Lấy từ fullEvent.endTimeRegistration
+          if (fullEvent.endTimeRegistration) {
+            endTimeRegisterValue = formatToDatetimeLocal(fullEvent.endTimeRegistration);
+            console.log('✅ Got endTimeRegister from fullEvent.endTimeRegistration');
+          } 
+          // Priority 2: Lấy từ fullEvent.endTimeRegister (nếu có)
+          else if (fullEvent.endTimeRegister) {
+            endTimeRegisterValue = formatToDatetimeLocal(fullEvent.endTimeRegister);
+            console.log('✅ Got endTimeRegister from fullEvent.endTimeRegister');
+          }
+          // Priority 3: Tính toán từ startTimeRegistration + 1 ngày
+          else if (fullEvent.startTimeRegistration) {
+            const startDate = new Date(fullEvent.startTimeRegistration);
+            startDate.setDate(startDate.getDate() + 1); // Thêm 1 ngày
+            endTimeRegisterValue = formatToDatetimeLocal(startDate.toISOString());
+            console.log('⚠️ Calculated endTimeRegister from startTimeRegistration + 1 day');
+          }
+          // Priority 4: Fallback về event.startDate
+          else if (event.startDate) {
+            endTimeRegisterValue = formatToDatetimeLocal(event.startDate);
+            console.log('⚠️ Fallback endTimeRegister to event.startDate');
+          }
+
+          console.log('📅 Final endTimeRegister value:', endTimeRegisterValue);
+
+          // ✅ SET FORM DATA VỚI DỮ LIỆU ĐẦY ĐỦ TỪ API
+          const formattedData = {
+            title: fullEvent.title || '',
+            description: fullEvent.description || '',
+            eventType: fullEvent.category || event.eventType || 'WORKSHOP',
+            bannerUrl: fullEvent.bannerUrl || fullEvent.imageUrl || '',
+            startDate: formatToDatetimeLocal(fullEvent.startTime || event.startDate),
+            endDate: formatToDatetimeLocal(fullEvent.endTime || event.endDate),
+            registrationDeadline: formatToDatetimeLocal(
+              fullEvent.startTimeRegistration || 
+              fullEvent.startTimeRegister || 
+              event.registrationDeadline
+            ),
+            endTimeRegister: endTimeRegisterValue, // ✅ FIX: Dùng giá trị đã xác định
+            maxParticipants: fullEvent.maxCapacity || event.maxParticipants || 0,
+            venueId: String(fullEvent.venueId || event.venueId || ''),
+            imageUrl: '',
+          };
+
+          console.log('✅ Formatted form data:', formattedData);
+          console.log('✅ endTimeRegister in formData:', formattedData.endTimeRegister);
+
+          setFormData(formattedData);
+
+          // ✅ LƯU ORIGINAL DATA
           setOriginalData({
             title: fullEvent.title,
             description: fullEvent.description,
@@ -132,14 +171,14 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             bannerUrl: fullEvent.bannerUrl || fullEvent.imageUrl,
             startTime: fullEvent.startTime,
             endTime: fullEvent.endTime,
-            startTimeRegister: fullEvent.startTimeRegistration || fullEvent.startTimeRegister,
-            endTimeRegister: fullEvent.endTimeRegistration || fullEvent.endTimeRegister,
+            startTimeRegister: fullEvent.startTimeRegistration || fullEvent.startTime,
+            endTimeRegister: fullEvent.endTimeRegistration || fullEvent.endTimeRegister || fullEvent.endTime, // ✅ FIX
             maxCapacity: fullEvent.maxCapacity || event.maxParticipants,
             isGlobal: fullEvent.isGlobal ?? true,
             organizerId: fullEvent.organizerId || event.organizerId,
             venueId: fullEvent.venueId || event.venueId,
             hostId: fullEvent.hostId || 1,
-            staffIds: staffIds || [],
+            staffIds: staffIds,
             speakers: fullEvent.eventSpeakers?.map((es: any) => ({
               speakerId: es.speakerId,
               topic: es.topic,
@@ -147,14 +186,30 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           });
 
         } catch (error) {
-          console.error('❌ Error fetching full event details:', error);
-          // ✅ VẪN TIẾP TỤC VỚI DỮ LIỆU CƠ BẢN
+          console.error('Error fetching full event details:', error);
+          
+          // ✅ FALLBACK: DÙNG DỮ LIỆU TỪ PROPS - FIX ĐỂ CÓ endTimeRegister
+          const fallbackData = {
+            title: event.title || '',
+            description: event.description || '',
+            eventType: event.eventType || 'WORKSHOP',
+            bannerUrl: event.imageUrl || '',
+            startDate: formatToDatetimeLocal(event.startDate),
+            endDate: formatToDatetimeLocal(event.endDate),
+            registrationDeadline: formatToDatetimeLocal(event.registrationDeadline),
+            endTimeRegister: formatToDatetimeLocal(event.startDate), // ✅ FIX: Fallback về startDate thay vì để trống
+            maxParticipants: event.maxParticipants || 0,
+            venueId: String(event.venueId || ''),
+            imageUrl: '',
+          };
+          
+          console.log('⚠️ Using fallback data with endTimeRegister:', fallbackData.endTimeRegister);
+          setFormData(fallbackData);
         }
 
-        setFormData(initialFormData);
         console.log('✅ Form pre-filled with existing data');
       } else {
-        console.log('➕ Creating new event - empty form');
+        console.log('Creating new event - empty form');
         // ✅ RESET FORM CHO TẠO MỚI
         setFormData({
           title: '',
@@ -165,8 +220,9 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           endDate: '',
           registrationDeadline: '',
           endTimeRegister: '',
-          maxParticipants: 0,
-          venueId: 0,
+          maxParticipants: 100,
+          venueId: '',
+          imageUrl: '',
         });
         setSelectedStaffIds([]);
         setOriginalData(null);
@@ -246,14 +302,17 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
       let allVenues: Venue[] = [];
 
-      if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
-        allVenues = response.data.data;
+      // ✅ FIX: Cast response.data to any để tránh lỗi TypeScript
+      const responseData = response.data as any;
+
+      if (responseData?.success && responseData?.data && Array.isArray(responseData.data)) {
+        allVenues = responseData.data;
         console.log('Case 1: Found venues in response.data.data (with wrapper)');
-      } else if (Array.isArray(response.data)) {
-        allVenues = response.data;
+      } else if (Array.isArray(responseData)) {
+        allVenues = responseData;
         console.log('Case 2: Found venues in response.data (direct array)');
-      } else if (response.data?.data && Array.isArray(response.data.data)) {
-        allVenues = response.data.data;
+      } else if (responseData?.data && Array.isArray(responseData.data)) {
+        allVenues = responseData.data;
         console.log('Case 3: Found venues in response.data.data (no success flag)');
       }
 
@@ -261,7 +320,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
       if (allVenues.length === 0) {
         console.warn('No venues found in system');
-        // toast.warning('Không có địa điểm nào trong hệ thống');
         setVenueList([]);
         return;
       }
@@ -284,22 +342,9 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       console.log('✅ Filtered venues:', filteredVenues);
       
       setVenueList(filteredVenues);
-      // if (filteredVenues.length === 0) {
-      //   toast.warning(`Không có địa điểm ACTIVE nào cho Campus ID: ${campusId}`);
-      // } else {
-      //   toast.success(`Đã tải ${filteredVenues.length} địa điểm cho campus ${campusId}`);
-      // }
 
     } catch (error: any) {
       console.error('Error fetching venues:', error);
-      // if (error.response?.status === 404) {
-      //   toast.error('API venues không tồn tại');
-      // } else if (error.response?.status === 401) {
-      //   toast.error('Phiên đăng nhập hết hạn');
-      // } else {
-      //   toast.error('Không thể tải danh sách địa điểm');
-      // }
-      
       setVenueList([]);
     } finally {
       setIsLoadingVenues(false);
@@ -317,16 +362,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       
       console.log('Full staff response:', response);
 
+      // ✅ FIX: Cast to any
+      const responseData = response.data as any;
       let staffData: User[] = [];
       
-      if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
-        staffData = response.data.data;
+      if (responseData?.success && responseData?.data && Array.isArray(responseData.data)) {
+        staffData = responseData.data;
         console.log('Case 1: Found staff in response.data.data');
-      } else if (Array.isArray(response.data)) {
-        staffData = response.data;
+      } else if (Array.isArray(responseData)) {
+        staffData = responseData;
         console.log('Case 2: Found staff in response.data');
-      } else if (response.data?.data && Array.isArray(response.data.data)) {
-        staffData = response.data.data;
+      } else if (responseData?.data && Array.isArray(responseData.data)) {
+        staffData = responseData.data;
         console.log('Case 3: Found staff in response.data.data');
       }
       
@@ -334,23 +381,12 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       
       if (staffData.length > 0) {
         setStaffList(staffData);
-        // toast.success(`Đã tải ${staffData.length} nhân viên`);
       } else {
         setStaffList([]);
-        // toast.info('Không có nhân viên nào');
       }
       
     } catch (error: any) {
-      console.error('❌ Error fetching staff:', error);
-
-      // if (error.response?.status === 404) {
-      //   toast.error('API staff không tồn tại');
-      // } else if (error.response?.status === 401) {
-      //   toast.error('Phiên đăng nhập hết hạn');
-      // } else {
-      //   toast.error('Không thể tải danh sách nhân viên');
-      // }
-      
+      console.error('Error fetching staff:', error);
       setStaffList([]);
     } finally {
       setIsLoadingStaff(false);
@@ -617,10 +653,13 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       if (response.status === 201 || response.status === 200) {
         let apiEvent: any = null;
 
-        if (response.data?.data) {
-          apiEvent = response.data.data;
-        } else if (response.data?.id || response.data?.title) {
-          apiEvent = response.data;
+        // ✅ FIX: Cast to any
+        const responseData = response.data as any;
+
+        if (responseData?.data) {
+          apiEvent = responseData.data;
+        } else if (responseData?.id || responseData?.title) {
+          apiEvent = responseData;
         }
 
         if (!apiEvent || !apiEvent.id) {
