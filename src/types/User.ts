@@ -3,7 +3,7 @@ export interface Campus {
   name: string;
   code: string;
   address: string;
-} 
+}
 
 export interface User {
   id: number;
@@ -18,11 +18,12 @@ export interface User {
   studentCode?: string;
   email: string;
   createdAt: string;
-  status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  status: "APPROVED" | "PENDING" | "REJECTED";
   isActive: boolean;
   roleName: "student" | "admin" | "staff" | "event_organizer";
   campusId: number;
   campus: Campus;
+  studentCardImage?: string;
 }
 
 export interface GetPendingUsersResponse {
@@ -37,8 +38,8 @@ export interface GetPendingUsersResponse {
   address: string;
   studentCode: string;
   studentCardImage?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'; 
-  roleName: 'staff' | 'student' | 'admin'; 
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  roleName: "staff" | "student" | "admin";
   isActive: boolean;
   createdAt: string; // hoặc Date
   campus: Campus;
@@ -52,8 +53,8 @@ export interface StatusUserResponse {
 export interface GetUsersStatusResponse {
   id: number;
   userName: string;
-  googleId?: string ;
-  avatar?: string ;
+  googleId?: string;
+  avatar?: string;
   phoneNumber: string;
   gender: boolean;
   address: string;
@@ -62,14 +63,13 @@ export interface GetUsersStatusResponse {
   studentCode: string;
   email: string;
   studentCardImage?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   refreshTokenHash?: string;
-  createdAt: string; 
+  createdAt: string;
   isActive: boolean;
-  roleName: 'staff' | 'student' | 'admin';
+  roleName: "staff" | "student" | "admin";
   campusId: number;
 }
-
 
 export interface PatchUserResponse {
   id: number;
@@ -84,11 +84,11 @@ export interface PatchUserResponse {
   studentCode: string | null;
   email: string;
   studentCardImage: string | null;
-  status: 'APPROVED' | 'PENDING' | 'REJECTED'; // nếu có thêm trạng thái khác thì bổ sung
+  status: "APPROVED" | "PENDING" | "REJECTED"; // nếu có thêm trạng thái khác thì bổ sung
   refreshTokenHash: string | null;
   createdAt: string; // hoặc Date nếu bạn convert
   isActive: boolean;
-  roleName: 'student' | 'admin' | 'event_organizer'; // thêm role nếu có
+  roleName: "student" | "admin" | "event_organizer"; // thêm role nếu có
   campusId: number;
 }
 
@@ -99,17 +99,17 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  message: string
+  message: string;
 }
 
-export interface UserParams{
+export interface UserParams {
   page?: number;
   limit?: number;
   roleName?: string;
   search?: string;
   campusId?: number;
   isActive?: boolean;
-};
+}
 
 export interface RegisterRequest {
   userName: string;
@@ -118,14 +118,10 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   campusId: number;
-  studentCode?: string;     // optional (vì User cho phép null)
-  phoneNumber?: string;     // optional
-  gender?: boolean;         // optional
-  address?: string;         // optional
-  avatar?: string; 
+  studentCode?: string; // optional (vì User cho phép null)
+  phoneNumber?: string; // optional
+  gender?: boolean; // optional
+  address?: string; // optional
+  avatar?: string;
   studentCardImage?: string; // optional
 }
-
-
-
-

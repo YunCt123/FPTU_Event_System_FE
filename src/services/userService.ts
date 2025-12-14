@@ -1,5 +1,5 @@
 import { apiUtils } from "../api/axios";
-import { USER_URL } from "../constants/apiEndPoints";
+import { TICKET_URL, USER_URL } from "../constants/apiEndPoints";
 import type {
   GetUsersStatusResponse,
   PatchUserResponse,
