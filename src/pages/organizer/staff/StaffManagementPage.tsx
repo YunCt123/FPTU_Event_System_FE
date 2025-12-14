@@ -5,24 +5,25 @@ import {
   Shield,
   Smartphone,
 } from 'lucide-react';
-import type { StaffRole, CreateStaffRequest } from '../../../types/Staff';
+
 import type { eventStaff, GetEventResponse } from '../../../types/Event';
 import { organizerService } from '../../../services';
 import eventService from '../../../services/eventService';
 import StaffTable from '../../../components/organizer/staff/StaffTable';
 import AddStaffModal from '../../../components/organizer/staff/AddStaffModal';
+// import { toast } from 'react-toastify';
+// import { ConfirmModal } from '../../../components';
 
 const StaffManagementPage = () => {
   const [events, setEvents] = useState<GetEventResponse[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [selectedEvent, setSelectedEvent] = useState<GetEventResponse >();
   const [staffList, setStaffList] = useState<eventStaff[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredStaff, setFilteredStaff] = useState<eventStaff[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newStaff, setNewStaff] = useState<Partial<CreateStaffRequest>>({
-    role: 'CHECK_IN',
-    hasAppAccess: true,
-  });
+  
+
   
 const fetchEvent = async () => {
   try {
@@ -38,10 +39,11 @@ const fetchEvent = async () => {
 };
 
 
-
 useEffect(() => {
   fetchEvent();    
 }, []);
+
+ 
 
 useEffect(() => {
   if (events.length > 0) {
@@ -59,6 +61,7 @@ useEffect(() => {
       if(response){ 
         console.log("response2", response);
         setStaffList(response.data.eventStaffs);
+        setSelectedEvent(response.data);
       }
     }catch(error){
       console.log("Error fetching staff data:", error);
@@ -73,7 +76,7 @@ useEffect(() => {
   }, [selectedEventId]);
 
   console.log("eventID", selectedEventId);
-  console.log("staffList", staffList);
+  console.log("staffList123", staffList);
 
   useEffect(() => {
     const filtered = staffList.filter(
@@ -85,9 +88,9 @@ useEffect(() => {
     setFilteredStaff(filtered);
   }, [searchQuery, staffList]);
 
-  const handleDeleteStaff = (staffId: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa staff này?')) {
-      setStaffList((prev) => prev.filter((s) => s.id !== staffId));
+  const handleDeleteStaff = (userId: number) => {
+    if (selectedEventId) {
+      fetchStaff(selectedEventId);
     }
   };
 
@@ -97,9 +100,7 @@ useEffect(() => {
     }
   };
 
-  const stats = {
-    total: staffList.length,
-  };
+
 
   return (
     <div className="space-y-6">
@@ -136,7 +137,7 @@ useEffect(() => {
           ) : (
             events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.title} - {new Date(event.startDate).toLocaleDateString('vi-VN')}
+                {event.title} - {new Date(event.startTime).toLocaleDateString('vi-VN')}
               </option>
             ))
           )}
@@ -185,6 +186,7 @@ useEffect(() => {
             <StaffTable 
               staffList={filteredStaff} 
               onDeleteStaff={handleDeleteStaff}
+              eventId={selectedEventId}
             />
           )}
 
@@ -208,11 +210,14 @@ useEffect(() => {
         <AddStaffModal 
           staffList={staffList} 
           eventId={selectedEventId}
+          eventCampusId={selectedEvent?.venue?.campus?.id}
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onStaffAdded={handleStaffAdded}
         />
       )}
+
+
     </div>
   );
 };

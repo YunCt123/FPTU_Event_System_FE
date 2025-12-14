@@ -1,21 +1,29 @@
-import { Eye, Mail, Phone, Shield, Trash2 } from 'lucide-react';
+import { Eye, Shield, Trash2 } from 'lucide-react';
 import type { eventStaff } from '../../../types/Event';
 import type { User } from '../../../types/User';
 import { useState } from 'react';
-import { userService } from '../../../services';
+import { organizerService, userService } from '../../../services';
 import UserDetailModal from '../../admin/user/UserDetailModal';
+import { ConfirmModal } from '../..';
+import { toast } from 'react-toastify';
 
 interface StaffTableProps {
   staffList: eventStaff[];
   onDeleteStaff: (staffId: number) => void;
+  eventId: string;
 }
 
 
 
-const StaffTable = ({ staffList, onDeleteStaff }: StaffTableProps) => {
+const StaffTable = ({ staffList, onDeleteStaff, eventId }: StaffTableProps) => {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{
+      isOpen: boolean;
+      userId: number | null;
+    }>({ isOpen: false, userId: null });
+    
     
 //   const getRoleBadge = (role: StaffRole) => {
 //     const roleConfig: Record<StaffRole, { label: string; className: string }> = {
@@ -52,6 +60,38 @@ const handleViewDetail = async(id: number) => {
     } finally {
         setIsLoading(false);
     }
+};
+
+const handleDeleteClick = ( userId: number) => {
+    setConfirmModal({ isOpen: true,  userId });
+};
+
+const confirmDelete = async () => {
+    if (!confirmModal.userId) return;
+
+    setIsLoading(true);
+    try {
+        const response = await organizerService.deleteEventStaff(eventId, confirmModal.userId);
+        
+        if (response.status === 200 || response.data.success) {
+            toast.success("Xóa staff khỏi sự kiện thành công");
+            onDeleteStaff(confirmModal.userId);
+            setConfirmModal({ isOpen: false, userId: null });
+        }
+    } catch (error: any) {
+        console.error('Error deleting staff:', error);
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.data?.message || 
+                            'Không thể xóa staff khỏi sự kiện!';
+        toast.error(errorMessage);
+    } finally {
+        setIsLoading(false);
+        setConfirmModal({ isOpen: false, userId: null });
+    }
+};
+
+const cancelDelete = () => {
+    setConfirmModal({ isOpen: false, userId: null });
 };
 
 
@@ -119,27 +159,26 @@ const handleViewDetail = async(id: number) => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    
+                    {staff.user.campus?.name}
                   </td>
-                  {/* <td className="px-6 py-4">{getRoleBadge(staff.role)}</td> */}
                   <td className="px-6 py-4">
                     <div>
                         <a
-                        href={`mailto:${staff.user.email}`}
+                        href={`mailto:${staff.user?.email}`}
                         className="text-sm text-[#F27125] hover:text-[#d95c0b] hover:underline"
-                      >{staff.user.email}</a>
+                      >{staff.user?.email}</a>
                       </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {/* <span className={`
+                    <span className={`
                       inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                      ${staff.user.isActive 
+                      ${staff.user?.isActive 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                       }
                     `}>
-                      {staff.user.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
-                    </span> */}
+                      {staff.user?.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
@@ -152,7 +191,7 @@ const handleViewDetail = async(id: number) => {
                           <Eye size={18} />
                         </button>
                         <button
-                          onClick={() => onDeleteStaff(staff.id)}
+                          onClick={() => handleDeleteClick(staff.user.id)}
                           disabled={isLoading}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Xóa"
@@ -182,6 +221,16 @@ const handleViewDetail = async(id: number) => {
         user={selectedUser}
       />
 
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="Xác nhận xóa Staff"
+        message="Bạn có chắc chắn muốn xóa staff này khỏi sự kiện? Hành động này không thể hoàn tác."
+        confirmText={isLoading ? "Đang xóa..." : "Xác nhận"}
+        cancelText="Hủy"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 };

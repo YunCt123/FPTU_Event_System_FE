@@ -151,7 +151,7 @@ const ListEventPage = () => {
     };
 
     return (
-      <span className={`px-3 py-1 rounded-lg text-sm font-medium ${statusConfig[status] || "bg-gray-100 text-gray-700"}`}>
+      <span className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${statusConfig[status] || "bg-gray-100 text-gray-700"}`}>
         {statusLabel[status] || status}
       </span>
     );

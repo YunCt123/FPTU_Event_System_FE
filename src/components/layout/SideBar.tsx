@@ -12,7 +12,6 @@ import {
   UserCog,
   UserStar,
   User,
-  UserX,
   LogOut,
 } from 'lucide-react';
 
