@@ -3,27 +3,37 @@ import { X, AlertTriangle } from 'lucide-react';
 
 interface DeleteRequestModalProps {
   eventTitle: string;
-  eventId: number;
+  eventId: string; 
   onClose: () => void;
-  onSubmit: (eventId: number, reason: string) => void;
+  onSubmit: (reason: string) => Promise<void>; 
 }
 
 const DeleteRequestModal = ({ eventTitle, eventId, onClose, onSubmit }: DeleteRequestModalProps) => {
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async () => {
+    // ✅ VALIDATION
     if (!reason.trim()) {
-      alert('Vui lòng nhập lý do xóa sự kiện');
+      setError('Vui lòng nhập lý do xóa sự kiện');
+      return;
+    }
+
+    if (reason.trim().length < 10) {
+      setError('Lý do phải có ít nhất 10 ký tự');
       return;
     }
 
     setIsSubmitting(true);
+    setError('');
+
     try {
-      await onSubmit(eventId, reason);
+      await onSubmit(reason);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting delete request:', error);
+      setError(error.response?.data?.message || 'Không thể gửi yêu cầu xóa');
     } finally {
       setIsSubmitting(false);
     }
@@ -32,11 +42,11 @@ const DeleteRequestModal = ({ eventTitle, eventId, onClose, onSubmit }: DeleteRe
   return (
     <div 
       className="fixed inset-0 bg-black/15 backdrop-blur-[2px] flex items-center justify-center z-50 p-4"
-      onClick={onClose} // Click outside to close
+      onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full adnimate-fade-in"
-        onClick={(e) => e.stopPropagation()} // Prevent close when clicking modal
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
@@ -57,6 +67,7 @@ const DeleteRequestModal = ({ eventTitle, eventId, onClose, onSubmit }: DeleteRe
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={isSubmitting}
             >
               <X size={24} />
             </button>
@@ -73,20 +84,29 @@ const DeleteRequestModal = ({ eventTitle, eventId, onClose, onSubmit }: DeleteRe
 
           <div>
             <label htmlFor="reason" className="block text-sm font-semibold text-gray-900 mb-2">
-              Lý do yêu cầu:
+              Lý do yêu cầu: <span className="text-red-500">*</span>
             </label>
             <textarea
               id="reason"
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                setError('');
+              }}
               placeholder="Nhập lý do muốn xóa sự kiện..."
               rows={5}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              className={`w-full px-4 py-3 border ${
+                error ? 'border-red-500' : 'border-gray-300'
+              } rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none transition-all`}
               disabled={isSubmitting}
             />
-            <p className="text-xs text-gray-500 mt-2">
-              Tối thiểu 10 ký tự
-            </p>
+            {error ? (
+              <p className="text-xs text-red-500 mt-2">{error}</p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-2">
+                Tối thiểu 10 ký tự
+              </p>
+            )}
           </div>
         </div>
 

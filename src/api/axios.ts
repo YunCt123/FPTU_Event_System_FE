@@ -86,7 +86,6 @@ const apiUtils = {
    * @param config - Additional axios config
    */ 
   async get<T>(url: string, params?: object, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    // ❌ SAI
     // const response = await api.get(url, { ...config, params });
     
     // ✅ ĐÚNG: params phải nằm trong object config
@@ -103,10 +102,12 @@ const apiUtils = {
    * @param data - Request body
    * @param config - Additional axios config
    */
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise< AxiosResponse<T>> {
+  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     const response = await api.post(url, data, {
+      ...config,
       headers: {
         'Content-Type': 'application/json',
+        ...config?.headers,
       }
     });
     return response as AxiosResponse<T>;

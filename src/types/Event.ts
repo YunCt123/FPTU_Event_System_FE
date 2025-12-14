@@ -3,7 +3,8 @@ export type EventStatus =
   | 'PENDING'    // Đang xử lý
   | 'APPROVED'   // Đã duyệt
   | 'CANCELED'   // Bị từ chối
-  | 'COMPLETED'; // Hoàn thành
+  | 'COMPLETED'  // Hoàn thành
+  | 'PENDING_DELETE'; // TRẠNG THÁI CHỜ XÓA
 
 export type EventType = 
 'CONFERENCE' 
@@ -234,5 +235,26 @@ export interface UpdateEventResponse {
 export interface EventDeleteResponse {
   id: string;
   message: string;
+}
+
+export interface DeleteRequest {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  requestedBy: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  reviewedBy?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  reviewNote?: string;
+  createdAt: string;
+  reviewedAt?: string;
 }
 
