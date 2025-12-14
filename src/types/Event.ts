@@ -1,13 +1,22 @@
+import type { User } from './User';
 export type EventStatus = 
-  | 'DRAFT'      // Nháp
   | 'PENDING'    // Đang xử lý
   | 'APPROVED'   // Đã duyệt
-  | 'REJECTED'   // Bị từ chối
-  | 'COMPLETED'; // Hoàn thành
-export type EventType = 'CONFERENCE' | 'WORKSHOP' | 'SEMINAR' | 'COMPETITION' | 'CULTURAL' | 'SPORTS' | 'OTHER';
+  | 'CANCELED'   // Bị từ chối
+  | 'COMPLETED'  // Hoàn thành
+  | 'PENDING_DELETE'; // TRẠNG THÁI CHỜ XÓA
+
+export type EventType = 
+'CONFERENCE' 
+| 'WORKSHOP' 
+| 'SEMINAR' 
+| 'COMPETITION' 
+| 'CULTURAL' 
+| 'SPORTS' 
+| 'OTHER';
 
 export interface Event {
-  id: number;
+  id: string; 
   title: string;
   description: string;
   eventType: EventType;
@@ -74,33 +83,35 @@ export interface meta{
   totalPages: number;
 }
 
-export interface eventSpeaker{
+export interface speaker{
+  id: number;
+  name: string;
+  bio: string;
+  avatar: string;
+  type: string;
+  company: string;
+}
 
+export interface eventSpeaker{
+  id: number;
+  topic: string;
+  speakerId: number;
+  speaker: speaker;
 }
 
 export interface eventStaff{
   id:number;
   createdAt: string;
+  eventId: number;
   userId: number;
   user: User;
-}
-
-export interface User{
-  id: number;
-  userName: string;
-  email: string;
-  firstName: string; 
-  lastName: string;
-  avatar?: string;
-  roleName: "student" | "admin" | "staff" | "event_organizer";
-  isActive: boolean;
-  campus: Campus;
 }
 
 export interface GetEventResponse {
   id: string;
   title: string;
   description: string;
+  category?: string;
   bannerUrl?: string;
   imageUrl?: string; 
   startTimeRegistration: string;
@@ -110,7 +121,6 @@ export interface GetEventResponse {
   status: string;
   maxCapacity: number;
   registeredCount: number;
-  checkinCount: number; // THÊM FIELD NÀY
   isGlobal: boolean;
   createdAt: string;
   hostId: number;
@@ -121,6 +131,7 @@ export interface GetEventResponse {
   host: host;
   eventSpeakers: eventSpeaker[];
   eventStaffs: eventStaff[];
+  checkinCount: number; 
 }
 
 export interface GetTotalEventsResponse {
@@ -140,19 +151,45 @@ export interface GetTotalRegisteredEventsResponse {
 export interface CreateEventRequest {
   title: string;
   description: string;
-  eventType: EventType;
-  startDate: string;
-  endDate: string;
-  registrationDeadline: string;
-  maxParticipants: number;
+  category: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  startTimeRegister: string;
+  endTimeRegister: string;
+  maxCapacity: number;
+  isGlobal: boolean;
+  organizerId: number;
   venueId?: number;
-  campusId?: number;
-  imageUrl?: string;
-  requiresApproval: boolean;
+  hostId: number;
+  staffIds?: number[];
+  speakers?: {
+    speakerId: number;
+    topic: string;
+  }[];
 }
 
-export interface UpdateEventRequest extends CreateEventRequest {
-  id: number;
+export type UpdateEventRequest = Partial<CreateEventRequest>;
+
+export interface UpdateEventRequest {
+  title?: string;
+  description?: string;
+  category?: string;
+  bannerUrl?: string;
+  startTime?: string;
+  endTime?: string;
+  startTimeRegister?: string;
+  endTimeRegister?: string;
+  maxCapacity?: number;
+  isGlobal?: boolean;
+  organizerId?: number;
+  venueId?: number;
+  hostId?: number;
+  staffIds?: number[];
+  speakers?: {
+    speakerId: number;
+    topic: string;
+  }[];
 }
 
 export interface EventModalProps {
@@ -170,7 +207,54 @@ export interface EventFormData {
   date: string;
 }
 
+export interface UpdateEventResponse {
+  id: string;
+  title: string;
+  description: string;
+  category?: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  maxCapacity: number;
+  registeredCount: number;
+  isGlobal: boolean;
+  createdAt: string;
+  organizerId: number;
+  venueId?: number;
+  organizer: organizer;
+  venue?: {
+    id: number;
+    name: string;
+    location: string;
+    hasSeats: boolean;
+  }
+  host: host;  
+}
+
 export interface EventDeleteResponse {
   id: string;
   message: string;
 }
+
+export interface DeleteRequest {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  requestedBy: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  reviewedBy?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  reviewNote?: string;
+  createdAt: string;
+  reviewedAt?: string;
+}
+
