@@ -8,10 +8,14 @@ import {
   FileText,
   Image as ImageIcon,
   Tag,
+  UserPlus,
+  AlertCircle,
 } from "lucide-react";
 import type { Event, CreateEventRequest } from "../../../types/Event";
+import type { User } from "../../../types/User";
+import type { Venue } from "../../../types/Venue";
 import { toast } from "react-toastify";
-import { organizerService } from "../../../services";
+import { organizerService, venueService, eventService } from "../../../services"; // ✅ THÊM eventService
 
 interface EventFormModalProps {
   event: Event | null;
@@ -21,10 +25,24 @@ interface EventFormModalProps {
 
 const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [staffList, setStaffList] = useState<User[]>([]);
+  const [selectedStaffIds, setSelectedStaffIds] = useState<number[]>([]);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(false);
+
+  // ✅ THÊM STATE CHO ORGANIZER VÀ VENUE
+  const [organizerInfo, setOrganizerInfo] = useState<{
+    id: number;
+    name: string;
+    campusId: number;
+  } | null>(null);
+  const [venueList, setVenueList] = useState<Venue[]>([]);
+  const [isLoadingVenues, setIsLoadingVenues] = useState(false);
+  const [isLoadingOrganizer, setIsLoadingOrganizer] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    eventType: "", // ✅ Đổi default từ "WORKSHOP" thành ""
+    eventType: "",
     startDate: "",
     endDate: "",
     registrationDeadline: "",
@@ -37,6 +55,19 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // ✅ FETCH ORGANIZER INFO VÀ STAFF KHI MOUNT
+  useEffect(() => {
+    fetchOrganizerInfo();
+    fetchStaffList();
+  }, []);
+
+  // ✅ FETCH VENUES KHI CÓ ORGANIZER INFO
+  useEffect(() => {
+    if (organizerInfo?.campusId) {
+      fetchVenuesByCampus(organizerInfo.campusId);
+    }
+  }, [organizerInfo]);
+
   // Initialize form with event data if editing
   useEffect(() => {
     if (event) {
@@ -44,7 +75,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       setFormData({
         title: event.title || "",
         description: event.description || "",
-        eventType: event.eventType || "", // ✅ Giữ nguyên value từ event
+        eventType: event.eventType || "",
         startDate: event.startDate
           ? new Date(event.startDate).toISOString().slice(0, 16)
           : "",
@@ -65,6 +96,195 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     }
   }, [event]);
 
+  const fetchOrganizerInfo = async () => {
+    setIsLoadingOrganizer(true);
+    try {
+      console.log('Fetching organizer info...');
+      
+      const response = await organizerService.getAllOrganizers();
+      
+      console.log('Full organizer response:', response);
+
+      let organizersArray: any[] = [];
+
+      if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
+        organizersArray = response.data.data;
+        console.log('Case 1: Found organizers in response.data.data (with wrapper)');
+      } else if (Array.isArray(response.data)) {
+        organizersArray = response.data;
+        console.log('Case 2: Found organizers in response.data (direct array)');
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        organizersArray = response.data.data;
+        console.log('Case 3: Found organizers in response.data.data (no success flag)');
+      }
+
+      console.log('Final organizers array:', organizersArray);
+
+      if (organizersArray.length === 0) {
+        console.error('No organizers found in response');
+        throw new Error('Không tìm thấy organizer. Vui lòng liên hệ admin.');
+      }
+
+      const organizer = organizersArray[0];
+      
+      console.log('Selected organizer:', organizer);
+
+      if (!organizer.campusId) {
+        console.error('Organizer has no campusId');
+        throw new Error('Organizer không có thông tin campus');
+      }
+      
+      setOrganizerInfo({
+        id: organizer.id,
+        name: organizer.name,
+        campusId: organizer.campusId,
+      });
+      
+      console.log('Organizer info set successfully');
+      // toast.success(`Đã tải thông tin: ${organizer.name}`);
+      
+    } catch (error: any) {
+      // if (error.response?.status === 404) {
+      //   toast.error('API organizers không tồn tại');
+      // } else if (error.response?.status === 401) {
+      //   toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      // } else {
+      //   toast.error(error.message || 'Không thể tải thông tin organizer');
+      // }
+    } finally {
+      setIsLoadingOrganizer(false);
+    }
+  };
+  const fetchVenuesByCampus = async (campusId: number) => {
+    setIsLoadingVenues(true);
+    try {
+      console.log('🏢 Fetching venues for campus ID:', campusId);
+      
+      const response = await venueService.getAllVenues();
+      
+      console.log('📍 Full venues response:', response);
+
+      let allVenues: Venue[] = [];
+
+      if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
+        allVenues = response.data.data;
+        console.log('Case 1: Found venues in response.data.data (with wrapper)');
+      } else if (Array.isArray(response.data)) {
+        allVenues = response.data;
+        console.log('Case 2: Found venues in response.data (direct array)');
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        allVenues = response.data.data;
+        console.log('Case 3: Found venues in response.data.data (no success flag)');
+      }
+
+      console.log('All venues:', allVenues);
+
+      if (allVenues.length === 0) {
+        console.warn('No venues found in system');
+        // toast.warning('Không có địa điểm nào trong hệ thống');
+        setVenueList([]);
+        return;
+      }
+
+      const filteredVenues = allVenues.filter((venue) => {
+        const matchesCampus = venue.campusId === campusId;
+        const normalizedStatus = venue.status?.toUpperCase();
+        const isActive = normalizedStatus === 'ACTIVE';
+        
+        console.log(`Venue ${venue.id} "${venue.name}":`, {
+          campusId: venue.campusId,
+          targetCampusId: campusId,
+          matchesCampus,
+          isActive,
+        });
+        
+        return matchesCampus && isActive;
+      });
+
+      console.log('✅ Filtered venues:', filteredVenues);
+      
+      setVenueList(filteredVenues);
+      // if (filteredVenues.length === 0) {
+      //   toast.warning(`Không có địa điểm ACTIVE nào cho Campus ID: ${campusId}`);
+      // } else {
+      //   toast.success(`Đã tải ${filteredVenues.length} địa điểm cho campus ${campusId}`);
+      // }
+
+    } catch (error: any) {
+      console.error('Error fetching venues:', error);
+      // if (error.response?.status === 404) {
+      //   toast.error('API venues không tồn tại');
+      // } else if (error.response?.status === 401) {
+      //   toast.error('Phiên đăng nhập hết hạn');
+      // } else {
+      //   toast.error('Không thể tải danh sách địa điểm');
+      // }
+      
+      setVenueList([]);
+    } finally {
+      setIsLoadingVenues(false);
+    }
+  };
+
+  const fetchStaffList = async () => {
+    setIsLoadingStaff(true);
+    try {
+      console.log('🔍 Fetching staff list...');
+      
+      const response = await organizerService.getStaffEvent({
+        isActive: true,
+      });
+      
+      console.log('Full staff response:', response);
+
+      let staffData: User[] = [];
+      
+      if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
+        staffData = response.data.data;
+        console.log('Case 1: Found staff in response.data.data');
+      } else if (Array.isArray(response.data)) {
+        staffData = response.data;
+        console.log('Case 2: Found staff in response.data');
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        staffData = response.data.data;
+        console.log('Case 3: Found staff in response.data.data');
+      }
+      
+      console.log('Final staff data:', staffData);
+      
+      if (staffData.length > 0) {
+        setStaffList(staffData);
+        // toast.success(`Đã tải ${staffData.length} nhân viên`);
+      } else {
+        setStaffList([]);
+        // toast.info('Không có nhân viên nào');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Error fetching staff:', error);
+
+      // if (error.response?.status === 404) {
+      //   toast.error('API staff không tồn tại');
+      // } else if (error.response?.status === 401) {
+      //   toast.error('Phiên đăng nhập hết hạn');
+      // } else {
+      //   toast.error('Không thể tải danh sách nhân viên');
+      // }
+      
+      setStaffList([]);
+    } finally {
+      setIsLoadingStaff(false);
+    }
+  };
+
+  const handleStaffToggle = (staffId: number) => {
+    setSelectedStaffIds((prev) =>
+      prev.includes(staffId)
+        ? prev.filter((id) => id !== staffId)
+        : [...prev, staffId]
+    );
+  };
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -72,7 +292,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -89,7 +308,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       newErrors.description = "Vui lòng nhập mô tả sự kiện";
     }
 
-    // ✅ THÊM VALIDATION CHO EVENT TYPE
     if (!formData.eventType.trim()) {
       newErrors.eventType = "Vui lòng nhập loại sự kiện";
     }
@@ -116,7 +334,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       newErrors.endTimeRegister = "Vui lòng chọn thời gian đóng đăng ký";
     }
 
-    // VALIDATE: registrationDeadline < endTimeRegister <= startDate
     if (formData.registrationDeadline && formData.endTimeRegister) {
       if (
         new Date(formData.endTimeRegister) <=
@@ -138,6 +355,11 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       newErrors.maxParticipants = "Số lượng người tham gia phải lớn hơn 0";
     }
 
+    //VALIDATE VENUE
+    if (!formData.venueId) {
+      newErrors.venueId = "Vui lòng chọn địa điểm";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -147,6 +369,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
     console.log("=== SUBMIT START ===");
     console.log("Form data:", formData);
+    console.log("Is editing:", !!event);
+    console.log("Event ID:", event?.id);
+    console.log("Selected staff IDs:", selectedStaffIds);
+    console.log("Organizer info:", organizerInfo);
 
     if (!validateForm()) {
       console.log("❌ Validation failed");
@@ -154,18 +380,31 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       return;
     }
 
+    if (!organizerInfo) {
+      toast.error("Không tìm thấy thông tin organizer");
+      return;
+    }
+
+    const selectedVenue = venueList.find(v => v.id === Number(formData.venueId));
+    if (!selectedVenue) {
+      toast.error("Vui lòng chọn địa điểm hợp lệ");
+      return;
+    }
+
+    if (selectedVenue.campusId !== organizerInfo.campusId) {
+      toast.error(
+        `Địa điểm phải thuộc campus ID: ${organizerInfo.campusId}. ` +
+        `Địa điểm bạn chọn thuộc campus ID: ${selectedVenue.campusId}`
+      );
+      return;
+    }
+
     console.log("✅ Validation passed");
+    console.log("✅ Venue campus matches organizer campus:", organizerInfo.campusId);
+
     setIsSubmitting(true);
 
     try {
-      // Log raw form values
-      console.log("📝 Raw form values:");
-      console.log("  startDate:", formData.startDate);
-      console.log("  endDate:", formData.endDate);
-      console.log("  registrationDeadline:", formData.registrationDeadline);
-      console.log("  endTimeRegister:", formData.endTimeRegister);
-
-      // Helper function để format datetime cho API
       const formatDateTime = (dateString: string): string => {
         const date = new Date(dateString);
         const offset = -date.getTimezoneOffset();
@@ -177,7 +416,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         return date.toISOString().slice(0, 19) + sign + hours + ":" + minutes;
       };
 
-      // Map formData sang CreateEventRequest format theo Swagger
       const requestData: CreateEventRequest = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -189,109 +427,199 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         endTimeRegister: formatDateTime(formData.endTimeRegister),
         maxCapacity: Number(formData.maxParticipants),
         isGlobal: true,
-        organizerId: 1,
-        venueId: Number(formData.venueId) || 1,
+        organizerId: organizerInfo.id,
+        venueId: Number(formData.venueId),
         hostId: 1,
-        staffIds: [],
+        staffIds: selectedStaffIds,
         speakers: [],
       };
 
       console.log("📤 Request data:", requestData);
-      console.log("📤 Request JSON:");
-      console.log(JSON.stringify(requestData, null, 2));
+      console.log("📍 Selected venue:", selectedVenue);
+      console.log("🏢 Organizer campus:", organizerInfo.campusId);
+      console.log("🏢 Venue campus:", selectedVenue.campusId);
 
-      // Log từng field để check
-      console.log("🔍 Field validation:");
-      console.log(
-        "  title:",
-        requestData.title,
-        "(length:",
-        requestData.title.length + ")"
-      );
-      console.log(
-        "  description:",
-        requestData.description.substring(0, 50) + "..."
-      );
-      console.log("  category:", requestData.category);
-      console.log("  startTime:", requestData.startTime);
-      console.log("  endTime:", requestData.endTime);
-      console.log("  startTimeRegister:", requestData.startTimeRegister);
-      console.log("  endTimeRegister:", requestData.endTimeRegister);
-      console.log(
-        "  maxCapacity:",
-        requestData.maxCapacity,
-        "(type:",
-        typeof requestData.maxCapacity + ")"
-      );
-      console.log(
-        "  venueId:",
-        requestData.venueId,
-        "(type:",
-        typeof requestData.venueId + ")"
-      );
+      let response;
+      
+      // ✅ KIỂM TRA NẾU ĐANG EDIT HAY TẠO MỚI
+      if (event) {
+        console.log("🔄 Updating existing event:", event.id);
+        // ✅ GỌI API PATCH UPDATE
+        response = await eventService.patchEventById({
+          id: event.id.toString(),
+          data: requestData
+        });
+        console.log("✅ Update response:", response);
+      } else {
+        console.log("➕ Creating new event");
+        // ✅ GỌI API POST CREATE
+        response = await eventService.postEvent(requestData);
+        console.log("✅ Create response:", response);
+      }
 
-      // Gọi API để tạo sự kiện
-      const response = await organizerService.postEvent(requestData);
+      console.log("📋 Full API response:", response);
+      console.log("Response status:", response.status);
+      console.log("Response statusText:", response.statusText);
+      console.log("Response data:", response.data);
 
-      console.log("📥 API response:", response);
-      console.log("📥 Response data:", response.data);
+      // ✅ CHECK STATUS CODE THAY VÌ success FLAG
+      // Backend trả về status 201 (Created) hoặc 200 (OK) khi thành công
+      if (response.status === 201 || response.status === 200) {
+        // ✅ XỬ LÝ NHIỀU TRƯỜNG HỢP CẤU TRÚC RESPONSE
+        let apiEvent: any = null;
 
-      if (response.data.success && response.data.data) {
-        const apiEvent = response.data.data;
+        // Case 1: response.data.data (có wrapper)
+        if (response.data?.data) {
+          apiEvent = response.data.data;
+          console.log("✅ Case 1: Found event in response.data.data");
+        }
+        // Case 2: response.data (không có wrapper)
+        else if (response.data?.id || response.data?.title) {
+          apiEvent = response.data;
+          console.log("✅ Case 2: Found event in response.data directly");
+        }
 
+        console.log("✅ API Event data:", apiEvent);
+
+        if (!apiEvent || !apiEvent.id) {
+          console.error("❌ No event data found in response");
+          throw new Error("Không tìm thấy thông tin sự kiện trong response");
+        }
+
+        // ✅ MAP DỮ LIỆU TỪ API
         const savedEvent: Event = {
           id: parseInt(apiEvent.id),
           title: apiEvent.title,
           description: apiEvent.description,
-          eventType: formData.eventType as any,
+          eventType: (apiEvent.category || formData.eventType) as any,
           status: (apiEvent.status as any) || "PENDING",
-          startDate: apiEvent.startTime,
-          endDate: apiEvent.endTime,
-          registrationDeadline: apiEvent.startTimeRegistration,
-          maxParticipants: apiEvent.maxCapacity,
+          startDate: apiEvent.startTime || apiEvent.startDate,
+          endDate: apiEvent.endTime || apiEvent.endDate,
+          registrationDeadline: apiEvent.startTimeRegistration || apiEvent.startTimeRegister,
+          maxParticipants: apiEvent.maxCapacity || formData.maxParticipants,
           currentParticipants: apiEvent.registeredCount || 0,
-          venueId: apiEvent.venueId,
-          venueName: apiEvent.venue?.name || "",
-          campusId: apiEvent.venue?.campusId,
-          campusName: apiEvent.venue?.campus?.name || "",
-          organizerId: apiEvent.organizerId,
-          organizerName: apiEvent.organizer?.name || "",
+          venueId: apiEvent.venueId || Number(formData.venueId),
+          venueName: apiEvent.venue?.name || selectedVenue.name,
+          campusId: apiEvent.venue?.campusId || selectedVenue.campusId,
+          campusName: apiEvent.venue?.campus?.name || organizerInfo.campusName || "",
+          organizerId: apiEvent.organizerId || organizerInfo.id,
+          organizerName: apiEvent.organizer?.name || organizerInfo.name,
           requiresApproval: true,
           isPublished: false,
         };
 
-        console.log("Event created successfully:", savedEvent);
-        toast.success("Tạo sự kiện thành công!");
+        console.log("✅ Event saved successfully:", savedEvent);
+        
+        // ✅ HIỂN THỊ TOAST PHÙ HỢP
+        if (event) {
+          toast.success(`Cập nhật sự kiện "${savedEvent.title}" thành công!`, {
+            autoClose: 3000
+          });
+        } else {
+          toast.success(`Tạo sự kiện "${savedEvent.title}" thành công!`, {
+            autoClose: 3000
+          });
+        }
+        
         onSuccess(savedEvent);
       } else {
-        console.error("API returned success=false:", response.data);
-        throw new Error(response.data.message || "Không thể tạo sự kiện");
+        console.error("❌ Unexpected status code:", response.status);
+        throw new Error(`Không thể lưu sự kiện. Status: ${response.status}`);
       }
     } catch (error: any) {
-      console.error("Error submitting form:", error);
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
+      console.error("❌ Error submitting form:", error);
       console.error("Error response:", error.response);
       console.error("Error response data:", error.response?.data);
       console.error("Error response status:", error.response?.status);
-      console.error("Error response headers:", error.response?.headers);
-      console.error("Error config:", error.config);
 
-      // Log validation errors từ backend nếu có
-      if (error.response?.data?.errors) {
-        console.error(
-          "Validation errors from backend:",
-          error.response.data.errors
-        );
+      let errorMessage = event 
+        ? "Đã xảy ra lỗi khi cập nhật sự kiện" 
+        : "Đã xảy ra lỗi khi tạo sự kiện";
+
+      // ✅ XỬ LÝ LỖI VENUE CONFLICT (400 BAD REQUEST)
+      if (error.response?.status === 400) {
+        const responseData = error.response.data;
+        
+        // Check xem có phải lỗi venue conflict không
+        if (responseData?.message) {
+          const message = responseData.message;
+          
+          // Lỗi venue đã được đặt
+          if (message.includes("Venue đã được đặt") || 
+              message.includes("venue is already booked") ||
+              message.includes("conflict") ||
+              message.includes("đã được sử dụng")) {
+            
+            // ✅ PARSE THÔNG TIN TỪ ERROR MESSAGE
+            const eventNameMatch = message.match(/"([^"]+)"/);
+            const conflictEventName = eventNameMatch ? eventNameMatch[1] : "một sự kiện khác";
+            
+            errorMessage = 
+              `❌ Không thể đặt ${selectedVenue?.name || "địa điểm này"}!\n\n` +
+              `Địa điểm đã được sử dụng cho sự kiện "${conflictEventName}" trong cùng khung giờ.\n\n` +
+              `Vui lòng:\n` +
+              `• Chọn địa điểm khác, hoặc\n` +
+              `• Chọn thời gian khác`;
+            
+            toast.error(errorMessage, {
+              autoClose: 8000,
+              style: {
+                whiteSpace: 'pre-line'
+              }
+            });
+            return; // ✅ Return để không hiển thị error message chung
+          }
+        }
       }
 
-      // Parse error message từ API
-      let errorMessage = "Đã xảy ra lỗi khi lưu sự kiện";
+      // ✅ XỬ LÝ TRƯỜNG HỢP ĐẶC BIỆT: API TRẢ VỀ 201/200 NHƯNG THROW ERROR
+      if (error.response?.status === 201 || error.response?.status === 200) {
+        console.log("⚠️ API returned 201/200 but threw error, treating as success");
+        
+        let apiEvent: any = null;
+        if (error.response?.data?.data) {
+          apiEvent = error.response.data.data;
+        } else if (error.response?.data) {
+          apiEvent = error.response.data;
+        }
 
+        if (apiEvent && apiEvent.id) {
+          const savedEvent: Event = {
+            id: parseInt(apiEvent.id),
+            title: apiEvent.title,
+            description: apiEvent.description,
+            eventType: apiEvent.category as any,
+            status: apiEvent.status as any || "PENDING",
+            startDate: apiEvent.startTime,
+            endDate: apiEvent.endTime,
+            registrationDeadline: apiEvent.startTimeRegistration,
+            maxParticipants: apiEvent.maxCapacity,
+            currentParticipants: 0,
+            venueId: apiEvent.venueId,
+            venueName: apiEvent.venue?.name || "",
+            campusId: apiEvent.venue?.campusId || 0,
+            campusName: apiEvent.venue?.campus?.name || "",
+            organizerId: apiEvent.organizerId,
+            organizerName: apiEvent.organizer?.name || "",
+            requiresApproval: true,
+            isPublished: false,
+          };
+
+          if (event) {
+            toast.success(`Cập nhật sự kiện "${savedEvent.title}" thành công!`);
+          } else {
+            toast.success(`Tạo sự kiện "${savedEvent.title}" thành công!`);
+          }
+          
+          onSuccess(savedEvent);
+          return; // ✅ QUAN TRỌNG: Return để không hiển thị error toast
+        }
+      }
+
+      // ✅ XỬ LÝ CÁC LỖI KHÁC
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
-        // Handle validation errors array
         if (Array.isArray(error.response.data.errors)) {
           errorMessage = error.response.data.errors
             .map((e: any) => e.message || e)
@@ -301,18 +629,14 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             .map(([field, msg]) => `${field}: ${msg}`)
             .join(", ");
         }
-      } else if (error.response?.data?.error) {
-        if (typeof error.response.data.error === "string") {
-          errorMessage = error.response.data.error;
-        } else if (Array.isArray(error.response.data.error)) {
-          errorMessage = error.response.data.error.join(", ");
-        }
       } else if (error.message) {
         errorMessage = error.message;
       }
 
       console.error("Final error message:", errorMessage);
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        autoClose: 5000
+      });
     } finally {
       console.log("=== SUBMIT END ===");
       setIsSubmitting(false);
@@ -329,329 +653,417 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg">
               <Calendar className="text-white" size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-white">
-              {event ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold text-white">
+                {event ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
+              </h2>
+              {organizerInfo && (
+                <p className="text-white/90 text-sm mt-1">
+                  {organizerInfo.name} - Campus ID: {organizerInfo.campusId}
+                </p>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
             className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+            type="button"
           >
             <X size={24} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Tên sự kiện */}
-            <div>
-              <label
-                htmlFor="title"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-              >
-                <FileText size={16} className="text-orange-500" />
-                Tên sự kiện <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="Nhập tên sự kiện..."
-                className={`w-full px-4 py-3 border ${
-                  errors.title ? "border-red-500" : "border-gray-300"
-                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                disabled={isSubmitting}
-              />
-              {errors.title && (
-                <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="space-y-6">
+              {/* HIỂN THỊ THÔNG BÁO NẾU ĐANG LOADING */}
+              {isLoadingOrganizer && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  <p className="text-sm text-blue-800">Đang tải thông tin organizer...</p>
+                </div>
               )}
-            </div>
+              
+              {/* Tên sự kiện */}
+              <div>
+                <label
+                  htmlFor="title"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <FileText size={16} className="text-orange-500" />
+                  Tên sự kiện <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  placeholder="Nhập tên sự kiện..."
+                  className={`w-full px-4 py-3 border ${
+                    errors.title ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.title && (
+                  <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                )}
+              </div>
 
-            {/* Loại sự kiện - ĐỔI TỪ SELECT THÀNH INPUT */}
-            <div>
-              <label
-                htmlFor="eventType"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-              >
-                <Tag size={16} className="text-orange-500" />
-                Loại sự kiện <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="eventType"
-                name="eventType"
-                value={formData.eventType}
-                onChange={handleChange}
-                placeholder="VD: Workshop, Seminar, Conference, Hackathon..."
-                className={`w-full px-4 py-3 border ${
-                  errors.eventType ? "border-red-500" : "border-gray-300"
-                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                disabled={isSubmitting}
-              />
-              {errors.eventType && (
-                <p className="text-red-500 text-xs mt-1">{errors.eventType}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Nhập loại sự kiện theo ý bạn (VD: Workshop, Seminar, Conference, Hackathon, Training, Webinar...)
-              </p>
-            </div>
-
-            {/* Mô tả */}
-            <div>
-              <label
-                htmlFor="description"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-              >
-                <FileText size={16} className="text-orange-500" />
-                Mô tả sự kiện <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Nhập mô tả chi tiết về sự kiện..."
-                rows={4}
-                className={`w-full px-4 py-3 border ${
-                  errors.description ? "border-red-500" : "border-gray-300"
-                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all`}
-                disabled={isSubmitting}
-              />
-              {errors.description && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.description}
+              {/* Loại sự kiện */}
+              <div>
+                <label
+                  htmlFor="eventType"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <Tag size={16} className="text-orange-500" />
+                  Loại sự kiện <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="eventType"
+                  name="eventType"
+                  value={formData.eventType}
+                  onChange={handleChange}
+                  placeholder="VD: Workshop, Seminar, Conference, Hackathon..."
+                  className={`w-full px-4 py-3 border ${
+                    errors.eventType ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.eventType && (
+                  <p className="text-red-500 text-xs mt-1">{errors.eventType}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Nhập loại sự kiện theo ý bạn (VD: Workshop, Seminar, Conference, Hackathon, Training, Webinar...)
                 </p>
+              </div>
+
+              {/* Mô tả */}
+              <div>
+                <label
+                  htmlFor="description"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <FileText size={16} className="text-orange-500" />
+                  Mô tả sự kiện <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Nhập mô tả chi tiết về sự kiện..."
+                  rows={4}
+                  className={`w-full px-4 py-3 border ${
+                    errors.description ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.description && (
+                  <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+                )}
+              </div>
+
+              {/* Thời gian */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="startDate"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                  >
+                    <Calendar size={16} className="text-orange-500" />
+                    Thời gian bắt đầu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="startDate"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.startDate ? "border-red-500" : "border-gray-300"
+                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                    disabled={isSubmitting}
+                  />
+                  {errors.startDate && (
+                    <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="endDate"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                  >
+                    <Calendar size={16} className="text-orange-500" />
+                    Thời gian kết thúc <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="endDate"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.endDate ? "border-red-500" : "border-gray-300"
+                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                    disabled={isSubmitting}
+                  />
+                  {errors.endDate && (
+                    <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Hạn đăng ký */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="registrationDeadline"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                  >
+                    <Clock size={16} className="text-orange-500" />
+                    Thời gian mở đăng ký <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="registrationDeadline"
+                    name="registrationDeadline"
+                    value={formData.registrationDeadline}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.registrationDeadline ? "border-red-500" : "border-gray-300"
+                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                    disabled={isSubmitting}
+                  />
+                  {errors.registrationDeadline && (
+                    <p className="text-red-500 text-xs mt-1">{errors.registrationDeadline}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="endTimeRegister"
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                  >
+                    <Clock size={16} className="text-orange-500" />
+                    Thời gian đóng đăng ký <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="endTimeRegister"
+                    name="endTimeRegister"
+                    value={formData.endTimeRegister}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.endTimeRegister ? "border-red-500" : "border-gray-300"
+                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                    disabled={isSubmitting}
+                  />
+                  {errors.endTimeRegister && (
+                    <p className="text-red-500 text-xs mt-1">{errors.endTimeRegister}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Số lượng người tham gia */}
+              <div>
+                <label
+                  htmlFor="maxParticipants"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <Users size={16} className="text-orange-500" />
+                  Số lượng người tham gia tối đa <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  id="maxParticipants"
+                  name="maxParticipants"
+                  value={formData.maxParticipants}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder="100"
+                  className={`w-full px-4 py-3 border ${
+                    errors.maxParticipants ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  disabled={isSubmitting}
+                />
+                {errors.maxParticipants && (
+                  <p className="text-red-500 text-xs mt-1">{errors.maxParticipants}</p>
+                )}
+              </div>
+
+              {/* VENUE DROPDOWN */}
+              <div>
+                <label
+                  htmlFor="venueId"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <MapPin size={16} className="text-orange-500" />
+                  Địa điểm <span className="text-red-500">*</span>
+                </label>
+
+                {isLoadingVenues ? (
+                  <div className="flex items-center justify-center py-3 border border-gray-300 rounded-lg">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500"></div>
+                    <span className="ml-2 text-sm text-gray-600">Đang tải địa điểm...</span>
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      id="venueId"
+                      name="venueId"
+                      value={formData.venueId}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-3 border ${
+                        errors.venueId ? "border-red-500" : "border-gray-300"
+                      } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                      disabled={isSubmitting || !organizerInfo || venueList.length === 0}
+                      required
+                    >
+                      <option value="">
+                        {!organizerInfo
+                          ? "Đang tải thông tin organizer..."
+                          : venueList.length === 0
+                          ? "Không có địa điểm nào"
+                          : "Chọn địa điểm..."}
+                      </option>
+                      {venueList.map((venue) => (
+                        <option key={venue.id} value={venue.id}>
+                          {venue.name} - {venue.location}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* {organizerInfo && venueList.length > 0 && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Hiển thị {venueList.length} địa điểm thuộc Campus ID: {organizerInfo.campusId}
+                      </p>
+                    )} */}
+
+                    {organizerInfo && venueList.length === 0 && !isLoadingVenues && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Không có địa điểm nào cho Campus ID: {organizerInfo.campusId}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {errors.venueId && (
+                  <p className="text-red-500 text-xs mt-1">{errors.venueId}</p>
+                )}
+              </div>
+
+              {/* Staff selection */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
+                  <UserPlus size={16} className="text-orange-500" />
+                  Chọn nhân viên hỗ trợ
+                </label>
+
+                {isLoadingStaff ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : staffList.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Không có nhân viên nào
+                  </div>
+                ) : (
+                  <div className="border border-gray-300 rounded-lg max-h-60 overflow-y-auto">
+                    {staffList.map((staff, index) => (
+                      <label
+                        key={`staff-${staff.id}-${index}`}
+                        className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedStaffIds.includes(staff.id)}
+                          onChange={() => handleStaffToggle(staff.id)}
+                          className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                          disabled={isSubmitting}
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">
+                            {staff.firstName} {staff.lastName}
+                          </div>
+                          <div className="text-sm text-gray-600">{staff.email}</div>
+                        </div>
+                        {staff.campus && (
+                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                            {staff.campus.name}
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {selectedStaffIds.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Đã chọn {selectedStaffIds.length} nhân viên
+                  </p>
+                )}
+              </div>
+
+              {/* Banner URL */}
+              <div>
+                <label
+                  htmlFor="bannerUrl"
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
+                >
+                  <ImageIcon size={16} className="text-orange-500" />
+                  Banner URL (tùy chọn)
+                </label>
+                <input
+                  type="url"
+                  id="bannerUrl"
+                  name="bannerUrl"
+                  value={formData.bannerUrl}
+                  onChange={handleChange}
+                  placeholder="https://example.com/banner.jpg"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer - ✅ THÊM FLEX-SHRINK-0 */}
+          <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 flex-shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !organizerInfo || venueList.length === 0}
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Đang lưu...
+                </>
+              ) : event ? (
+                "Cập nhật"
+              ) : (
+                "Tạo sự kiện"
               )}
-            </div>
-
-            {/* Thời gian - Grid 2 cột */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Thời gian bắt đầu */}
-              <div>
-                <label
-                  htmlFor="startDate"
-                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-                >
-                  <Calendar size={16} className="text-orange-500" />
-                  Thời gian bắt đầu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  id="startDate"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${
-                    errors.startDate ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                  disabled={isSubmitting}
-                />
-                {errors.startDate && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.startDate}
-                  </p>
-                )}
-              </div>
-
-              {/* Thời gian kết thúc */}
-              <div>
-                <label
-                  htmlFor="endDate"
-                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-                >
-                  <Calendar size={16} className="text-orange-500" />
-                  Thời gian kết thúc <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  id="endDate"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${
-                    errors.endDate ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                  disabled={isSubmitting}
-                />
-                {errors.endDate && (
-                  <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Hạn đăng ký */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="registrationDeadline"
-                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-                >
-                  <Clock size={16} className="text-orange-500" />
-                  Thời gian mở đăng ký <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  id="registrationDeadline"
-                  name="registrationDeadline"
-                  value={formData.registrationDeadline}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${
-                    errors.registrationDeadline
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                  disabled={isSubmitting}
-                />
-                {errors.registrationDeadline && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.registrationDeadline}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="endTimeRegister"
-                  className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-                >
-                  <Clock size={16} className="text-orange-500" />
-                  Thời gian đóng đăng ký <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  id="endTimeRegister"
-                  name="endTimeRegister"
-                  value={formData.endTimeRegister}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${
-                    errors.endTimeRegister
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                  disabled={isSubmitting}
-                />
-                {errors.endTimeRegister && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.endTimeRegister}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Số lượng người tham gia */}
-            <div>
-              <label
-                htmlFor="maxParticipants"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-              >
-                <Users size={16} className="text-orange-500" />
-                Số lượng người tham gia tối đa{" "}
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                id="maxParticipants"
-                name="maxParticipants"
-                value={formData.maxParticipants}
-                onChange={handleChange}
-                min="1"
-                placeholder="100"
-                className={`w-full px-4 py-3 border ${
-                  errors.maxParticipants ? "border-red-500" : "border-gray-300"
-                } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                disabled={isSubmitting}
-              />
-              {errors.maxParticipants && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.maxParticipants}
-                </p>
-              )}
-            </div>
-
-            {/* Địa điểm - TODO: Add venue selector */}
-            <div>
-              <label
-                htmlFor="venueId"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-              >
-                <MapPin size={16} className="text-orange-500" />
-                Địa điểm
-              </label>
-              <select
-                id="venueId"
-                name="venueId"
-                value={formData.venueId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                disabled={isSubmitting}
-              >
-                <option value="">Chọn địa điểm...</option>
-                <option value="1">FU HCM Hall A</option>
-                <option value="2">FU HCM Hall B</option>
-                <option value="3">FU HCM Auditorium</option>
-                {/* TODO: Load venues from API */}
-              </select>
-            </div>
-
-            {/* Banner URL (optional) */}
-            <div>
-              <label
-                htmlFor="bannerUrl"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
-              >
-                <ImageIcon size={16} className="text-orange-500" />
-                Banner URL (tùy chọn)
-              </label>
-              <input
-                type="url"
-                id="bannerUrl"
-                name="bannerUrl"
-                value={formData.bannerUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/banner.jpg"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                disabled={isSubmitting}
-              />
-            </div>
-          </form>
-        </div>
-
-        {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            Hủy
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Đang lưu...
-              </>
-            ) : event ? (
-              "Cập nhật"
-            ) : (
-              "Tạo sự kiện"
-            )}
-          </button>
-        </div>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

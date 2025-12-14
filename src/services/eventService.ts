@@ -1,7 +1,7 @@
 import { apiUtils } from "../api/axios";
 import { EVENT_URL } from "../constants/apiEndPoints";
 import type { AxiosResponse } from "axios";
-import type { EventDeleteResponse, GetEventResponse, GetTotalEventsResponse } from "../types/Event";
+import type { CreateEventRequest, EventDeleteResponse, GetEventResponse, GetTotalEventsResponse, UpdateEventRequest, UpdateEventResponse } from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
 
 const eventService = {
@@ -20,14 +20,28 @@ const eventService = {
         return await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
     },
 
-    async deleteEvent(id: string): Promise<AxiosResponse<ApiResponse<EventDeleteResponse>>> {
-        return await apiUtils.delete<ApiResponse<EventDeleteResponse>>(`${EVENT_URL}${id}`);
+    async deleteEvent(params?: { 
+        id: string
+        userId: number
+    }): Promise<AxiosResponse<ApiResponse<EventDeleteResponse>>> {
+        return await apiUtils.delete<ApiResponse<EventDeleteResponse>>(`${EVENT_URL}${params?.id}?userId=${params?.userId}`);
     },
 
     async patchEvent(id: string, data: {status: string}): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
         return await apiUtils.patch<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}/status`, data);
     },
     
+    async postEvent(data: CreateEventRequest): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
+        return await apiUtils.post<ApiResponse<GetEventResponse>>(`${EVENT_URL}`, data);
+    },
+    
+    async patchEventById(params?: {
+        id: string;
+        data: UpdateEventRequest;
+    }): Promise<AxiosResponse<ApiResponse<UpdateEventResponse>>> {
+        return await apiUtils.patch<ApiResponse<UpdateEventResponse>>(`${EVENT_URL}${params?.id}`, params?.data);
+    }
+
     // XÓA HOẶC COMMENT OUT hàm này
     // async getTotalEventsByMoth(param?:{
     //     year?: number;

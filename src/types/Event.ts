@@ -1,3 +1,4 @@
+import type { User } from './User';
 export type EventStatus = 
   | 'PENDING'    // Đang xử lý
   | 'APPROVED'   // Đã duyệt
@@ -105,22 +106,11 @@ export interface eventStaff{
   user: User;
 }
 
-export interface User{
-  id: number;
-  userName: string;
-  email: string;
-  firstName: string; 
-  lastName: string;
-  avatar?: string;
-  roleName: "student" | "admin" | "staff" | "event_organizer";
-  isActive: boolean;
-  campus: Campus;
-}
-
 export interface GetEventResponse {
   id: string;
   title: string;
   description: string;
+  category?: string; // ✅ THÊM FIELD NÀY
   bannerUrl?: string;
   imageUrl?: string; 
   startTimeRegistration: string;
@@ -197,7 +187,54 @@ export interface EventFormData {
   date: string;
 }
 
+export interface UpdateEventRequest {
+  title: string;
+  description: string;
+  category: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  startTimeRegister: string;
+  endTimeRegister: string;
+  maxCapacity: number;
+  isGlobal: boolean;
+  organizerId: number;
+  venueId?: number;
+  hostId: number;              
+  staffIds?: number[];         
+  speakers?: {                 
+    speakerId: number;
+    topic: string;
+  }[];
+}
+
+export interface UpdateEventResponse {
+  id: string;
+  title: string;
+  description: string;
+  category?: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  maxCapacity: number;
+  registeredCount: number;
+  isGlobal: boolean;
+  createdAt: string;
+  organizerId: number;
+  venueId?: number;
+  organizer: organizer;
+  venue?: {
+    id: number;
+    name: string;
+    location: string;
+    hasSeats: boolean;
+  }
+  host: host;  
+}
+
 export interface EventDeleteResponse {
   id: string;
   message: string;
 }
+
