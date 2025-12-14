@@ -30,11 +30,9 @@ const LoginPage = () => {
   // Hàm xử lý đăng ký notification sau khi login
   const handleNotificationSubscription = async () => {
     try {
-      console.log("🔔 Bắt đầu đăng ký notification...");
 
       // Kiểm tra xem user đã cho phép notification chưa
       const isEnabled = await isPushNotificationsEnabled();
-      console.log("📋 Push notifications enabled:", isEnabled);
 
       if (!isEnabled) {
         // Nếu chưa cho phép, xin quyền trước
@@ -71,7 +69,7 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      toast.error("Please enter both email and password!");
+      toast.error("Vui lòng nhập mật khẩu và email!");
       return;
     }
 
@@ -162,7 +160,7 @@ const LoginPage = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
