@@ -1,6 +1,6 @@
 import type { Campus } from "./Campus";
 
-export type VenueStatus = 'Active' | 'Maintenance' | 'Inactive';
+export type VenueStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
 
 export type SeatType = 'empty' | 'regular' | 'vip';
 

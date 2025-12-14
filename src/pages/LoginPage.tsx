@@ -7,6 +7,11 @@ import { jwtDecode } from "jwt-decode";
 import { GOOGLE_URL } from "../constants/apiEndPoints";
 import RegisterUserModal from "../components/auth/RegisterUserModal";
 import { Eye, EyeOff } from "lucide-react";
+import {
+  requestNotificationPermission,
+  registerSubscriptionWithBackend,
+  isPushNotificationsEnabled,
+} from "../utils/oneSignal";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -22,9 +27,49 @@ const LoginPage = () => {
     window.location.href = GOOGLE_URL;
   };
 
+  // Hàm xử lý đăng ký notification sau khi login
+  const handleNotificationSubscription = async () => {
+    try {
+
+      // Kiểm tra xem user đã cho phép notification chưa
+      const isEnabled = await isPushNotificationsEnabled();
+
+      if (!isEnabled) {
+        // Nếu chưa cho phép, xin quyền trước
+        console.log("🔔 Xin quyền notification...");
+        await requestNotificationPermission();
+
+        // Đợi để user click Allow/Block và OneSignal xử lý
+        console.log("⏳ Đợi user cho phép notification...");
+
+        // Retry nhiều lần để đợi subscriptionId
+        for (let i = 0; i < 10; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const result = await registerSubscriptionWithBackend();
+          if (result) {
+            console.log("✅ Đăng ký thành công sau", i + 1, "giây");
+            return;
+          }
+          console.log(`⏳ Retry ${i + 1}/10...`);
+        }
+        console.log(
+          "⚠️ Không thể đăng ký sau 10 giây. User có thể chưa cho phép notification."
+        );
+        return;
+      }
+
+      // Đăng ký subscription với backend
+      console.log("📤 Đăng ký subscription với backend...");
+      const result = await registerSubscriptionWithBackend();
+      console.log("📤 Kết quả đăng ký:", result);
+    } catch (error) {
+      console.error("❌ Failed to handle notification subscription:", error);
+    }
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
-      toast.error("Please enter both email and password!");
+      toast.error("Vui lòng nhập mật khẩu và email!");
       return;
     }
 
@@ -33,24 +78,31 @@ const LoginPage = () => {
       const response = await authService.login({ email, password });
       console.log(response.status);
 
-      
       if (response.status == 201) {
         console.log(response);
         const { accessToken } = response.data;
-        
+
         // Decode accessToken để lấy thông tin user
         const decodedToken: any = jwtDecode(accessToken);
         console.log("Decoded token:", decodedToken);
-        
+
         // Lưu token và thông tin user
         localStorage.setItem("token", accessToken);
         localStorage.setItem("user", JSON.stringify(decodedToken));
-        
+
         toast.success("Login successfully!");
-        
+
+        // Đăng ký nhận thông báo OneSignal sau khi login thành công
+        handleNotificationSubscription();
+
         // Điều hướng dựa trên role từ decoded token
-        const userRole = decodedToken.role || decodedToken.roleName || decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-        
+        const userRole =
+          decodedToken.role ||
+          decodedToken.roleName ||
+          decodedToken[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ];
+
         switch (userRole) {
           case "admin":
             navigate("/admin/dashboard");
@@ -64,19 +116,20 @@ const LoginPage = () => {
             navigate("/home");
             break;
         }
-      }else{
+      } else {
         toast.error("Email or password is incorrect!");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.data?.message || 
-                          "Email or password is incorrect!";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.data?.message ||
+        "Email or password is incorrect!";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
       <div className="flex flex-col items-center justify-center px-10 lg:px-24 py-16 prose">
@@ -107,7 +160,7 @@ const LoginPage = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}

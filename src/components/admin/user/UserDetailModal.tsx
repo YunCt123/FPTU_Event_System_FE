@@ -1,6 +1,15 @@
-import React from 'react';
-import { X, Mail, Phone, MapPin, Calendar, User as UserIcon, Building2, CreditCard } from 'lucide-react';
-import type { User } from '../../../types/User';
+import React from "react";
+import {
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  User as UserIcon,
+  Building2,
+  CreditCard,
+} from "lucide-react";
+import type { User } from "../../../types/User";
 
 interface UserDetailModalProps {
   isOpen: boolean;
@@ -8,7 +17,11 @@ interface UserDetailModalProps {
   user: User | null;
 }
 
-const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user }) => {
+const UserDetailModal: React.FC<UserDetailModalProps> = ({
+  isOpen,
+  onClose,
+  user,
+}) => {
   if (!isOpen || !user) return null;
 
   // const getCampusName = (campusId: number) => {
@@ -24,56 +37,67 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
 
   const getRoleLabel = (role: string) => {
     const roles: { [key: string]: string } = {
-      event_organizer: 'Event Organizer',
-      staff: 'Staff',
-      student: 'Student',
-      admin: 'Admin'
+      event_organizer: "Event Organizer",
+      staff: "Staff",
+      student: "Student",
+      admin: "Admin",
     };
     return roles[role] || role;
   };
 
   const getStatusBadge = (status?: string) => {
     const statusMap: { [key: string]: { label: string; className: string } } = {
-      APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-800' },
-      PENDING: { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-800' },
-      REJECTED: { label: 'Từ chối', className: 'bg-red-100 text-red-800' }
+      APPROVED: { label: "Đã duyệt", className: "bg-green-100 text-green-800" },
+      PENDING: {
+        label: "Chờ duyệt",
+        className: "bg-yellow-100 text-yellow-800",
+      },
+      REJECTED: { label: "Từ chối", className: "bg-red-100 text-red-800" },
     };
-    return statusMap[status || ''] || { label: 'N/A', className: 'bg-gray-100 text-gray-800' };
+    return (
+      statusMap[status || ""] || {
+        label: "N/A",
+        className: "bg-gray-100 text-gray-800",
+      }
+    );
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-fadeIn"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl w-2/3 max-w-[95vw] shadow-2xl transform transition-all duration-300 flex flex-col animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
-        style={{ height: 'calc(100vh - 4rem)', maxHeight: '90vh' }}
+        style={{ height: "calc(100vh - 4rem)", maxHeight: "90vh" }}
       >
         {/* Header - Fixed with Gradient */}
         <div className="relative bg-gradient-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {user.avatar ? (
-                <img 
-                  src={user.avatar} 
+                <img
+                  src={user.avatar}
                   alt={user.userName}
                   className="w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-[#F27125] font-bold text-lg shadow-lg">
-                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                  {user.firstName.charAt(0)}
+                  {user.lastName.charAt(0)}
                 </div>
               )}
               <div className="text-white">
                 <h2 className="text-lg font-bold drop-shadow-sm">
                   {user.firstName} {user.lastName}
                 </h2>
-                <p className="text-white/90 text-xs">@{user.userName} • ID: {user.id}</p>
+                <p className="text-white/90 text-xs">
+                  @{user.userName} • ID: {user.id}
+                </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="text-white/80 hover:text-white transition-all p-1.5 hover:bg-white/20 rounded-lg backdrop-blur-sm"
             >
@@ -88,7 +112,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
             {/* Left Column */}
             <div className="flex flex-col gap-2 h-full overflow-hidden">
               {/* Student Card - Takes up 2/3 of the space */}
-              {user.avatar ? (
+              {user.studentCardImage ? (
                 <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-[2] min-h-0 flex flex-col">
                   <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
                     <div className="p-0.5 bg-indigo-50 rounded">
@@ -97,8 +121,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                     <span>Thẻ sinh viên</span>
                   </h3>
                   <div className="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-lg p-2 overflow-hidden">
-                    <img 
-                      src={user.avatar} 
+                    <img
+                      src={user.studentCardImage}
                       alt="Student Card"
                       className="max-w-full max-h-full rounded object-contain shadow-lg border border-white"
                     />
@@ -125,17 +149,31 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                 </h3>
                 <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
-                    <label className="font-medium text-gray-500 uppercase text-[10px]">Username</label>
-                    <p className="text-gray-900 font-semibold text-xs">{user.userName}</p>
-                  </div>
-                  <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
-                    <label className="font-medium text-gray-500 uppercase text-[10px]">Họ tên</label>
-                    <p className="text-gray-900 font-semibold text-xs">{user.firstName} {user.lastName}</p>
-                  </div>
-                  <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
-                    <label className="font-medium text-gray-500 uppercase text-[10px]">Giới tính</label>
+                    <label className="font-medium text-gray-500 uppercase text-[10px]">
+                      Username
+                    </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.gender === true ? 'Nam' : user.gender === false ? 'Nữ' : 'N/A'}
+                      {user.userName}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
+                    <label className="font-medium text-gray-500 uppercase text-[10px]">
+                      Họ tên
+                    </label>
+                    <p className="text-gray-900 font-semibold text-xs">
+                      {user.firstName} {user.lastName}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
+                    <label className="font-medium text-gray-500 uppercase text-[10px]">
+                      Giới tính
+                    </label>
+                    <p className="text-gray-900 font-semibold text-xs">
+                      {user.gender === true
+                        ? "Nam"
+                        : user.gender === false
+                        ? "Nữ"
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -158,7 +196,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                       <Mail size={10} className="text-orange-500" />
                       <span className="uppercase text-[10px]">Email</span>
                     </label>
-                    <a 
+                    <a
                       href={`mailto:${user.email}`}
                       className="text-[#F27125] hover:text-[#d95c0b] font-semibold block truncate text-xs"
                       title={user.email}
@@ -172,7 +210,9 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                         <Phone size={10} className="text-green-500" />
                         <span className="uppercase text-[10px]">SĐT</span>
                       </label>
-                      <p className="text-gray-900 font-semibold text-xs">{user.phoneNumber}</p>
+                      <p className="text-gray-900 font-semibold text-xs">
+                        {user.phoneNumber}
+                      </p>
                     </div>
                   )}
                   {user.address && (
@@ -181,7 +221,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                         <MapPin size={10} className="text-purple-500" />
                         <span className="uppercase text-[10px]">Địa chỉ</span>
                       </label>
-                      <p className="text-gray-900 font-medium line-clamp-2 text-xs" title={user.address}>{user.address}</p>
+                      <p
+                        className="text-gray-900 font-medium line-clamp-2 text-xs"
+                        title={user.address}
+                      >
+                        {user.address}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -197,8 +242,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                 </h3>
                 <div className="space-y-1.5 text-xs">
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
-                    <label className="font-medium text-gray-500 uppercase text-[10px]">Campus</label>
-                    <p className="text-gray-900 font-semibold text-xs">{user.campus?.name || user.campusId}</p>
+                    <label className="font-medium text-gray-500 uppercase text-[10px]">
+                      Campus
+                    </label>
+                    <p className="text-gray-900 font-semibold text-xs">
+                      {user.campus?.name || user.campusId}
+                    </p>
                   </div>
                   {user.studentCode && (
                     <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -206,18 +255,22 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                         <CreditCard size={10} />
                         Mã SV
                       </label>
-                      <p className="text-gray-900 font-mono font-bold text-xs">{user.studentCode}</p>
+                      <p className="text-gray-900 font-mono font-bold text-xs">
+                        {user.studentCode}
+                      </p>
                     </div>
                   )}
                   <div className="p-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded border border-purple-200">
-                    <label className="font-medium text-gray-500 uppercase text-[10px] mb-0.5 block">Vai trò</label>
+                    <label className="font-medium text-gray-500 uppercase text-[10px] mb-0.5 block">
+                      Vai trò
+                    </label>
                     <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white">
                       {getRoleLabel(user.roleName)}
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               {/* Status Info */}
               <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100">
                 <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
@@ -229,18 +282,30 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                 <div className="space-y-1.5 text-xs">
                   {user.status && (
                     <div className="p-1.5 bg-gradient-to-br from-yellow-50 to-orange-50 rounded border border-yellow-200">
-                      <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">Duyệt</label>
-                      <p className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${getStatusBadge(user.status).className}`}>
+                      <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">
+                        Duyệt
+                      </label>
+                      <p
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                          getStatusBadge(user.status).className
+                        }`}
+                      >
                         {getStatusBadge(user.status).label}
                       </p>
                     </div>
                   )}
                   <div className="p-1.5 bg-gradient-to-br from-green-50 to-emerald-50 rounded border border-green-200">
-                    <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">Hoạt động</label>
-                    <p className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                      user.isActive ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                    }`}>
-                      {user.isActive ? 'Hoạt động' : 'Vô hiệu'}
+                    <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">
+                      Hoạt động
+                    </label>
+                    <p
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                        user.isActive
+                          ? "bg-green-600 text-white"
+                          : "bg-red-600 text-white"
+                      }`}
+                    >
+                      {user.isActive ? "Hoạt động" : "Vô hiệu"}
                     </p>
                   </div>
                   {/* <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded border border-blue-200">
@@ -251,7 +316,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ isOpen, onClose, user
                     <p className="text-gray-600 text-[10px]">
                       🕐 {new Date(user.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                  </div> */} 
+                  </div> */}
                   {/* {user.googleId && (
                     <div className="p-1.5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded border border-indigo-200">
                       <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">🔗 Google ID</label>
