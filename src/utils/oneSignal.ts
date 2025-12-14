@@ -24,9 +24,14 @@ export type NotificationType =
   | "event_created"
   | "event_approved"
   | "event_rejected"
+  | "event_cancelled"
+  | "event_time_changed"
   | "one_day"
   | "thirty_min"
-  | "incident_reported";
+  | "incident_reported"
+  | "cancellation_request"
+  | "cancellation_approved"
+  | "cancellation_rejected";
 
 /**
  * Interface cho notification data từ backend
@@ -37,8 +42,12 @@ export interface NotificationData {
   startTime?: string;
   endTime?: string;
   status?: "PENDING" | "PUBLISHED" | "CANCELED";
-  // Thêm fields cho incident_reported
-  incidentId?: string;
+  title?: string;
+  eventTitle?: string;
+  requestId?: number;
+  reason?: string;
+  adminNote?: string;
+  incidentId?: number;
   severity?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   reporterName?: string;
 }
@@ -219,6 +228,20 @@ const navigateToEvent = (eventId: string): void => {
 };
 
 /**
+ * Điều hướng đến trang notifications
+ */
+const navigateToNotifications = (): void => {
+  window.location.href = `/notifications`;
+};
+
+/**
+ * Điều hướng đến trang cancellation requests (admin)
+ */
+const navigateToCancellationRequests = (): void => {
+  window.location.href = `/admin/events/cancellation-requests`;
+};
+
+/**
  * Thiết lập click handler cho notifications
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -258,6 +281,24 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
         if (data.eventId) navigateToEvent(data.eventId);
         break;
 
+      case "event_cancelled":
+        toast.error(
+          `Sự kiện "${
+            data.title || data.eventTitle || "này"
+          }" đã bị hủy. Vé của bạn đã được tự động hủy.`
+        );
+        navigateToNotifications();
+        break;
+
+      case "event_time_changed":
+        toast.info(
+          `Sự kiện "${
+            data.title || data.eventTitle || "này"
+          }" đã thay đổi thời gian. Vui lòng kiểm tra email để biết chi tiết.`
+        );
+        if (data.eventId) navigateToEvent(data.eventId);
+        break;
+
       case "one_day":
         toast.info("📅 Sự kiện sắp diễn ra trong 1 ngày");
         if (data.eventId) navigateToEvent(data.eventId);
@@ -280,6 +321,31 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
         if (data.eventId) navigateToEvent(data.eventId);
         break;
       }
+
+      case "cancellation_request":
+        toast.warning(
+          `Có yêu cầu hủy sự kiện "${data.eventTitle || "này"}" cần xem xét`
+        );
+        navigateToCancellationRequests();
+        break;
+
+      case "cancellation_approved":
+        toast.success(
+          `Yêu cầu hủy sự kiện "${
+            data.eventTitle || "này"
+          }" đã được phê duyệt. Sự kiện đã được hủy.`
+        );
+        if (data.eventId) navigateToEvent(data.eventId);
+        break;
+
+      case "cancellation_rejected":
+        toast.error(
+          `Yêu cầu hủy sự kiện "${
+            data.eventTitle || "này"
+          }" đã bị từ chối. Sự kiện vẫn sẽ diễn ra.`
+        );
+        if (data.eventId) navigateToEvent(data.eventId);
+        break;
 
       default:
         if (data.eventId) navigateToEvent(data.eventId);

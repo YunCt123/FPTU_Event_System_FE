@@ -3,7 +3,6 @@ import {
   Menu,
   X,
   Search,
-  Bell,
   LogOut,
   Ticket,
   Settings,
@@ -14,7 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { userService } from "../../services";
 import type { User } from "../../types/User";
-
+import { NotificationDropdown } from "../notification";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -24,7 +23,7 @@ const Header = () => {
   const UserLoggedIn = users ? JSON.parse(users) : null;
   const [userLoggedIn, setUserLoggedIn] = useState<User>();
   console.log("object", UserLoggedIn);
-  
+
   const user = {
     isLoggedIn: true,
     name: "Nguyen Van A",
@@ -36,10 +35,10 @@ const Header = () => {
   const fetchUser = async () => {
     try {
       const response = await userService.getUserInUse();
-      if(response.status === 200){
+      if (response.status === 200) {
         setUserLoggedIn(response.data);
         console.log("User in use:", response.data);
-      }else{
+      } else {
         console.log("Not user or Api");
       }
     } catch (error) {
@@ -57,12 +56,10 @@ const Header = () => {
     ...(UserLoggedIn?.roleName === "event_organizer"
       ? [{ label: "Dashboard", href: "/organizer/dashboard" }]
       : []),
-     ...(UserLoggedIn?.roleName === "admin"
+    ...(UserLoggedIn?.roleName === "admin"
       ? [{ label: "Dashboard", href: "/admin/dashboard" }]
       : []),
   ];
-
-  
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -108,10 +105,7 @@ const Header = () => {
               />
             </div>
 
-            <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
+            <NotificationDropdown />
 
             <div className="relative">
               <button
