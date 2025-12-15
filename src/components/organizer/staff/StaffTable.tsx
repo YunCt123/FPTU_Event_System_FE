@@ -48,6 +48,7 @@ const handleCloseDetailModal = () => {
   };
 
 const handleViewDetail = async(id: number) => {
+    
     setIsLoading(true);
     try {
         const response = await userService.getUserById(id);
@@ -90,6 +91,10 @@ const confirmDelete = async () => {
         setConfirmModal({ isOpen: false, userId: null });
     }
 };
+      
+
+
+      
 
 const cancelDelete = () => {
     setConfirmModal({ isOpen: false, userId: null });
@@ -97,8 +102,8 @@ const cancelDelete = () => {
 
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-lg shadow-md">
+        <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -181,14 +186,15 @@ const cancelDelete = () => {
                       {staff.user?.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-
+                  <td className="px-6 py-4 relative overflow-visible">
+                      
                       <ActionDropdown
                         actions={[
                           {
                             label: 'Xem chi tiết',
                             onClick: () => handleViewDetail(staff.user.id),
                             icon: Eye,
+                           
                           },
                           {
                             label: 'Xóa',
