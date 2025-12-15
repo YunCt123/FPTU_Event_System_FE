@@ -164,34 +164,59 @@ const DashboardPage = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatsCard 
-          label="Tổng số sự kiện" 
-          value={responseData?.meta?.total || 0}
-          icon={Calendar}
-          color="blue"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-4 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-blue-700">Tổng số sự kiện</span>
+            <div className="p-2 bg-blue-500 rounded-lg shadow-md">
+              <Calendar className="text-white" size={20} />
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-blue-900 mb-1">
+            {responseData?.meta?.total || 0}
+          </p>
+        </div>
         
-        <StatsCard 
-          label="Đang xử lý" 
-          value={responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
-          icon={Clock}
-          color="yellow"
-        />
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm border border-yellow-200 p-4 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-yellow-700">Đang xử lý</span>
+            <div className="p-2 bg-yellow-500 rounded-lg shadow-md">
+              <Clock className="text-white" size={20} />
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-yellow-900 mb-1">
+            {responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
+          </p>
+        </div>
         
-        <StatsCard 
-          label="Đã duyệt" 
-          value={responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
-          icon={CheckCircle}
-          color="green"
-        />
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-4 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-green-700">Đã duyệt</span>
+            <div className="p-2 bg-green-500 rounded-lg shadow-md">
+              <CheckCircle className="text-white" size={20} />
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-green-900 mb-1">
+            {responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
+          </p>
+          <p className="text-xs text-green-600 font-medium">
+            Tỷ lệ duyệt: {responseData?.meta?.total > 0 
+              ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
+              : 0}%
+          </p>
+        </div>
         
-        <StatsCard 
-          label="Đã từ chối" 
-          value={responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
-          icon={XCircle}
-          color="red"
-        />
+        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm border border-red-200 p-4 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-red-700">Đã từ chối</span>
+            <div className="p-2 bg-red-500 rounded-lg shadow-md">
+              <XCircle className="text-white" size={20} />
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-red-900 mb-1">
+            {responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
+          </p>
+        </div>
       </div>
 
       {/* Charts Grid - 2 Columns */}
@@ -363,48 +388,6 @@ const DashboardPage = () => {
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Quick Stats Footer */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Tổng người tham gia</h4>
-            <Users size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">
-            {responseData?.data?.reduce((sum: number, e: any) => sum + (e.checkinCount || 0), 0) || 0}
-          </p>
-          <p className="text-xs opacity-75 mt-2">Tổng check-in tham gia</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Tỷ lệ duyệt</h4>
-            <CheckCircle size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">
-            {responseData?.meta?.total > 0 
-              ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
-              : 0}%
-          </p>
-          <p className="text-xs opacity-75 mt-2">Sự kiện được duyệt</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Sự kiện tháng này</h4>
-            <TrendingUp size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">
-            {responseData?.data?.filter((e: any) => {
-              const eventDate = new Date(e.startTime);
-              const now = new Date();
-              return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear();
-            }).length || 0}
-          </p>
-          <p className="text-xs opacity-75 mt-2">Diễn ra trong tháng</p>
         </div>
       </div>
     </div>

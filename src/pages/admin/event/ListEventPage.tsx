@@ -24,9 +24,9 @@ const ListEventPage = () => {
   const fetchEvents = async () => {
     setIsLoading(true);
     try {
-      const response = await eventService.getAllEvents({ status: "PUBLISHED" });
-      if(response){
-        setEvents(response.data.data);
+      const response: any = await eventService.getAllEvents({ status: "PUBLISHED" });
+      if(response && response.data){
+        setEvents(response.data.data || []);
         console.log("response loaded", response);
         console.log(response.data.meta?.total);
       }
@@ -335,7 +335,7 @@ const ListEventPage = () => {
                 <span className="font-semibold min-w-[120px]">Trạng thái:</span>
                 {getStatusBadge(selectedEvent.status)}
               </div>
-              {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
+              {/* {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
                 <div className="flex gap-2 items-start">
                   <span className="font-semibold min-w-[120px]">URL Ảnh:</span>
                   <a 
@@ -347,7 +347,7 @@ const ListEventPage = () => {
                     {selectedEvent.bannerUrl || selectedEvent.imageUrl}
                   </a>
                 </div>
-              )}
+              )} */}
               {selectedEvent.description && (
                 <div className="flex gap-2 items-start">
                   <span className="font-semibold min-w-[120px]">Mô tả:</span>
