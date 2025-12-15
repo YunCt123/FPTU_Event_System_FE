@@ -97,6 +97,7 @@ const MainRoute: React.FC = () => {
             <Route path="/organizer/staff" element={<StaffManagementPage />} />
             <Route path="/organizer/reports" element={<EventReportsPage />} />
             <Route path="/organizer/speakers" element={<SpeakerManagementPage />} />
+            <Route path="/organizer/organizers" element={<OrganizerList />} />
           </Route>
         </Route>
 

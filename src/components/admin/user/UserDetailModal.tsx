@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   X,
   Mail,
@@ -22,7 +22,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   onClose,
   user,
 }) => {
-  if (!isOpen || !user) return null;
+  console.log(isOpen);
+  if (!isOpen ) return null;
 
   // const getCampusName = (campusId: number) => {
   //   const campuses: { [key: number]: string } = {
@@ -76,24 +77,24 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         <div className="relative bg-gradient-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {user.avatar ? (
+              {user?.avatar ? (
                 <img
-                  src={user.avatar}
-                  alt={user.userName}
+                  src={user?.avatar}
+                  alt={user?.userName}
                   className="w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-[#F27125] font-bold text-lg shadow-lg">
-                  {user.firstName.charAt(0)}
-                  {user.lastName.charAt(0)}
+                  {user?.firstName.charAt(0)}
+                  {user?.lastName.charAt(0)}
                 </div>
               )}
               <div className="text-white">
                 <h2 className="text-lg font-bold drop-shadow-sm">
-                  {user.firstName} {user.lastName}
+                  {user?.firstName} {user?.lastName}
                 </h2>
                 <p className="text-white/90 text-xs">
-                  @{user.userName} • ID: {user.id}
+                  @{user?.userName} • ID: {user?.id}
                 </p>
               </div>
             </div>
@@ -112,7 +113,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             {/* Left Column */}
             <div className="flex flex-col gap-2 h-full overflow-hidden">
               {/* Student Card - Takes up 2/3 of the space */}
-              {user.studentCardImage ? (
+              {user?.studentCardImage ? (
                 <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-[2] min-h-0 flex flex-col">
                   <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
                     <div className="p-0.5 bg-indigo-50 rounded">
@@ -122,7 +123,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   </h3>
                   <div className="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-lg p-2 overflow-hidden">
                     <img
-                      src={user.studentCardImage}
+                      src={user?.studentCardImage}
                       alt="Student Card"
                       className="max-w-full max-h-full rounded object-contain shadow-lg border border-white"
                     />
@@ -153,7 +154,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Username
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.userName}
+                      {user?.userName}
                     </p>
                   </div>
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -161,7 +162,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Họ tên
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.firstName} {user.lastName}
+                      {user?.firstName} {user?.lastName}
                     </p>
                   </div>
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
