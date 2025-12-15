@@ -8,3 +8,4 @@ export const EVENT_URL = "/events/";
 export const NOTIFICATION_URL = "/notifications/";
 export const TICKET_URL = "/tickets/";
 export const FEEDBACK_URL = "/feedback/";
+export const SPEAKER_URL = "/speakers/";

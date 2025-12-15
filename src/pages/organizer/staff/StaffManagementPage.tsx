@@ -66,7 +66,7 @@ useEffect(() => {
     }catch(error){
       console.log("Error fetching staff data:", error);
     }
-  }
+  };
 
   useEffect(() => {
     if (!selectedEventId) {

@@ -68,7 +68,7 @@ const userService = {
   ): Promise<AxiosResponse<ApiResponse<AttendanceReponse>>> {
     return await apiUtils.get<ApiResponse<AttendanceReponse>>(
       `${TICKET_URL}events/${eventId}/attendees`,
-      { param }
+       param 
     );
   },
 };
