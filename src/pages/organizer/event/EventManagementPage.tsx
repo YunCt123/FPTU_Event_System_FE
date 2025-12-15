@@ -5,7 +5,6 @@ import {
   Search,
   Edit,
   Trash2,
-  Eye,
   Calendar,
   Users,
   MapPin,
@@ -146,21 +145,21 @@ const EventManagementPage = () => {
         let eventId: string = '';
         
         if (apiEvent.id !== null && apiEvent.id !== undefined) {
-          eventId = String(apiEvent.id); // ✅ CONVERT SANG STRING
+          eventId = String(apiEvent.id); 
           console.log('✅ Event ID (string):', eventId);
         }
         
-        // ✅ VALIDATE ID - PHẢI LÀ UUID HỢP LỆ
+        
         if (!eventId || eventId.trim() === '' || eventId === 'undefined' || eventId === 'null') {
           console.error('❌ Invalid event ID:', {
             rawId: apiEvent.id,
             convertedId: eventId,
             title: apiEvent.title,
           });
-          return null; // ✅ FILTER OUT
+          return null; 
         }
         
-        console.log('✅ Final event ID:', eventId);
+        console.log('Final event ID:', eventId);
         
         const mappedStatus = normalizeStatus(apiEvent.status || 'PENDING');
         
@@ -281,8 +280,7 @@ const EventManagementPage = () => {
 
   const handleDeleteEvent = (event: Event) => {
     console.log('🗑️ Requesting delete for event:', event);
-    
-    // ✅ VALIDATE EVENT ID
+
     if (!event || !event.id || typeof event.id !== 'string') {
       console.error('❌ Invalid event ID');
       toast.error('Không thể gửi yêu cầu xóa. Dữ liệu không hợp lệ.');
@@ -291,12 +289,11 @@ const EventManagementPage = () => {
 
     setDeleteModalState({
       isOpen: true,
-      eventId: event.id, // ✅ STRING UUID
+      eventId: event.id, 
       eventTitle: event.title,
     });
   };
 
-  // ✅ SỬA HÀM SUBMIT DELETE REQUEST
   const handleSubmitDeleteRequest = async (reason: string) => {
     if (!deleteModalState.eventId) {
       toast.error('Không tìm thấy ID sự kiện');
@@ -309,7 +306,6 @@ const EventManagementPage = () => {
         reason,
       });
 
-      // ✅ GỬI REQUEST LÊN SERVER
       await eventService.requestDeleteEvent({
         eventId: deleteModalState.eventId,
         reason: reason.trim(),
@@ -319,27 +315,24 @@ const EventManagementPage = () => {
         autoClose: 5000,
       });
 
-      // ✅ CẬP NHẬT TRẠNG THÁI LOCAL (OPTIONAL)
       setEvents((prev) =>
         prev.map((e) =>
           e.id === deleteModalState.eventId
-            ? { ...e, status: 'PENDING' as EventStatus } // Có thể thêm status mới "PENDING_DELETE"
+            ? { ...e, status: 'PENDING' as EventStatus } 
             : e
         )
       );
 
-      // ✅ ĐÓNG MODAL
       setDeleteModalState({
         isOpen: false,
         eventId: null,
         eventTitle: '',
       });
 
-      // ✅ REFRESH LẠI DANH SÁCH
       await fetchEventsByOrganizer();
       
     } catch (error: any) {
-      console.error('❌ Error submitting delete request:', error);
+      console.error('Error submitting delete request:', error);
       
       let errorMessage = 'Không thể gửi yêu cầu xóa';
       
@@ -357,7 +350,7 @@ const EventManagementPage = () => {
         autoClose: 5000,
       });
 
-      throw error; // ✅ RE-THROW ĐỂ MODAL XỬ LÝ
+      throw error; 
     }
   };
 
@@ -377,15 +370,15 @@ const EventManagementPage = () => {
         <p className="text-orange-100">Tạo, chỉnh sửa và quản lý vòng đời sự kiện</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-            <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-          </div>
-        ))}
-      </div>
+        {/* Stats - COMMENTED OUT */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {stats.map((stat, index) => (
+            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
+              <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+            </div>
+          ))}
+        </div> */}
 
       {/* Filters */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -592,13 +585,13 @@ const EventManagementPage = () => {
       {deleteModalState.isOpen && deleteModalState.eventId && (
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
-          eventId={deleteModalState.eventId} // ✅ STRING UUID
+          eventId={deleteModalState.eventId} 
           onClose={() => setDeleteModalState({
             isOpen: false,
             eventId: null,
             eventTitle: '',
           })}
-          onSubmit={handleSubmitDeleteRequest} // ✅ ĐÃ SỬA
+          onSubmit={handleSubmitDeleteRequest} 
         />
       )}
     </div>
