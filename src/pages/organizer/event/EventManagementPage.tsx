@@ -3,8 +3,6 @@ import {
   Plus,
   Filter,
   Search,
-  Edit,
-  Trash2,
   Calendar,
   Users,
   MapPin,
@@ -14,6 +12,8 @@ import EventFormModal from '../../../components/organizer/event/EventFormModal';
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
+import ActionDropdown from '../../../components/ActionDropdown';
+import { Edit, Trash2, Eye } from 'lucide-react'; // ✅ Thêm Eye icon
 
 const EventManagementPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -23,9 +23,14 @@ const EventManagementPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // ✅ THÊM STATE PAGINATION
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Số item mỗi trang
+  
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
-    eventId: string | null; // ✅ ĐỔI THÀNH STRING
+    eventId: string | null;
     eventTitle: string;
   }>({
     isOpen: false,
@@ -141,25 +146,22 @@ const EventManagementPage = () => {
         console.log('Raw apiEvent:', apiEvent);
         console.log('apiEvent.id:', apiEvent.id, 'type:', typeof apiEvent.id);
         
-        // ✅ FIX: ID LÀ STRING (UUID)
+        // ✅ QUAN TRỌNG: CONVERT ID SANG STRING
         let eventId: string = '';
         
         if (apiEvent.id !== null && apiEvent.id !== undefined) {
-          eventId = String(apiEvent.id); 
-          console.log('✅ Event ID (string):', eventId);
+          eventId = String(apiEvent.id).trim();
+          console.log('✅ Converted Event ID:', eventId);
         }
         
-        
-        if (!eventId || eventId.trim() === '' || eventId === 'undefined' || eventId === 'null') {
-          console.error('❌ Invalid event ID:', {
+        if (!eventId || eventId === 'undefined' || eventId === 'null') {
+          console.error('❌ Invalid event ID after conversion:', {
             rawId: apiEvent.id,
             convertedId: eventId,
             title: apiEvent.title,
           });
-          return null; 
+          return null;
         }
-        
-        console.log('Final event ID:', eventId);
         
         const mappedStatus = normalizeStatus(apiEvent.status || 'PENDING');
         
@@ -185,8 +187,7 @@ const EventManagementPage = () => {
         };
       }).filter((event): event is Event => event !== null);
 
-      console.log('\n✅ Total valid mapped events:', mappedEvents.length);
-      console.log('✅ All event IDs:', mappedEvents.map(e => e.id));
+      console.log('\n✅ All mapped event IDs:', mappedEvents.map(e => `${e.id} (${e.title})`));
       
       setEvents(mappedEvents);
       setFilteredEvents(mappedEvents);
@@ -237,7 +238,72 @@ const EventManagementPage = () => {
 
     console.log('Final filtered events:', filtered.length);
     setFilteredEvents(filtered);
+    
+    // ✅ RESET VỀ TRANG 1 KHI FILTER THAY ĐỔI
+    setCurrentPage(1);
   }, [searchQuery, statusFilter, events]);
+
+  // ✅ TÍNH TOÁN PAGINATION
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+
+  // ✅ HÀM XỬ LÝ PAGINATION
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // ✅ TẠO DANH SÁCH SỐ TRANG
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   const getStatusBadge = (status: EventStatus) => {
     const statusConfig = {
@@ -279,10 +345,10 @@ const EventManagementPage = () => {
   };
 
   const handleDeleteEvent = (event: Event) => {
-    console.log('🗑️ Requesting delete for event:', event);
+    console.log('Requesting delete for event:', event);
 
     if (!event || !event.id || typeof event.id !== 'string') {
-      console.error('❌ Invalid event ID');
+      console.error('Invalid event ID');
       toast.error('Không thể gửi yêu cầu xóa. Dữ liệu không hợp lệ.');
       return;
     }
@@ -301,47 +367,61 @@ const EventManagementPage = () => {
     }
 
     try {
-      console.log('📤 Submitting delete request:', {
+      console.log('📤 Submitting cancel request:', {
         eventId: deleteModalState.eventId,
         reason,
       });
 
-      await eventService.requestDeleteEvent({
+      // ✅ GỌI API requestCancelEvent - CHỈ TẠO REQUEST, KHÔNG ĐỔI STATUS
+      const response = await eventService.requestCancelEvent({
         eventId: deleteModalState.eventId,
-        reason: reason.trim(),
+        data: {
+          reason: reason.trim(),
+        }
       });
 
-      toast.success('Đã gửi yêu cầu xóa sự kiện. Vui lòng chờ Admin phê duyệt.', {
+      console.log('✅ Cancel request created:', response.data);
+
+      toast.success('Đã gửi yêu cầu hủy sự kiện. Vui lòng chờ Admin phê duyệt.', {
         autoClose: 5000,
       });
 
-      setEvents((prev) =>
-        prev.map((e) =>
-          e.id === deleteModalState.eventId
-            ? { ...e, status: 'PENDING' as EventStatus } 
-            : e
-        )
-      );
+      // ❌ KHÔNG CẬP NHẬT STATUS VỀ PENDING NỮA
+      // setEvents((prev) =>
+      //   prev.map((e) =>
+      //     e.id === deleteModalState.eventId
+      //       ? { ...e, status: 'PENDING' as EventStatus }
+      //       : e
+      //   )
+      // );
 
+      // Đóng modal
       setDeleteModalState({
         isOpen: false,
         eventId: null,
         eventTitle: '',
       });
 
+      // Refresh lại danh sách (status vẫn giữ nguyên)
       await fetchEventsByOrganizer();
       
     } catch (error: any) {
-      console.error('Error submitting delete request:', error);
+      console.error('❌ Error submitting cancel request:', error);
+      console.error('Error response:', error.response);
       
-      let errorMessage = 'Không thể gửi yêu cầu xóa';
+      let errorMessage = 'Không thể gửi yêu cầu hủy sự kiện';
       
       if (error.response?.status === 400) {
-        errorMessage = error.response.data?.message || 'Yêu cầu không hợp lệ';
+        const messages = error.response.data?.message;
+        if (Array.isArray(messages)) {
+          errorMessage = messages.join(', ');
+        } else {
+          errorMessage = messages || 'Yêu cầu không hợp lệ (sự kiện đã bị hủy/hoàn thành, hoặc đang có yêu cầu chờ duyệt)';
+        }
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền hủy sự kiện này. Chỉ organizer owner mới có thể yêu cầu hủy.';
       } else if (error.response?.status === 404) {
         errorMessage = 'Không tìm thấy sự kiện';
-      } else if (error.response?.status === 403) {
-        errorMessage = 'Bạn không có quyền xóa sự kiện này';
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -349,8 +429,6 @@ const EventManagementPage = () => {
       toast.error(errorMessage, {
         autoClose: 5000,
       });
-
-      throw error; 
     }
   };
 
@@ -427,125 +505,222 @@ const EventManagementPage = () => {
             <p className="text-gray-600 mb-6">Bắt đầu bằng cách tạo sự kiện đầu tiên</p>
             <button
               onClick={handleCreateEvent}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
             >
               <Plus size={20} />
               Tạo sự kiện mới
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Sự kiện
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">
-                    Trạng thái
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-36">
-                    Thời gian
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-52">
-                    Địa điểm
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">
-                    Người tham gia
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
-                    Hành động
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {filteredEvents.map((event, index) => (
-                  <tr 
-                    key={`event-${event.id}-${index}`}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    {/* Cột Sự kiện */}
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 text-sm">
-                          {event.title}
-                        </div>
-                        <div className="text-xs text-gray-500 line-clamp-2">
-                          {event.description}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Cột Trạng thái */}
-                    <td className="px-6 py-4 text-center">
-                      {getStatusBadge(event.status)}
-                    </td>
-
-                    {/* Cột Thời gian */}
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-                        <Calendar size={16} className="text-orange-500 flex-shrink-0" />
-                        <span className="whitespace-nowrap">
-                          {new Date(event.startDate).toLocaleDateString('vi-VN', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Cột Địa điểm */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-2">
-                        <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-medium text-gray-900 truncate">
-                            {event.venueName || 'Chưa xác định'}
-                          </span>
-                          {event.campusName && (
-                            <span className="text-xs text-gray-500 truncate">
-                              {event.campusName}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Cột Người tham gia */}
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Users size={16} className="text-gray-400 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {event.currentParticipants}/{event.maxParticipants}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Cột Hành động */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          onClick={() => handleEditEvent(event)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteEvent(event)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Sự kiện
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">
+                      Trạng thái
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-36">
+                      Thời gian
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-52">
+                      Địa điểm
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">
+                      Người tham gia
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
+                      {/* Hành động */}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {currentEvents.map((event, index) => (
+                    <tr 
+                      key={`event-${event.id}-${index}`}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      {/* Sự kiện */}
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-gray-900 text-sm">
+                            {event.title}
+                          </div>
+                          <div className="text-xs text-gray-500 line-clamp-2">
+                            {event.description}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Trạng thái */}
+                      <td className="px-6 py-4 text-center">
+                        {getStatusBadge(event.status)}
+                      </td>
+
+                      {/* Thời gian */}
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                          <Calendar size={16} className="text-orange-500 flex-shrink-0" />
+                          <span className="whitespace-nowrap">
+                            {new Date(event.startDate).toLocaleDateString('vi-VN', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Địa điểm */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-start gap-2">
+                          <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-gray-900 truncate">
+                              {event.venueName || 'Chưa xác định'}
+                            </span>
+                            {event.campusName && (
+                              <span className="text-xs text-gray-500 truncate">
+                                {event.campusName}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Người tham gia */}
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Users size={16} className="text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {event.currentParticipants}/{event.maxParticipants}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* ✅ Hành động - SỬ DỤNG ActionDropdown */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center">
+                          <ActionDropdown
+                            actions={[
+                              {
+                                label: 'Xem chi tiết',
+                                icon: Eye,
+                                onClick: () => {
+                                  console.group('🔍 CLICK XEM CHI TIẾT');
+                                  console.log('1. Full event object:', event);
+                                  console.log('2. Event ID:', event.id);
+                                  console.log('3. Event ID type:', typeof event.id);
+                                  console.log('4. Event Title:', event.title);
+                                  console.log('5. Current URL:', window.location.href);
+                                  
+                                  if (!event.id) {
+                                    console.error('❌ Event ID is missing!');
+                                    toast.error('Không thể mở chi tiết sự kiện: Thiếu ID');
+                                    console.groupEnd();
+                                    return;
+                                  }
+                                  
+                                  if (typeof event.id !== 'string' || event.id.trim() === '') {
+                                    console.error('❌ Invalid Event ID:', event.id);
+                                    toast.error('Không thể mở chi tiết sự kiện: ID không hợp lệ');
+                                    console.groupEnd();
+                                    return;
+                                  }
+                                  
+                                  const targetUrl = `/organizer/events/${event.id}`;
+                                  console.log('6. ✅ Target URL:', targetUrl);
+                                  console.log('7. ✅ Navigating...');
+                                  console.groupEnd();
+                                  
+                                  // ✅ SỬA: Dùng window.location.href (hoặc navigate nếu có useNavigate)
+                                  window.location.href = targetUrl;
+                                },
+                              },
+                              {
+                                label: 'Chỉnh sửa',
+                                icon: Edit,
+                                onClick: () => handleEditEvent(event),
+                              },
+                              {
+                                label: 'Xóa',
+                                icon: Trash2,
+                                onClick: () => handleDeleteEvent(event),
+                                danger: true,
+                              },
+                            ]}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ✅ PAGINATION */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    {/* Hiển thị <span className="font-semibold">{startIndex + 1}</span> đến{' '}
+                    <span className="font-semibold">{Math.min(endIndex, filteredEvents.length)}</span> trong tổng số{' '}
+                    <span className="font-semibold">{filteredEvents.length}</span> sự kiện */}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === 1
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300'
+                      }`}
+                    >
+                      Trước
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map((page, index) => (
+                        <React.Fragment key={index}>
+                          {page === '...' ? (
+                            <span className="px-3 py-2 text-gray-500">...</span>
+                          ) : (
+                            <button
+                              onClick={() => handlePageChange(page as number)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                currentPage === page
+                                  ? 'bg-orange-500 text-white'
+                                  : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === totalPages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300'
+                      }`}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -585,13 +760,13 @@ const EventManagementPage = () => {
       {deleteModalState.isOpen && deleteModalState.eventId && (
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
-          eventId={deleteModalState.eventId} 
+          eventId={deleteModalState.eventId}
           onClose={() => setDeleteModalState({
             isOpen: false,
             eventId: null,
             eventTitle: '',
           })}
-          onSubmit={handleSubmitDeleteRequest} 
+          onSubmit={handleSubmitDeleteRequest}
         />
       )}
     </div>
@@ -615,7 +790,7 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    console.error('❌❌❌ EventFormModal Error:', error, errorInfo);
+    console.error('EventFormModal Error:', error, errorInfo);
     console.error('Error stack:', error.stack);
     toast.error('Có lỗi xảy ra khi mở form chỉnh sửa');
   }

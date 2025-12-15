@@ -257,3 +257,92 @@ export interface DeleteRequest {
   reviewedAt?: string;
 }
 
+export interface CancellationReason {
+  id: number;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  eventId: string;
+  requestedBy: number;
+  event?: {
+    id: string;
+    title: string;
+    status: string;
+    startTime: string;
+    endTime: string;
+  };
+  requester?: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  reviewer?: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+export interface DeleteEventByOrganizersRequest {
+  reason: string;
+}
+
+export interface DeleteEventByOrganizersResponse {
+  message: string;
+  cancellationReason: cancellationReason;
+}
+
+export interface GetDeleteRequestsResponse {
+  data: DeleteRequestItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface DeleteRequestItem {
+  id: number;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  eventId: string;
+  requestedBy: number;
+  event: {
+    id: string;
+    title: string;
+    status: string;
+    startTime: string;
+    endTime: string;
+    organizer: {
+      id: number;
+      name: string;
+    };
+  };
+  requester: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  reviewer: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+

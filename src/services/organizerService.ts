@@ -5,7 +5,7 @@ import type {
   OrganizerResponse, 
   OrganizerRequest, 
   OrganizerDeleteResponse, 
-  OrganizerEventsAPIResponse as GetEventResponse 
+  OrganizerEventsAPIResponse as EventResponse 
 } from '../types/Organizer';
 import type { ApiResponse } from '../types/ApiResponse';
 import type { CreateEventRequest, GetEventResponse } from '../types/Event';
