@@ -79,7 +79,7 @@ const EventManagementPage = () => {
       do {
         console.log(`\n📄 Fetching page ${currentPage}/${totalPages}...`);
         
-        const response = await organizerService.getOrganizerEvents({
+        const response: any = await organizerService.getOrganizerEvents({
           page: currentPage,
           limit: 10,
         });
@@ -155,7 +155,7 @@ const EventManagementPage = () => {
         }
         
         if (!eventId || eventId === 'undefined' || eventId === 'null') {
-          console.error('❌ Invalid event ID after conversion:', {
+          console.error('Invalid event ID after conversion:', {
             rawId: apiEvent.id,
             convertedId: eventId,
             title: apiEvent.title,
@@ -269,7 +269,6 @@ const EventManagementPage = () => {
     }
   };
 
-  // ✅ TẠO DANH SÁCH SỐ TRANG
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisiblePages = 5;
