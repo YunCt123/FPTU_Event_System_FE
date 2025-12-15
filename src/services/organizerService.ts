@@ -5,7 +5,7 @@ import type {
   OrganizerResponse, 
   OrganizerRequest, 
   OrganizerDeleteResponse, 
-  OrganizerEventsAPIResponse 
+  OrganizerEventsAPIResponse as GetEventResponse 
 } from '../types/Organizer';
 import type { ApiResponse } from '../types/ApiResponse';
 import type { CreateEventRequest, GetEventResponse } from '../types/Event';
@@ -38,34 +38,16 @@ const organizerService = {
         return await apiUtils.delete<ApiResponse<OrganizerDeleteResponse>>(`${ORGANIZER_URL}${id}`);
     },
 
-    // ✅ FIX: SỬ DỤNG ĐÚNG ENDPOINT /events/my-events
-    async getOrganizerEvents(params?: {
+    async getOrganizerEvents(params?:{
         page?: number;
         limit?: number;
+        search?: string;
         status?: string;
-    }): Promise<AxiosResponse<OrganizerEventsAPIResponse>> {
-        const queryParams = new URLSearchParams();
-        
-        if (params?.page) {
-            queryParams.append('page', params.page.toString());
-        }
-        if (params?.limit) {
-            queryParams.append('limit', params.limit.toString());
-        }
-        if (params?.status) {
-            queryParams.append('status', params.status);
-        }
-        
-        const queryString = queryParams.toString();
-        
-        // ✅ ĐÚNG ENDPOINT THEO SWAGGER: GET /events/my-events
-        const url = queryString 
-            ? `/events/my-events?${queryString}`
-            : `/events/my-events`;
-        
-        console.log('🔍 Fetching organizer events from:', url);
-        
-        return await apiUtils.get<OrganizerEventsAPIResponse>(url);
+        organizerId?: number;
+        venueId?: number;
+        category?: string;
+    }): Promise<AxiosResponse<GetEventResponse | ApiResponse<GetEventResponse>>> {
+        return await apiUtils.get<GetEventResponse | ApiResponse<GetEventResponse>>(`${EVENT_URL}my-events`, params); 
     },
 
     async getStaffEvent(params?:{
@@ -95,7 +77,6 @@ const organizerService = {
     ): Promise<AxiosResponse<ApiResponse<DeleteStaffResponse>>> {
         return await apiUtils.delete<ApiResponse<DeleteStaffResponse>>(`${EVENT_URL}${eventId}/staff/${userId}`);
     }
-
 
 };
 

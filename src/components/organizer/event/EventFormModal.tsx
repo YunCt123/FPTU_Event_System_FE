@@ -9,13 +9,18 @@ import {
   Image as ImageIcon,
   Tag,
   UserPlus,
-  AlertCircle,
 } from "lucide-react";
 import type { Event, CreateEventRequest, UpdateEventRequest } from "../../../types/Event";
 import type { User } from "../../../types/User";
 import type { Venue } from "../../../types/Venue";
 import { toast } from "react-toastify";
-import { organizerService, venueService, eventService } from "../../../services"; // ✅ THÊM eventService
+import { organizerService, venueService, eventService } from "../../../services"; 
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { registerLocale } from 'react-datepicker';
+import vi from 'date-fns/locale/vi';
+
+registerLocale('vi', vi);
 
 interface EventFormModalProps {
   event: Event | null;
@@ -464,7 +469,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     console.log("Is editing:", !!event);
 
     if (!validateForm()) {
-      console.log("❌ Validation failed");
+      console.log("Validation failed");
       toast.error("Vui lòng kiểm tra lại thông tin");
       return;
     }
@@ -497,13 +502,12 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       let response;
       
       if (event) {
-        // ✅ UPDATE MODE - CHỈ GỬI FIELDS ĐƯỢC PHÉP
         console.log("🔄 UPDATE MODE");
         
         const eventIdString = String(event.id);
         
         if (!eventIdString || eventIdString.trim() === '') {
-          console.error("❌ Invalid event ID");
+          console.error("Invalid event ID");
           toast.error("ID sự kiện không hợp lệ");
           return;
         }
@@ -562,7 +566,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             updateData.venueId = newVenueId;
           }
 
-          console.log("⚠️ Skipping hostId, staffIds, speakers for UPDATE");
+          console.log("Skipping hostId, staffIds, speakers for UPDATE");
         } else {
           // KHÔNG CÓ ORIGINAL DATA - GỬI TẤT CẢ TRỪ hostId, staffIds, speakers
           updateData.title = formData.title.trim();
@@ -877,16 +881,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Calendar size={16} className="text-orange-500" />
                     Thời gian bắt đầu <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="startDate"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.startDate ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.startDate ? new Date(formData.startDate) : null}
+                    onChange={(date) => setFormData({ ...formData, startDate: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.startDate && (
                     <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>
@@ -901,16 +907,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Calendar size={16} className="text-orange-500" />
                     Thời gian kết thúc <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="endDate"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.endDate ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.endDate ? new Date(formData.endDate) : null}
+                    onChange={(date) => setFormData({ ...formData, endDate: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.endDate && (
                     <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>
@@ -928,16 +936,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Clock size={16} className="text-orange-500" />
                     Thời gian mở đăng ký <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="registrationDeadline"
-                    name="registrationDeadline"
-                    value={formData.registrationDeadline}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.registrationDeadline ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.registrationDeadline ? new Date(formData.registrationDeadline) : null}
+                    onChange={(date) => setFormData({ ...formData, registrationDeadline: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.registrationDeadline && (
                     <p className="text-red-500 text-xs mt-1">{errors.registrationDeadline}</p>
@@ -952,16 +962,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Clock size={16} className="text-orange-500" />
                     Thời gian đóng đăng ký <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="endTimeRegister"
-                    name="endTimeRegister"
-                    value={formData.endTimeRegister}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.endTimeRegister ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.endTimeRegister ? new Date(formData.endTimeRegister) : null}
+                    onChange={(date) => setFormData({ ...formData, endTimeRegister: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.endTimeRegister && (
                     <p className="text-red-500 text-xs mt-1">{errors.endTimeRegister}</p>

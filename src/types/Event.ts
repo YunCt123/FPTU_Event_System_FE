@@ -71,16 +71,22 @@ export interface host{
   lastName: string;
 } 
 
-export interface eventSpeaker{
-  id: number;
-  topic: string;
-}
+// export interface eventSpeaker{
+//   id: number;
+//   topic: string;
+// }
 
 export interface meta{
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface eventSpeaker{
+  id: number;
+  topic: string;
+  speaker: speaker;
 }
 
 export interface speaker{
@@ -92,12 +98,7 @@ export interface speaker{
   company: string;
 }
 
-export interface eventSpeaker{
-  id: number;
-  topic: string;
-  speakerId: number;
-  speaker: speaker;
-}
+
 
 export interface eventStaff{
   id:number;
@@ -129,8 +130,8 @@ export interface GetEventResponse {
   organizer: organizer;
   venue?: venue;
   host: host;
-  eventSpeakers: eventSpeaker[];
-  eventStaffs: eventStaff[];
+  eventSpeakers?: eventSpeaker[];
+  eventStaffs?: eventStaff[];
   checkinCount: number; 
 }
 
@@ -168,8 +169,6 @@ export interface CreateEventRequest {
     topic: string;
   }[];
 }
-
-export type UpdateEventRequest = Partial<CreateEventRequest>;
 
 export interface UpdateEventRequest {
   title?: string;

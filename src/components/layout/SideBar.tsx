@@ -136,6 +136,12 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/staff',
     },
     {
+      id: 'speaker',
+      label: 'Quản lý diễn giả',
+      icon: <UserStar size={20} />,
+      path: '/organizer/speakers',
+    },
+    {
       id: 'reports',
       label: 'Báo cáo',
       icon: <MapPin size={20} />,
