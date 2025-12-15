@@ -169,8 +169,6 @@ export interface CreateEventRequest {
   }[];
 }
 
-export type UpdateEventRequest = Partial<CreateEventRequest>;
-
 export interface UpdateEventRequest {
   title?: string;
   description?: string;
