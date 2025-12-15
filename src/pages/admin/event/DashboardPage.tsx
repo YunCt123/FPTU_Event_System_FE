@@ -163,59 +163,69 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-4 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-blue-700">Tổng số sự kiện</span>
-            <div className="p-2 bg-blue-500 rounded-lg shadow-md">
-              <Calendar className="text-white" size={20} />
+      {/* Stats Cards - Giống OrganizerDashboardPage */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card 1: Tổng số sự kiện - Màu xanh dương */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Tổng số sự kiện</p>
+              <p className="text-5xl font-bold text-white">{responseData?.meta?.total || 0}</p>
+            </div>
+            <div className="bg-blue-100 p-4 rounded-xl shadow-md">
+              <Calendar className="text-blue-600" size={32} strokeWidth={2.5} />
             </div>
           </div>
-          <p className="text-2xl font-bold text-blue-900 mb-1">
-            {responseData?.meta?.total || 0}
-          </p>
         </div>
-        
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm border border-yellow-200 p-4 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-yellow-700">Đang xử lý</span>
-            <div className="p-2 bg-yellow-500 rounded-lg shadow-md">
-              <Clock className="text-white" size={20} />
+
+        {/* Card 2: Đang xử lý - Màu vàng */}
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đang xử lý</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
+              </p>
+            </div>
+            <div className="bg-yellow-100 p-4 rounded-xl shadow-md">
+              <Clock className="text-yellow-600" size={32} strokeWidth={2.5} />
             </div>
           </div>
-          <p className="text-2xl font-bold text-yellow-900 mb-1">
-            {responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
-          </p>
         </div>
-        
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-4 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-green-700">Đã duyệt</span>
-            <div className="p-2 bg-green-500 rounded-lg shadow-md">
-              <CheckCircle className="text-white" size={20} />
+
+        {/* Card 3: Đã duyệt - Màu xanh lá */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đã duyệt</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
+              </p>
+              <p className="text-sm text-white/80 mt-2 font-medium">
+                Tỷ lệ: {responseData?.meta?.total > 0 
+                  ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
+                  : 0}%
+              </p>
+            </div>
+            <div className="bg-green-100 p-4 rounded-xl shadow-md">
+              <CheckCircle className="text-green-600" size={32} strokeWidth={2.5} />
             </div>
           </div>
-          <p className="text-2xl font-bold text-green-900 mb-1">
-            {responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
-          </p>
-          <p className="text-xs text-green-600 font-medium">
-            Tỷ lệ duyệt: {responseData?.meta?.total > 0 
-              ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
-              : 0}%
-          </p>
         </div>
-        
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm border border-red-200 p-4 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-red-700">Đã từ chối</span>
-            <div className="p-2 bg-red-500 rounded-lg shadow-md">
-              <XCircle className="text-white" size={20} />
+
+        {/* Card 4: Đã từ chối - Màu đỏ */}
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đã từ chối</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
+              </p>
+            </div>
+            <div className="bg-red-100 p-4 rounded-xl shadow-md">
+              <XCircle className="text-red-600" size={32} strokeWidth={2.5} />
             </div>
           </div>
-          <p className="text-2xl font-bold text-red-900 mb-1">
-            {responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
-          </p>
         </div>
       </div>
 
@@ -270,7 +280,6 @@ const DashboardPage = () => {
                           setSelectedYear(year);
                           setYearInput(year.toString());
                         } else {
-                          // Reset về giá trị hiện tại
                           setYearInput(selectedYear.toString());
                         }
                       }}
@@ -284,7 +293,6 @@ const DashboardPage = () => {
                           }
                           e.currentTarget.blur();
                         }
-                        // Cho phép Escape để cancel
                         if (e.key === 'Escape') {
                           setYearInput(selectedYear.toString());
                           e.currentTarget.blur();

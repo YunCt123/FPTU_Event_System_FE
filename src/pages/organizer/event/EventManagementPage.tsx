@@ -268,7 +268,7 @@ const EventManagementPage = () => {
     
     // ✅ VALIDATE STRING ID
     if (!event || !event.id || typeof event.id !== 'string' || event.id.trim() === '') {
-      console.error('❌ Invalid event object or missing ID');
+      console.error('Invalid event object or missing ID');
       toast.error('Không thể chỉnh sửa sự kiện. Dữ liệu không hợp lệ.');
       return;
     }
