@@ -8,6 +8,7 @@ interface DropdownAction {
   icon?: LucideIcon;
   onClick: () => void;
   danger?: boolean; 
+  disabled?: boolean;
 }
 
 interface ActionDropdownProps {
@@ -19,6 +20,8 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
   const [dropUp, setDropUp] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
 
   // Click outside → close
   useEffect(() => {
@@ -34,15 +37,15 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
 
   // Check if dropdown should open upward
   useEffect(() => {
-    if (open && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = actions.length * 40 + 16; // Approximate height
+    if (open && buttonRef.current && dropdownRef.current) {
+      const buttonRect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = dropdownRef.current.offsetHeight;
+    const spaceBelow = window.innerHeight - buttonRect.bottom;// Approximate height
       
       // If not enough space below, open upward
-      setDropUp(spaceBelow < dropdownHeight && rect.top > dropdownHeight);
+      setDropUp(spaceBelow < dropdownHeight && buttonRect.top > dropdownHeight);
     }
-  }, [open, actions.length]);
+  }, [open]);
 
   return (
     <div ref={ref} className="relative inline-block">
@@ -60,7 +63,8 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
       {/* Dropdown */}
       {open && (
         <div 
-          className={`absolute right-0 z-50 w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown
+          ref={dropdownRef}
+          className={`absolute right-0 z-[9999] w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown
             ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'}
           `}
         >

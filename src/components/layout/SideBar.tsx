@@ -131,6 +131,12 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/events',
     },
     {
+      id: 'organizers',
+      label: 'Quản lý Organizers',
+      icon: <Building2 size={20} />,
+      path: '/organizer/organizers',
+    },
+    {
       id: 'attendees',
       label: 'Người tham dự',
       icon: <Users size={20} />,
