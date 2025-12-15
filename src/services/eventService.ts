@@ -28,13 +28,12 @@ const eventService = {
     },
 
     async getEventById(id: string): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
-        console.log('📡 API Call: getEventById with ID:', id);
-        console.log('📡 Full URL:', `${EVENT_URL}${id}`);
+        console.log('API Call: getEventById with ID:', id);
+        console.log('Full URL:', `${EVENT_URL}${id}`);
         
-        // ✅ ĐÚNG: /api/events/{id}
         const response = await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
         
-        console.log('📡 API Response:', response);
+        console.log('API Response:', response);
         return response;
     },
 
@@ -83,35 +82,41 @@ const eventService = {
     }): Promise<AxiosResponse<ApiResponse<GetDeleteRequestsResponse>>> {
         console.log('📋 Fetching delete requests with params:', params);
         
-        // ✅ ĐÚNG THEO SWAGGER: /events/cancellation-requests (CÓ DẤU GẠCH NGANG)
         return await apiUtils.get<ApiResponse<GetDeleteRequestsResponse>>(
-            `${EVENT_URL}cancellation-requests`, // ✅ cancellation-requests
+            `${EVENT_URL}cancellation-requests`,
             params
         );
     },
 
-    // ✅ API PHÊ DUYỆT/TỪ CHỐI - CŨNG CẦN FIX URL
+    // ✅ API PHÊ DUYỆT/TỪ CHỐI YÊU CẦU XÓA - ĐÚNG THEO SWAGGER
     async approveDeleteRequest(params: {
         requestId: number;
-        action: 'APPROVED' | 'REJECTED';
+        status: 'APPROVED' | 'REJECTED';
+        adminNote?: string;
     }): Promise<AxiosResponse<ApiResponse<any>>> {
-        console.log('✅ Admin processing delete request:', params);
-        
-        // ✅ SỬA URL ENDPOINT (NẾU CÓ TRONG SWAGGER)
-        // Kiểm tra Swagger xem endpoint approve là gì
-        // Có thể là: /events/cancellation-requests/{id} hoặc /events/cancellations/{id}
+        console.group('🔍 APPROVE/REJECT DELETE REQUEST');
+        console.log('1. Request ID:', params.requestId);
+        console.log('2. Status:', params.status);
+        console.log('3. Admin Note:', params.adminNote);
+        console.log('4. Full URL:', `${EVENT_URL}cancellation-requests/${params.requestId}/status`);
+        console.log('5. Request Body:', {
+            status: params.status,
+            adminNote: params.adminNote || 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
+        });
+        console.groupEnd();
+
         return await apiUtils.patch<ApiResponse<any>>(
-            `${EVENT_URL}cancellation-requests/${params.requestId}`, // ✅ Thử endpoint này trước
-            { status: params.action }
+            `${EVENT_URL}cancellation-requests/${params.requestId}/status`,
+            {
+                status: params.status,
+                adminNote: params.adminNote || 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
+            }
         );
     },
 
-    async getCancellationReasons(params?: {
-        page?: number;
-        limit?: number;
-        status?: string;
-    }): Promise<AxiosResponse<ApiResponse<CancellationReason[]>>> { 
-        return await apiUtils.get<ApiResponse<CancellationReason[]>>(`${EVENT_URL}cancellations`, params);
+    async postCancellationReason(
+        data: { reason: string; isActive: boolean; }): Promise<AxiosResponse<ApiResponse<CancellationReason>>> {
+        return await apiUtils.post<ApiResponse<CancellationReason>>(`${EVENT_URL}cancellations`, data);
     }
 };
 

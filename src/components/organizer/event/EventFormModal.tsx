@@ -18,7 +18,7 @@ import { organizerService, venueService, eventService } from "../../../services"
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
-import vi from 'date-fns/locale/vi';
+import { vi } from 'date-fns/locale/vi';
 
 registerLocale('vi', vi);
 

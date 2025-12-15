@@ -296,7 +296,7 @@ export interface DeleteEventByOrganizersRequest {
 
 export interface DeleteEventByOrganizersResponse {
   message: string;
-  cancellationReason: cancellationReason;
+  cancellationReason: CancellationReason;
 }
 
 export interface GetDeleteRequestsResponse {

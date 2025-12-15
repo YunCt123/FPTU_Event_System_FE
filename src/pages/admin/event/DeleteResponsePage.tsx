@@ -11,11 +11,14 @@ import {
   Search,
   Filter,
   FileText,
-  Eye
+  Eye,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import eventService from '../../../services/eventService';
 import type { DeleteRequestItem } from '../../../types/Event';
+import ActionDropdown from '../../../components/ActionDropdown';
 
 const DeleteResponsePage = () => {
   const [deleteRequests, setDeleteRequests] = useState<DeleteRequestItem[]>([]);
@@ -26,6 +29,10 @@ const DeleteResponsePage = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // ✅ THÊM: Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Số items mỗi page
+
   useEffect(() => {
     fetchDeleteRequests();
   }, []);
@@ -33,18 +40,17 @@ const DeleteResponsePage = () => {
   const fetchDeleteRequests = async () => {
     setIsLoading(true);
     try {
-      console.log('📋 Fetching delete requests...');
+      console.log('Fetching delete requests...');
       
       const response = await eventService.getDeleteRequests({
         page: 1,
         limit: 100,
       });
 
-      console.log('✅ Full response:', response);
-      console.log('✅ response.data:', response.data);
-      console.log('✅ response.data type:', typeof response.data);
+      console.log('Full response:', response);
+      console.log('response.data:', response.data);
+      console.log('response.data type:', typeof response.data);
       
-      // ✅ KIỂM TRA CẤU TRÚC RESPONSE TỪNG BƯỚC
       if (!response || !response.data) {
         console.warn('⚠️ No response.data');
         setDeleteRequests([]);
@@ -71,7 +77,6 @@ const DeleteResponsePage = () => {
         return;
       }
 
-      // ✅ LOG CHI TIẾT REQUEST ĐẦU TIÊN
       if (requests.length > 0) {
         console.log('First request sample:', requests[0]);
         console.log('Request keys:', Object.keys(requests[0]));
@@ -81,10 +86,10 @@ const DeleteResponsePage = () => {
       console.log('✅ Total requests loaded:', requests.length);
       
     } catch (error: any) {
-      console.error('❌ Error fetching delete requests:', error);
-      console.error('❌ Error response:', error.response);
-      console.error('❌ Error response data:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
+      console.error('Error fetching delete requests:', error);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       
       let errorMessage = 'Không thể tải danh sách yêu cầu xóa';
       
@@ -105,9 +110,8 @@ const DeleteResponsePage = () => {
     }
   };
 
-  // ✅ HÀM PHÊ DUYỆT - ĐỔI STATUS EVENT SANG "CANCELED"
   const handleApprove = async (requestId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xóa sự kiện này?\n\nSự kiện sẽ được đổi status sang "Bị từ chối" (CANCELED).')) {
+    if (!window.confirm('Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xóa sự kiện này?\n\nSự kiện sẽ được đổi status sang "CANCELED".')) {
       return;
     }
 
@@ -115,22 +119,22 @@ const DeleteResponsePage = () => {
     try {
       console.log('✅ Approving delete request:', requestId);
       
-      // ✅ GỌI API PHÊ DUYỆT - BACKEND SẼ ĐỔI STATUS EVENT
+      // ✅ GỌI API VỚI PARAMS ĐÚNG THEO SWAGGER
       await eventService.approveDeleteRequest({
         requestId,
-        action: 'APPROVED',
+        status: 'APPROVED', // ✅ "status" thay vì "action"
+        adminNote: 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
       });
       
       toast.success('Đã phê duyệt yêu cầu xóa sự kiện. Status đã được cập nhật.', {
         autoClose: 5000,
       });
       
-      // Refresh lại danh sách
       await fetchDeleteRequests();
       setIsDetailModalOpen(false);
       
     } catch (error: any) {
-      console.error('❌ Error approving delete request:', error);
+      console.error('Error approving delete request:', error);
       console.error('Error response:', error.response);
       
       let errorMessage = 'Không thể phê duyệt yêu cầu';
@@ -149,32 +153,30 @@ const DeleteResponsePage = () => {
     }
   };
 
-  // ✅ HÀM TỪ CHỐI - GIỮ NGUYÊN STATUS EVENT
+  // ✅ HÀM TỪ CHỐI - SỬA PARAMS
   const handleReject = async (requestId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn TỪ CHỐI yêu cầu xóa sự kiện này?\n\nStatus của sự kiện sẽ KHÔNG thay đổi.')) {
+    if (!window.confirm('Bạn có chắc chắn muốn TỪ CHỐI yêu cầu xóa sự kiện này?')) {
       return;
     }
 
     setIsProcessing(true);
     try {
-      console.log('❌ Rejecting delete request:', requestId);
+      console.log('Rejecting delete request:', requestId);
       
-      // ✅ GỌI API TỪ CHỐI - BACKEND GIỮ NGUYÊN STATUS EVENT
+      // ✅ GỌI API VỚI PARAMS ĐÚNG THEO SWAGGER
       await eventService.approveDeleteRequest({
         requestId,
-        action: 'REJECTED',
+        status: 'REJECTED', // ✅ "status" thay vì "action"
+        adminNote: 'Yêu cầu xóa sự kiện không được chấp thuận'
       });
       
-      toast.success('Đã từ chối yêu cầu xóa sự kiện', {
-        autoClose: 3000,
-      });
+      toast.success('Đã từ chối yêu cầu xóa sự kiện');
       
-      // Refresh lại danh sách
       await fetchDeleteRequests();
       setIsDetailModalOpen(false);
       
     } catch (error: any) {
-      console.error('❌ Error rejecting delete request:', error);
+      console.error('Error rejecting delete request:', error);
       
       let errorMessage = 'Không thể từ chối yêu cầu';
       
@@ -225,11 +227,54 @@ const DeleteResponsePage = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // ✅ THÊM: Pagination logic
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRequests = filteredRequests.slice(startIndex, endIndex);
+
+  // ✅ THÊM: Reset page khi search hoặc filter thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus]);
+
+  // ✅ THÊM: Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  // ✅ THÊM: Generate page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  };
+
   const stats = {
     total: deleteRequests.length,
     pending: deleteRequests.filter(r => r.status === 'PENDING').length,
     approved: deleteRequests.filter(r => r.status === 'APPROVED').length,
-    rejected: deleteRequests.filter(r => r.status === 'REJECTED').length,
+    // rejected: deleteRequests.filter(r => r.status === 'REJECTED').length, // ✅ COMMENT
   };
 
   return (
@@ -238,11 +283,8 @@ const DeleteResponsePage = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-red-500 rounded-xl shadow-lg">
-              <Trash2 className="text-white" size={28} />
-            </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Yêu Cầu Xóa Sự Kiện</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Yêu Cầu Hủy Sự Kiện</h1>
               <p className="text-gray-600 mt-1">Quản lý các yêu cầu hủy sự kiện từ organizer</p>
             </div>
           </div>
@@ -268,7 +310,8 @@ const DeleteResponsePage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Tổng yêu cầu */}
         <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -281,6 +324,7 @@ const DeleteResponsePage = () => {
           </div>
         </div>
 
+        {/* Chờ xử lý */}
         <div className="bg-white rounded-xl shadow-sm border-2 border-yellow-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -293,6 +337,7 @@ const DeleteResponsePage = () => {
           </div>
         </div>
 
+        {/* Đã duyệt */}
         <div className="bg-white rounded-xl shadow-sm border-2 border-green-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -305,7 +350,8 @@ const DeleteResponsePage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6">
+        {/* ✅ COMMENT: Đã từ chối */}
+        {/* <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">Đã từ chối</p>
@@ -315,7 +361,7 @@ const DeleteResponsePage = () => {
               <XCircle className="text-red-600" size={32} strokeWidth={2.5} />
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Search & Filter */}
@@ -367,128 +413,182 @@ const DeleteResponsePage = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Sự kiện
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Organizer
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Thời gian sự kiện
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Lý do
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Trạng thái
-                  </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Hành động
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-red-50 rounded-lg">
-                          <Calendar className="text-red-500" size={20} />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{request.event.title}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Organizer: {request.event.organizer.name}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <User size={16} className="text-gray-400" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {request.requester.firstName} {request.requester.lastName}
-                          </p>
-                          <p className="text-xs text-gray-500">{request.requester.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <p className="text-gray-900 font-medium">
-                          {new Date(request.event.startTime).toLocaleDateString('vi-VN')}
-                        </p>
-                        <p className="text-gray-500">
-                          {new Date(request.event.startTime).toLocaleTimeString('vi-VN', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <p className="text-sm text-gray-700 line-clamp-2 max-w-xs">
-                        {request.reason}
-                      </p>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      {getStatusBadge(request.status)}
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedRequest(request);
-                            setIsDetailModalOpen(true);
-                          }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        
-                        {request.status === 'PENDING' && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(request.id)}
-                              disabled={isProcessing}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Phê duyệt (Đổi status event sang CANCELED)"
-                            >
-                              <CheckCircle size={18} />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleReject(request.id)}
-                              disabled={isProcessing}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Từ chối (Giữ nguyên status event)"
-                            >
-                              <XCircle size={18} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Sự kiện
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Organizer
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Thời gian sự kiện
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Lý do
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Trạng thái
+                    </th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      {/* Hành động */}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {/* ✅ SỬA: Dùng currentRequests thay vì filteredRequests */}
+                  {currentRequests.map((request) => (
+                    <tr key={request.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-red-50 rounded-lg">
+                            <Calendar className="text-red-500" size={20} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{request.event.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Organizer: {request.event.organizer.name}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <User size={16} className="text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {request.requester.firstName} {request.requester.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">{request.requester.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <div className="text-sm">
+                          <p className="text-gray-900 font-medium">
+                            {new Date(request.event.startTime).toLocaleDateString('vi-VN')}
+                          </p>
+                          <p className="text-gray-500">
+                            {new Date(request.event.startTime).toLocaleTimeString('vi-VN', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </p>
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <p className="text-sm text-gray-700 line-clamp-2 max-w-xs">
+                          {request.reason}
+                        </p>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        {getStatusBadge(request.status)}
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center">
+                          <ActionDropdown
+                            actions={[
+                              {
+                                label: 'Xem chi tiết',
+                                icon: Eye,
+                                onClick: () => {
+                                  setSelectedRequest(request);
+                                  setIsDetailModalOpen(true);
+                                },
+                              },
+                              ...(request.status === 'PENDING' ? [
+                                {
+                                  label: 'Phê duyệt',
+                                  icon: CheckCircle,
+                                  onClick: () => {
+                                    handleApprove(request.id);
+                                  },
+                                },
+                                {
+                                  label: 'Từ chối',
+                                  icon: XCircle,
+                                  onClick: () => {
+                                    handleReject(request.id);
+                                  },
+                                  danger: true,
+                                },
+                              ] : []),
+                            ]}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ✅ THÊM: Pagination */}
+            {filteredRequests.length > 0 && (
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  {/* Showing info */}
+                  <div className="text-sm text-gray-600">
+                    {/* Hiển thị <span className="font-semibold text-gray-900">{startIndex + 1}</span> đến{' '}
+                    <span className="font-semibold text-gray-900">{Math.min(endIndex, filteredRequests.length)}</span> trong tổng số{' '}
+                    <span className="font-semibold text-gray-900">{filteredRequests.length}</span> yêu cầu */}
+                  </div>
+
+                  {/* Pagination controls */}
+                  <div className="flex items-center gap-2">
+                    {/* Previous button */}
+                    <button
+                      onClick={goToPrevPage}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Trang trước"
+                    >
+                      <ChevronLeft size={20} className="text-gray-600" />
+                    </button>
+
+                    {/* Page numbers */}
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => goToPage(pageNum)}
+                          className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-colors ${
+                            pageNum === currentPage
+                              ? 'bg-red-500 text-white'
+                              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Next button */}
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Trang sau"
+                    >
+                      <ChevronRight size={20} className="text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Detail Modal */}
+      {/* Detail Modal - KHÔNG THAY ĐỔI */}
       {isDetailModalOpen && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">

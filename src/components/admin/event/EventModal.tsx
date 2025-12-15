@@ -21,19 +21,19 @@ const EventModal: React.FC<EventModalProps> = ({ title, children, onClose }) => 
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/25"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleClose}
     >
       <div
         className={`
-          bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col
+          bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col
           transition-all duration-200 transform
           ${show ? "opacity-100 scale-100" : "opacity-0 scale-90"}
         `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white">
           <h2 className="text-xl font-semibold text-gray-900">
             {title}
           </h2>
@@ -46,7 +46,7 @@ const EventModal: React.FC<EventModalProps> = ({ title, children, onClose }) => 
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 bg-white">
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white">
           {children}
         </div>
       </div>
