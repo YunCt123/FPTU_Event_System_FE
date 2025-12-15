@@ -31,25 +31,57 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ onClose, onSucces
 
   // Check user role and fetch event organizers
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+    const fetchCurrentUser = async () => {
       try {
-        const user = JSON.parse(userStr);
-        const role = user.role || user.roleName || user["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        const response = await userService.getUserInUse();
+        const currentUser = response.data;
+        console.log("object", currentUser);
+        
+        // Extract role from user object
+        const role = currentUser.role || currentUser.roleName;
         setCurrentUserRole(role);
         
-        // If user is event_organizer, auto-fill ownerId
+        // If user is event_organizer, auto-fill ownerId and campusId
         if (role === 'event_organizer') {
-          const userId = user.id || user.sub || user["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-          if (userId) {
-            setFormData(prev => ({ ...prev, ownerId: Number(userId) }));
+          if (currentUser.id) {
+            setFormData(prev => ({ 
+              ...prev, 
+              ownerId: Number(currentUser.id),
+              campusId: currentUser.campus?.id ? Number(currentUser.campus.id) : 0
+            }));
           }
         }
       } catch (error) {
-        console.error('Error parsing user from localStorage:', error);
+        console.error('Error fetching current user:', error);
+        // Fallback to localStorage if API fails
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            const role = user.role || user.roleName || user["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+            setCurrentUserRole(role);
+            
+            // If user is event_organizer, auto-fill ownerId and campusId from localStorage
+            if (role === 'event_organizer') {
+              const userId = user.id || user.sub || user["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+              const userCampusId = user.campusId || user.CampusId;
+              
+              if (userId) {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  ownerId: Number(userId),
+                  campusId: userCampusId ? Number(userCampusId) : 0
+                }));
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing user from localStorage:', error);
+          }
+        }
       }
-    }
+    };
     
+    fetchCurrentUser();
     fetchEventOrganizers();
     
     // Cleanup preview URL on unmount
@@ -300,7 +332,8 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ onClose, onSucces
               value={formData.campusId}
               onChange={(e) => setFormData(prev => ({ ...prev, campusId: parseInt(e.target.value) }))}
               required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
+              disabled={currentUserRole === 'event_organizer'}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               <option value="0">Chọn cơ sở</option>
               <option value="1">FU - Hà Nội</option>
@@ -309,6 +342,11 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ onClose, onSucces
               <option value="4">FU - Cần Thơ</option>
               <option value="5">FU - Quy Nhơn</option>
             </select>
+            {currentUserRole === 'event_organizer' && (
+              <p className="text-sm text-blue-600 mt-1">
+                Cơ sở được tự động chọn theo tài khoản của bạn
+              </p>
+            )}
           </div>
 
           {/* Event Organizer (Owner) */}
