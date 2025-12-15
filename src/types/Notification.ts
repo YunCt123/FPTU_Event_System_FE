@@ -4,6 +4,7 @@
 export type NotificationType =
   | "staff_assigned"
   | "event_created"
+  | "event_pending_approval"
   | "event_approved"
   | "event_rejected"
   | "event_cancelled"
@@ -26,6 +27,7 @@ export interface NotificationData {
   status?: "PENDING" | "PUBLISHED" | "CANCELED";
   title?: string;
   eventTitle?: string;
+  organizerName?: string;
   requestId?: number;
   reason?: string;
   adminNote?: string;

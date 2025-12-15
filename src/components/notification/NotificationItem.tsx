@@ -27,6 +27,8 @@ const getNotificationIcon = (type: NotificationType) => {
       return <Users className="w-5 h-5 text-blue-500" />;
     case "event_created":
       return <Calendar className="w-5 h-5 text-green-500" />;
+    case "event_pending_approval":
+      return <Clock className="w-5 h-5 text-yellow-500" />;
     case "event_approved":
       return <CheckCircle className="w-5 h-5 text-green-500" />;
     case "event_rejected":
@@ -69,6 +71,7 @@ const getNotificationBgColor = (type: NotificationType, isRead: boolean) => {
       return "bg-red-50";
     case "event_time_changed":
     case "cancellation_request":
+    case "event_pending_approval":
       return "bg-yellow-50";
     case "one_day":
     case "thirty_min":

@@ -22,6 +22,7 @@ const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "";
 export type NotificationType =
   | "staff_assigned"
   | "event_created"
+  | "event_pending_approval"
   | "event_approved"
   | "event_rejected"
   | "event_cancelled"
@@ -44,6 +45,7 @@ export interface NotificationData {
   status?: "PENDING" | "PUBLISHED" | "CANCELED";
   title?: string;
   eventTitle?: string;
+  organizerName?: string;
   requestId?: number;
   reason?: string;
   adminNote?: string;
@@ -265,6 +267,15 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
       case "event_created":
         toast.success(
           "Sự kiện của bạn đã được tạo thành công - đang chờ phê duyệt"
+        );
+        if (data.eventId) navigateToEvent(data.eventId);
+        break;
+
+      case "event_pending_approval":
+        toast.warning(
+          `Có sự kiện mới "${data.eventTitle || "này"}" từ ${
+            data.organizerName || "organizer"
+          } cần phê duyệt`
         );
         if (data.eventId) navigateToEvent(data.eventId);
         break;
