@@ -22,10 +22,34 @@ const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onS
 
     const fetchAllStaff = async () => {
         try {
-            const response = await userService.getStaffUser();
-            if (response.status === 200 && response.data.data) {
-                setAllStaff(response.data.data);
-            }
+            let page = 1;
+            let totalPages = 1;
+            const aggregatedStaff: User[] = [];
+
+            do {
+                const response = await userService.getStaffUser({
+                    page,
+                    limit: 50,
+                });
+
+                const payload: any = response.data;
+                
+                const pageStaff: User[] =
+                    Array.isArray(payload?.data?.data) ? payload.data.data :
+                    Array.isArray(payload?.data) ? payload.data :
+                    Array.isArray(payload) ? payload :
+                    [];
+
+                aggregatedStaff.push(...pageStaff);
+
+                totalPages = payload?.meta?.totalPages
+                    ?? payload?.data?.meta?.totalPages
+                    ?? totalPages;
+
+                page += 1;
+            } while (page <= totalPages);
+
+            setAllStaff(aggregatedStaff);
         } catch (error) {
             console.log("Error fetching all staff data:", error);
             toast.error("Không thể tải danh sách staff");
