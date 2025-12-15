@@ -4,6 +4,10 @@ import "./index.css";
 import MainRoute from "./routes/MainRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { initOneSignal } from "./utils/oneSignal";
+
+// Khởi tạo OneSignal
+initOneSignal();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

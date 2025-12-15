@@ -42,7 +42,7 @@ export default function EditEventModal({ initialData, onSubmit, submitting }: {
           name="image"
           value={formData.image}
           onChange={handleChange}
-          placeholder="https://example.com/image.jpg"
+          placeholder="https://example.com/image.jpg" 
           className="w-full px-4 py-2 border rounded-lg"
         />
         {formData.image && (

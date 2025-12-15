@@ -1,22 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Menu,
   X,
   Search,
-  Bell,
-  User,
   LogOut,
-  Ticket,
-  Settings,
   ChevronDown,
-  University,
+  UserRound,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { userService } from "../../services";
+import type { User } from "../../types/User";
+import { NotificationDropdown } from "../notification";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
+  const users = localStorage.getItem("user");
+  const UserLoggedIn = users ? JSON.parse(users) : null;
+  const [userLoggedIn, setUserLoggedIn] = useState<User>();
+  console.log("object", UserLoggedIn);
 
   const user = {
     isLoggedIn: true,
@@ -26,14 +29,31 @@ const Header = () => {
       "https://ui-avatars.com/api/?name=Nguyen+Van+A&background=F27125&color=fff",
   };
 
+  const fetchUser = async () => {
+    try {
+      const response = await userService.getUserInUse();
+      if (response.status === 200) {
+        setUserLoggedIn(response.data);
+        console.log("User in use:", response.data);
+      } else {
+        console.log("Not user or Api");
+      }
+    } catch (error) {
+      console.log("Error fetching user in use:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
   const navItems = [
     { label: "Trang chủ", href: "/home" },
-    { label: "Sự kiện", href: "/events" },
-    { label: "Địa điểm", href: "/venues" },
-    ...(user.role === "organizer"
+    { label: "Về chúng tôi", href: "/about" },
+    ...(UserLoggedIn?.roleName === "event_organizer"
       ? [{ label: "Dashboard", href: "/organizer/dashboard" }]
       : []),
-     ...(user.role === "admin"
+    ...(UserLoggedIn?.roleName === "admin"
       ? [{ label: "Dashboard", href: "/admin/dashboard" }]
       : []),
   ];
@@ -73,30 +93,17 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center bg-gray-100 rounded-full px-3 py-1.5 focus-within:ring-2 focus-within:ring-[#F27125] transition-all">
-              <Search size={18} className="text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm sự kiện..."
-                className="bg-transparent border-none focus:outline-none text-sm ml-2 w-32 placeholder-gray-400 text-gray-700"
-              />
-            </div>
-
-            <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
-
+            <NotificationDropdown />
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-all"
               >
                 <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                  {user.name.split(" ").pop()}
+                  {userLoggedIn?.firstName.split(" ").pop()}
                 </span>
                 <img
-                  src={user.avatar}
+                  src={userLoggedIn?.avatar}
                   alt="Avatar"
                   className="w-8 h-8 rounded-full border border-gray-200"
                 />
@@ -110,10 +117,10 @@ const Header = () => {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2">
                   <div className="px-4 py-2 border-b border-gray-100 mb-1">
                     <p className="text-sm font-semibold text-gray-800">
-                      {user.name}
+                      {userLoggedIn?.firstName} {userLoggedIn?.lastName}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">
-                      {user.role}
+                      {userLoggedIn?.roleName}
                     </p>
                   </div>
 
@@ -121,47 +128,8 @@ const Header = () => {
                     href="/profile"
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
                   >
-                    <User size={16} /> Hồ sơ cá nhân
+                    <UserRound size={16} /> Hồ sơ cá nhân
                   </a>
-
-                  <a
-                      href="/admin/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <University size={16} /> Quản lý địa điểm
-                    </a>
-
-                    <a
-                      href="/organizer/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Settings size={16} /> Quản lý chỗ ngồi
-                    </a>
-
-                  {user.role === "student" && (
-                    <a
-                      href="/my-tickets"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Ticket size={16} /> Vé đã đặt
-                    </a>
-                  )}
-                  {user.role === "organizer" && (
-                    <a
-                      href="/organizer/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Settings size={16} /> Quản lý chỗ ngồi
-                    </a>
-                  )}
-                  {user.role === "admin" && (
-                    <a
-                      href="/admin/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Settings size={16} /> Quản lý địa điểm
-                    </a>
-                  )}
 
                   <div className="border-t border-gray-100 mt-1 pt-1">
                     <button

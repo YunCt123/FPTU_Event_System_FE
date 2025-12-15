@@ -1,79 +1,104 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import StatsCard from "../../../components/admin/dashboard/StatsCard";
 import BarChartBox from "../../../components/admin/dashboard/BarChartBox";
-import LineChartBox from "../../../components/admin/dashboard/LineChartBox";
 import PieChartBox from "../../../components/admin/dashboard/PieChartBox";
 import { Calendar, Clock, CheckCircle, XCircle, TrendingUp, Users } from "lucide-react";
+import eventService from "../../../services/eventService";
+import type { meta } from "../../../types/Event";
 
 const DashboardPage = () => {
-  // Mock data
-  const stats = [
-    { 
-      label: "Tổng số sự kiện", 
-      value: 240,
-      icon: Calendar,
-      color: "blue" as const,
-      trend: { value: 12, isPositive: true }
-    },
-    { 
-      label: "Đang xử lý", 
-      value: 25,
-      icon: Clock,
-      color: "yellow" as const,
-      trend: { value: 5, isPositive: false }
-    },
-    { 
-      label: "Đã duyệt", 
-      value: 180,
-      icon: CheckCircle,
-      color: "green" as const,
-      trend: { value: 18, isPositive: true }
-    },
-    { 
-      label: "Đã từ chối", 
-      value: 35,
-      icon: XCircle,
-      color: "red" as const,
-      trend: { value: 3, isPositive: false }
-    },
-  ];
+  const [responseData, setResponseData] = useState<any>();
+  const [statusData, setStatusData] = useState<{ name: string; value: number }[]>([]);
+  const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [yearInput, setYearInput] = useState<string>(new Date().getFullYear().toString());
 
-  const monthlyData = [
-    { name: "T1", value: 15 },
-    { name: "T2", value: 18 },
-    { name: "T3", value: 22 },
-    { name: "T4", value: 20 },
-    { name: "T5", value: 28 },
-    { name: "T6", value: 17 },
-    { name: "T7", value: 25 },
-    { name: "T8", value: 19 },
-    { name: "T9", value: 23 },
-    { name: "T10", value: 21 },
-    { name: "T11", value: 26 },
-    { name: "T12", value: 16 },
-  ];
+  // Generate list of years (từ 2020 đến năm hiện tại + 2)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2020 + 3 }, (_, i) => 2020 + i);
 
-  const participantsData = [
-    { name: "T7", value: 450 },
-    { name: "T8", value: 520 },
-    { name: "T9", value: 680 },
-    { name: "T10", value: 590 },
-    { name: "T11", value: 750 },
-    { name: "T12", value: 820 },
-  ];
+  useEffect(() => {
+    fetchData();
+    
+    // Auto refresh mỗi 30s
+    const interval = setInterval(fetchData, 30000);
+    
+    return () => clearInterval(interval);
+  }, [selectedYear]); // Thêm selectedYear vào dependency
 
-  const statusData = [
-    { name: "Đã duyệt", value: 180 },
-    { name: "Đang xử lý", value: 25 },
-    { name: "Đã từ chối", value: 35 },
-  ];
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await eventService.getAllEvents({});
+      
+      if (response && response.data) {
+        setResponseData(response.data);
+        const events = response.data.data || [];
+        
+        // Tính statusData
+        const published = events.filter((e: any) => e.status === "PUBLISHED").length;
+        const pending = events.filter((e: any) => e.status === "PENDING").length;
+        const canceled = events.filter((e: any) => e.status === "CANCELED").length;
+        
+        setStatusData([
+          { name: "Đã duyệt", value: published },
+          { name: "Đang xử lý", value: pending },
+          { name: "Đã từ chối", value: canceled },
+        ]);
 
-  const recentEvents = [
-    { id: 1, name: "Tech Conference 2025", status: "Đã duyệt", participants: 350, date: "12/12/2024" },
-    { id: 2, name: "AI Workshop", status: "Đang xử lý", participants: 120, date: "15/12/2024" },
-    { id: 3, name: "Career Fair", status: "Đã duyệt", participants: 500, date: "18/12/2024" },
-    { id: 4, name: "Music Festival", status: "Đang xử lý", participants: 800, date: "20/12/2024" },
-  ];
+        // Tính monthly data theo startTime (không phải createdAt)
+        const monthCounts: Record<number, number> = {};
+        
+        for (let i = 1; i <= 12; i++) {
+          monthCounts[i] = 0;
+        }
+        
+        events.forEach((event: any) => {
+          try {
+            const eventDate = new Date(event.startTime);
+            const year = eventDate.getFullYear();
+            const month = eventDate.getMonth() + 1;
+            
+            console.log(`Event: ${event.title}, StartTime: ${event.startTime}, Year: ${year}, Month: ${month}`);
+            
+            if (year === selectedYear) {
+              monthCounts[month]++;
+            }
+          } catch (err) {
+            console.error("Error parsing event startTime:", event, err);
+          }
+        });
+        
+        const calculatedMonthlyData = Object.keys(monthCounts)
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .map(month => ({
+            name: `T${month}`,
+            value: monthCounts[parseInt(month)]
+          }));
+
+        setMonthlyData(calculatedMonthlyData);
+      }
+    } catch (error: any) {
+      console.error("Error fetching dashboard data:", error);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      
+      // Fallback data
+      setMonthlyData(Array.from({ length: 12 }, (_, i) => ({ 
+        name: `T${i + 1}`, 
+        value: 0 
+      })));
+      setStatusData([
+        { name: "Đã duyệt", value: 0 },
+        { name: "Đang xử lý", value: 0 },
+        { name: "Đã từ chối", value: 0 },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, string> = {
@@ -88,65 +113,225 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       {/* Header with Gradient */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-3 bg-orange-400 rounded-xl shadow-lg">
-            <TrendingUp className="text-white" size={28} />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-orange-400 rounded-xl shadow-lg">
+              <TrendingUp className="text-white" size={28} />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Thống Kê Sự Kiện</h1>
+              <p className="text-gray-600 mt-1">
+                Tổng quan hệ thống quản lý sự kiện FPT
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Thống Kê Sự Kiện</h1>
-            <p className="text-gray-600 mt-1">
-              Tổng quan hệ thống quản lý sự kiện FPT
-            </p>
+          
+          {/* Refresh Button */}
+          <button
+            onClick={fetchData}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+          >
+            <svg 
+              className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="text-sm font-medium text-gray-700">
+              {isLoading ? 'Đang tải...' : 'Làm mới'}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <XCircle size={20} />
+            <span>{error}</span>
+          </div>
+          <button 
+            onClick={fetchData}
+            className="text-sm font-medium hover:underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* Stats Cards - Giống OrganizerDashboardPage */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card 1: Tổng số sự kiện - Màu xanh dương */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Tổng số sự kiện</p>
+              <p className="text-5xl font-bold text-white">{responseData?.meta?.total || 0}</p>
+            </div>
+            <div className="bg-blue-100 p-4 rounded-xl shadow-md">
+              <Calendar className="text-blue-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Đang xử lý - Màu vàng */}
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đang xử lý</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
+              </p>
+            </div>
+            <div className="bg-yellow-100 p-4 rounded-xl shadow-md">
+              <Clock className="text-yellow-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Đã duyệt - Màu xanh lá */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đã duyệt</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
+              </p>
+              <p className="text-sm text-white/80 mt-2 font-medium">
+                Tỷ lệ: {responseData?.meta?.total > 0 
+                  ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
+                  : 0}%
+              </p>
+            </div>
+            <div className="bg-green-100 p-4 rounded-xl shadow-md">
+              <CheckCircle className="text-green-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Đã từ chối - Màu đỏ */}
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đã từ chối</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
+              </p>
+            </div>
+            <div className="bg-red-100 p-4 rounded-xl shadow-md">
+              <XCircle className="text-red-600" size={32} strokeWidth={2.5} />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <StatsCard
-            key={index}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            color={stat.color}
-            trend={stat.trend}
-          />
-        ))}
-      </div>
-
       {/* Charts Grid - 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <BarChartBox
-          title="Số lượng sự kiện theo tháng"
-          subtitle="Thống kê 12 tháng năm 2024"
-          unit="sự kiện"
-          data={monthlyData}
-        />
+        {isLoading ? (
+          <>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Đang tải dữ liệu...</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* BarChart với Year Selector */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
+              <div className="p-6 border-b border-gray-100 bg-linear-to-r from-blue-50 to-white">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Số lượng sự kiện theo tháng</h3>
+                    <p className="text-sm text-gray-500 mt-1">Thống kê 12 tháng trong năm</p>
+                  </div>
+                  
+                  {/* Year Selector với Previous/Next buttons */}
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="year-input" className="text-sm font-medium text-gray-700">
+                      Năm:
+                    </label>
+                    <input
+                      id="year-input"
+                      type="text"
+                      inputMode="numeric"
+                      value={yearInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Chỉ cho phép số
+                        if (value === '' || /^\d{0,4}$/.test(value)) {
+                          setYearInput(value);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const year = parseInt(e.target.value);
+                        if (!isNaN(year) && year >= 2000 && year <= 2100) {
+                          setSelectedYear(year);
+                          setYearInput(year.toString());
+                        } else {
+                          setYearInput(selectedYear.toString());
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const year = parseInt(yearInput);
+                          if (!isNaN(year) && year >= 2000 && year <= 2100) {
+                            setSelectedYear(year);
+                          } else {
+                            setYearInput(selectedYear.toString());
+                          }
+                          e.currentTarget.blur();
+                        }
+                        if (e.key === 'Escape') {
+                          setYearInput(selectedYear.toString());
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      className="w-24 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center"
+                      placeholder="2025"
+                      maxLength={4}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <BarChartBox
+                  title=""
+                  subtitle=""
+                  // unit="sự kiện"
+                  data={monthlyData}
+                />
+              </div>
+            </div>
 
-        <PieChartBox
-          title="Phân bố trạng thái sự kiện"
-          subtitle="Tổng quan theo trạng thái hiện tại"
-          data={statusData}
-        />
+            {/* PieChart */}
+            <PieChartBox
+              title="Phân bố trạng thái sự kiện"
+              subtitle="Tổng quan theo trạng thái hiện tại"
+              data={statusData}
+            />
+          </>
+        )}
       </div>
-
-      {/* Full Width Line Chart
-      <div className="mb-8">
-        <LineChartBox
-          title="Lượng người tham gia theo tháng"
-          subtitle="Xu hướng tham gia 6 tháng gần nhất (T7 - T12/2024)"
-          data={participantsData}
-        />
-      </div> */}
 
       {/* Recent Events Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+        <div className="p-6 border-b border-gray-100 bg-linear-to-r from-blue-50 to-white">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Sự kiện gần đây</h3>
-              {/* <p className="text-sm text-gray-500 mt-1">Sự kiện được tạo mới nhất</p> */}
             </div>
             <button className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
               Xem tất cả
@@ -168,69 +353,49 @@ const DashboardPage = () => {
                   Người tham gia
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Ngày tổ chức
+                  Thời gian tổ chức
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {recentEvents.map((event) => (
+              {(responseData?.data || []).slice(0, 4).map((event: any) => (
                 <tr key={event.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-50 rounded-lg">
                         <Calendar size={18} className="text-blue-600" />
                       </div>
-                      <span className="text-sm font-medium text-gray-900">{event.name}</span>
+                      <span className="text-sm font-medium text-gray-900">{event.title}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(event.status)}`}>
-                      {event.status}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(
+                      event.status === "PUBLISHED" ? "Đã duyệt" :
+                      event.status === "PENDING" ? "Đang xử lý" :
+                      event.status === "CANCELED" ? "Đã từ chối" : "Khác"
+                    )}`}>
+                      {event.status === "PUBLISHED" ? "Đã duyệt" :
+                       event.status === "PENDING" ? "Đang xử lý" :
+                       event.status === "CANCELED" ? "Đã từ chối" : event.status}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Users size={16} className="text-gray-400" />
-                      <span className="text-sm text-gray-900">{event.participants} người</span>
+                      <span className="text-sm text-gray-900">
+                        {event.checkinCount || 0} người
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-600">{event.date}</span>
+                    <span className="text-sm text-gray-600">
+                      {new Date(event.startTime).toLocaleDateString('vi-VN')}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Quick Stats Footer */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Tổng người tham gia</h4>
-            <Users size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">3,210</p>
-          <p className="text-xs opacity-75 mt-2">↑ 23% so với tháng trước</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Tỷ lệ hoàn thành</h4>
-            <CheckCircle size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">94.5%</p>
-          <p className="text-xs opacity-75 mt-2">↑ 5% so với tháng trước</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Đánh giá trung bình</h4>
-            <TrendingUp size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">4.8/5</p>
-          <p className="text-xs opacity-75 mt-2">↑ 0.3 so với tháng trước</p>
         </div>
       </div>
     </div>

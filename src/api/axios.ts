@@ -77,7 +77,8 @@ api.interceptors.response.use(
   }
 );
 
-export const apiUtils = {
+// Đảm bảo headers đúng
+const apiUtils = {
   /**
    * Generic GET request
    * @param url - API endpoint
@@ -85,7 +86,13 @@ export const apiUtils = {
    * @param config - Additional axios config
    */ 
   async get<T>(url: string, params?: object, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-    const response = await api.get(url, { ...config, params });
+    // const response = await api.get(url, { ...config, params });
+    
+    // ✅ ĐÚNG: params phải nằm trong object config
+    const response = await api.get(url, { 
+        ...config, 
+        params: params 
+    });
     return response as AxiosResponse<T>;
   },
 
@@ -95,8 +102,14 @@ export const apiUtils = {
    * @param data - Request body
    * @param config - Additional axios config
    */
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise< AxiosResponse<T>> {
-    const response = await api.post(url, data, config);
+  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    const response = await api.post(url, data, {
+      ...config,
+      headers: {
+        'Content-Type': 'application/json',
+        ...config?.headers,
+      }
+    });
     return response as AxiosResponse<T>;
   },
 
@@ -159,5 +172,5 @@ export const apiUtils = {
   }
 };
 
-
-export default axios;
+export { apiUtils };
+export default api;

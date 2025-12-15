@@ -21,8 +21,37 @@ export interface CreateStaffRequest {
   hasAppAccess?: boolean;
 }
 
+export interface CreateStaffResponse {
+  id: number;
+  createdAt: string;
+  eventId: string;
+  userId: number;
+  user: User;
+  event: Event;
+}
+
+export interface User {
+  id: number;
+  userName: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  roleName: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface UpdateStaffRequest {
   role?: StaffRole;
   status?: StaffStatus;
   hasAppAccess?: boolean;
+}
+
+export interface DeleteStaffResponse {
+  message: string;
 }

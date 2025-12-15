@@ -79,7 +79,7 @@ const OrganizerListGrid = () => {
       const response = await organizerService.deleteOrganizer(organizerId);
       
       if (response.status === 200 || response.data.success) {
-        toast.success("Xóa nhà tổ chức thành công!");
+        toast.success("Xóa nhà tổ chức thành công");
         fetchOrganizers(); // Refresh list after deleting
         setConfirmModal({ isOpen: false, organizerId: null });
       }

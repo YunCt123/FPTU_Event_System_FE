@@ -4,13 +4,19 @@ import {
   LayoutDashboard,
   Calendar,
   Building2,
-  MapPin,
   Users,
   ChevronDown,
   ChevronRight,
   Map,
   UserCog,
+  UserStar,
+  User,
+  LogOut,
+  Award,
+  AlertTriangle,
 } from 'lucide-react';
+
+import Logout from '../auth/Logout';
 
 interface SideBarProps {
   userRole: 'admin' | 'organizer';
@@ -77,6 +83,37 @@ const SideBar = ({ userRole }: SideBarProps) => {
       icon: <Map size={20} />,
       path: '/admin/campuses',
     },
+    {
+      id: 'users',
+      label: 'Quản lý Người dùng',
+      icon: <UserCog size={20} />,
+      children: [
+        {
+          id: 'event-organizers',
+          label: 'Event Organizers',
+          icon: <UserStar size={18} />,
+          path: '/admin/users?role=event_organizer',
+        },
+        {
+          id: 'staff',
+          label: 'Staff',
+          icon: <UserCog size={18} />,
+          path: '/admin/users?role=staff',
+        },
+        {
+          id: 'student',
+          label: 'Student',
+          icon: <User size={18} />,
+          path: '/admin/users?role=student',
+        },
+      ],
+    },
+    {
+      id: 'incidents',
+      label: 'Quản lý Sự cố',
+      icon: <AlertTriangle size={20} />,
+      path: '/admin/incidents',
+    },
   ];
 
   // Organizer menu items
@@ -106,10 +143,22 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/staff',
     },
     {
+      id: 'speaker',
+      label: 'Quản lý diễn giả',
+      icon: <UserStar size={20} />,
+      path: '/organizer/speakers',
+    },
+    {
       id: 'reports',
-      label: 'Báo cáo',
-      icon: <MapPin size={20} />,
+      label: 'Đánh giá',
+      icon: <Award size={20} />,
       path: '/organizer/reports',
+    },
+    {
+      id: 'incidents',
+      label: 'Quản lý Sự cố',
+      icon: <AlertTriangle size={20} />,
+      path: '/organizer/incidents',
     },
   ];
 
@@ -154,7 +203,16 @@ const SideBar = ({ userRole }: SideBarProps) => {
 
   const isActive = (path?: string) => {
     if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    // Extract pathname and search from the path
+    const [pathOnly, search] = path.split('?');
+    const currentPathMatches = location.pathname === pathOnly || location.pathname.startsWith(pathOnly + '/');
+    
+    // If path has query params, also match them
+    if (search && currentPathMatches) {
+      return location.search === `?${search}`;
+    }
+    
+    return currentPathMatches;
   };
 
   const isParentActive = (children?: MenuItem[]) => {
@@ -225,32 +283,44 @@ const SideBar = ({ userRole }: SideBarProps) => {
     );
   };
 
+  
+
   return (
     <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 shrink-0">
+      <div className="p-6 border-b border-gray-200 shrink-0 gap-5">
         <div className="flex items-center gap-3">
           <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = "/home")}
           >
-          <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-lg bg-[#F27125] flex items-center justify-center text-white font-bold text-xl shadow-md transform hover:scale-105 transition-transform">
               F
             </div>
-          <div>
-            <h2 className="font-bold text-gray-900">FPT-Event</h2>
-            <p className="text-xs text-gray-500">
-              {userRole === 'admin' ? 'Admin Panel' : 'Organizer Panel'}
-            </p>
-          </div>
+            <div>
+              <h2 className="font-bold text-gray-900">FPT-Event</h2>
+              <p className="text-xs text-gray-500">
+                {userRole === "admin" ? "Admin Panel" : "Organizer Panel"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Menu - Scrollable */}
-      <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
-        {menuItems.map((item) => renderMenuItem(item))}
-      </nav>
+      <div className="p-4 space-y-2 flex-1 overflow-y-auto flex-col justify-between">
+        <nav className="space-y-2">
+          {menuItems.map((item) => renderMenuItem(item))}
+        </nav>
+        <div className="border-t border-gray-100 mt-1 pt-1 ">
+          <button
+            onClick={Logout}
+            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+          >
+            <LogOut size={16} /> Đăng xuất
+          </button>
+        </div>
+      </div>
 
       {/* Footer - Always at bottom */}
       <div className="p-4 border-t border-gray-200 shrink-0 bg-white">

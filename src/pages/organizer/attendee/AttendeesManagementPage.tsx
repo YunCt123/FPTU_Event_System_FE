@@ -11,127 +11,115 @@ import {
   FileSpreadsheet,
   Send,
 } from 'lucide-react';
-import type { Attendee, CheckInStatus } from '../../../types/Attendee';
-import type { Event } from '../../../types/Event';
+import type { CheckInStatus, AttendanceReponse, Data} from '../../../types/Attendee';
+import type { GetEventResponse } from '../../../types/Event';
+import { organizerService, userService } from '../../../services';
+// import eventService from '../../../services/eventService';
 
 const AttendeesManagementPage = () => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-  const [attendees, setAttendees] = useState<Attendee[]>([]);
-  const [filteredAttendees, setFilteredAttendees] = useState<Attendee[]>([]);
+  const [events, setEvents] = useState<GetEventResponse[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  // const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(null);
+  const [attendees, setAttendees] = useState<Data[]>([]);
+  const [filteredAttendees, setFilteredAttendees] = useState<Data[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | CheckInStatus>('ALL');
-  const [selectedAttendees, setSelectedAttendees] = useState<Set<number>>(new Set());
+  const [selectedAttendees, setSelectedAttendees] = useState<Set<string>>(new Set());
+  const [attendee, setAttendee] = useState<AttendanceReponse>();
+
+
+  
+
+  const fetchEvent = async () => {
+    try {
+      const response = await organizerService.getOrganizerEvents();
+      if (response.status === 200 && response.data.data) {
+        setEvents(response.data.data);
+      } else {
+        console.log("No event Data or Api");
+      }
+    } catch (error) {
+      console.log("Error fetching event data:", error);
+    }
+  };
 
   useEffect(() => {
-    // Mock events data - Replace with actual API call
-    const mockEvents: Event[] = [
-      {
-        id: 1,
-        title: 'Workshop: AI & Machine Learning',
-        description: 'Hội thảo về AI và Machine Learning cho sinh viên',
-        eventType: 'WORKSHOP',
-        status: 'APPROVED',
-        startDate: '2024-12-10T09:00:00',
-        endDate: '2024-12-10T17:00:00',
-        registrationDeadline: '2024-12-08T23:59:59',
-        maxParticipants: 100,
-        currentParticipants: 85,
-        organizerId: 1,
-        requiresApproval: true,
-        isPublished: true,
-      },
-      {
-        id: 2,
-        title: 'Tech Conference 2024',
-        description: 'Hội nghị công nghệ thường niên',
-        eventType: 'CONFERENCE',
-        status: 'APPROVED',
-        startDate: '2024-12-15T08:00:00',
-        endDate: '2024-12-16T18:00:00',
-        registrationDeadline: '2024-12-12T23:59:59',
-        maxParticipants: 200,
-        currentParticipants: 150,
-        organizerId: 1,
-        requiresApproval: true,
-        isPublished: true,
-      },
-    ];
-    setEvents(mockEvents);
-    if (mockEvents.length > 0) {
-      setSelectedEventId(mockEvents[0].id);
-    }
+    fetchEvent();
   }, []);
 
   useEffect(() => {
+    if (events.length > 0) {
+      setSelectedEventId(events[0].id);
+    }
+  }, [events]);
+
+  // const fetchAttendees = async (eventId: string) => {
+  //   try {
+  //     const response = await eventService.getEventById(eventId);
+  //     if (response) {
+  //       console.log("Event attendees:", response.data);
+  //       setSelectedEvent(response.data);
+  //       // TODO: Replace with actual attendees data from API
+  //       // setAttendees(response.data.attendees || []);
+        
+  //       // Mock data for now - will be replaced when API is ready
+  //       const mockAttendees: Attendee[] = [
+  //         {
+  //           id: 1,
+  //           eventId: Number(eventId),
+  //           studentId: 'SE160001',
+  //           fullName: 'Nguyễn Văn A',
+  //           email: 'anvse160001@fpt.edu.vn',
+  //           phone: '0912345678',
+  //           registeredAt: '2024-12-01T10:30:00',
+  //           checkInStatus: 'CHECKED_IN',
+  //           checkInTime: '2024-12-10T08:45:00',
+  //           seat: 'A1',
+  //         },
+  //         {
+  //           id: 2,
+  //           eventId: Number(eventId),
+  //           studentId: 'SE160002',
+  //           fullName: 'Trần Thị B',
+  //           email: 'bttse160002@fpt.edu.vn',
+  //           phone: '0987654321',
+  //           registeredAt: '2024-12-01T11:00:00',
+  //           checkInStatus: 'NOT_CHECKED_IN',
+  //           seat: 'A2',
+  //         },
+  //       ];
+  //       setAttendees(mockAttendees);
+  //       setFilteredAttendees(mockAttendees);
+  //     }
+  //   } catch (error) {
+  //     console.log("Error fetching attendees data:", error);
+  //   }
+  // };
+
+  const fetchAttendees = async (eventId: string) => {
+    try{
+      const response = await userService.getAttendUser(eventId);
+      if(response){
+        console.log("response stats", response.data);
+        setAttendee(response.data);
+        setAttendees(response.data.data);
+      }else{
+        console.log("No attendees data or Api");
+      }
+    }catch(error){
+      console.log("Error fetching attendees data:", error);    
+    }
+  };
+
+  useEffect(() => {
     if (!selectedEventId) {
-      setAttendees([]);
       return;
     }
-
-    // Mock data - Replace with actual API call filtered by selectedEventId
-    const mockAttendees: Attendee[] = [
-      {
-        id: 1,
-        eventId: selectedEventId,
-        studentId: 'SE160001',
-        fullName: 'Nguyễn Văn A',
-        email: 'anvse160001@fpt.edu.vn',
-        phone: '0912345678',
-        registeredAt: '2024-12-01T10:30:00',
-        checkInStatus: 'CHECKED_IN',
-        checkInTime: '2024-12-10T08:45:00',
-        seat: 'A1',
-      },
-      {
-        id: 2,
-        eventId: selectedEventId,
-        studentId: 'SE160002',
-        fullName: 'Trần Thị B',
-        email: 'bttse160002@fpt.edu.vn',
-        phone: '0987654321',
-        registeredAt: '2024-12-01T11:00:00',
-        checkInStatus: 'NOT_CHECKED_IN',
-        seat: 'A2',
-      },
-      {
-        id: 3,
-        eventId: selectedEventId,
-        studentId: 'SE160003',
-        fullName: 'Lê Văn C',
-        email: 'clvse160003@fpt.edu.vn',
-        phone: '0901234567',
-        registeredAt: '2024-12-01T14:20:00',
-        checkInStatus: 'CHECKED_IN',
-        checkInTime: '2024-12-10T09:00:00',
-        seat: 'B1',
-      },
-      {
-        id: 4,
-        eventId: selectedEventId,
-        studentId: 'SE160004',
-        fullName: 'Phạm Thị D',
-        email: 'dptse160004@fpt.edu.vn',
-        phone: '0934567890',
-        registeredAt: '2024-12-02T09:15:00',
-        checkInStatus: 'CANCELLED',
-      },
-      {
-        id: 5,
-        eventId: selectedEventId,
-        studentId: 'SE160005',
-        fullName: 'Hoàng Văn E',
-        email: 'ehvse160005@fpt.edu.vn',
-        phone: '0945678901',
-        registeredAt: '2024-12-02T16:30:00',
-        checkInStatus: 'NOT_CHECKED_IN',
-        seat: 'B3',
-      },
-    ];
-    setAttendees(mockAttendees);
-    setFilteredAttendees(mockAttendees);
+    fetchAttendees(selectedEventId);
   }, [selectedEventId]);
-
+  
+  console.log(selectedEventId);
+  
   useEffect(() => {
     let filtered = attendees;
 
@@ -139,71 +127,65 @@ const AttendeesManagementPage = () => {
       filtered = filtered.filter(
         (attendee) =>
           attendee.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          attendee.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          attendee.email.toLowerCase().includes(searchQuery.toLowerCase())
+          attendee.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (attendee.phoneNumber && attendee.phoneNumber.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (attendee.studentCode && attendee.studentCode.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
     if (statusFilter !== 'ALL') {
-      filtered = filtered.filter((attendee) => attendee.checkInStatus === statusFilter);
+      filtered = filtered.filter((attendee) => attendee.status === statusFilter);
     }
 
     setFilteredAttendees(filtered);
   }, [searchQuery, statusFilter, attendees]);
 
   const stats = {
-    total: attendees.length,
-    checkedIn: attendees.filter((a) => a.checkInStatus === 'CHECKED_IN').length,
-    notCheckedIn: attendees.filter((a) => a.checkInStatus === 'NOT_CHECKED_IN').length,
-    cancelled: attendees.filter((a) => a.checkInStatus === 'CANCELLED').length,
-    attendanceRate:
-      attendees.length > 0
-        ? Math.round(
-            (attendees.filter((a) => a.checkInStatus === 'CHECKED_IN').length /
-              attendees.length) *
-              100
-          )
-        : 0,
+    total: attendee?.summary?.totalRegistered || 0,
+    checkedIn: attendee?.summary?.checkedIn || 0,
+    notCheckedIn: (attendee?.summary?.totalRegistered || 0) - (attendee?.summary?.checkedIn || 0) - (attendee?.summary?.cancelled || 0),
+    cancelled: attendee?.summary?.cancelled || 0,
+    attendanceRate: attendee?.summary?.attendanceRate || 0,
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
-      CHECKED_IN: {
-        label: 'Đã check-in',
-        className: 'bg-green-100 text-green-700',
-        icon: CheckCircle,
-      },
-      NOT_CHECKED_IN: {
-        label: 'Chưa check-in',
-        className: 'bg-yellow-100 text-yellow-700',
-        icon: Clock,
-      },
-      CANCELLED: {
-        label: 'Đã hủy',
-        className: 'bg-red-100 text-red-700',
-        icon: XCircle,
-      },
-    };
+  // const getStatusBadge = (status: string) => {
+  //   const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
+  //     CHECKED_IN: {
+  //       label: 'Đã check-in',
+  //       className: 'bg-green-100 text-green-700',
+  //       icon: CheckCircle,
+  //     },
+  //     NOT_CHECKED_IN: {
+  //       label: 'Chưa check-in',
+  //       className: 'bg-yellow-100 text-yellow-700',
+  //       icon: Clock,
+  //     },
+  //     CANCELLED: {
+  //       label: 'Đã hủy',
+  //       className: 'bg-red-100 text-red-700',
+  //       icon: XCircle,
+  //     },
+  //   };
 
-    const config = statusConfig[status];
-    const Icon = config.icon;
-    return (
-      <span className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${config.className}`}>
-        <Icon size={14} />
-        {config.label}
-      </span>
-    );
-  };
+  //   const config = statusConfig[status];
+  //   const Icon = config.icon;
+  //   return (
+  //     <span className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${config.className}`}>
+  //       <Icon size={14} />
+  //       {config.label}
+  //     </span>
+  //   );
+  // };
 
   const handleSelectAll = () => {
     if (selectedAttendees.size === filteredAttendees.length) {
       setSelectedAttendees(new Set());
     } else {
-      setSelectedAttendees(new Set(filteredAttendees.map((a) => a.id)));
+      setSelectedAttendees(new Set(filteredAttendees.map((a) => a.ticketId)));
     }
   };
 
-  const handleSelectAttendee = (id: number) => {
+  const handleSelectAttendee = (id: string) => {
     const newSelected = new Set(selectedAttendees);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -216,20 +198,20 @@ const AttendeesManagementPage = () => {
   const exportToExcel = () => {
     // Mock export - Replace with actual Excel export logic
     const dataToExport = selectedAttendees.size > 0
-      ? attendees.filter((a) => selectedAttendees.has(a.id))
+      ? attendees.filter((a) => selectedAttendees.has(a.ticketId))
       : filteredAttendees;
 
     const csvContent = [
       ['Mã SV', 'Họ tên', 'Email', 'SĐT', 'Trạng thái', 'Thời gian đăng ký', 'Thời gian check-in', 'Ghế ngồi'],
       ...dataToExport.map((a) => [
-        a.studentId,
+        a.studentCode || '',
         a.fullName,
         a.email,
-        a.phone,
-        a.checkInStatus === 'CHECKED_IN' ? 'Đã tham dự' : a.checkInStatus === 'NOT_CHECKED_IN' ? 'Chưa tham dự' : 'Đã hủy',
-        new Date(a.registeredAt).toLocaleString('vi-VN'),
-        a.checkInTime ? new Date(a.checkInTime).toLocaleString('vi-VN') : '',
-        a.seat || '',
+        a.phoneNumber || '',
+        a.status === 'CHECKED_IN' ? 'Đã tham dự' : a.status === 'NOT_CHECKED_IN' ? 'Chưa tham dự' : 'Đã hủy',
+        a.bookingDate ? new Date(a.bookingDate).toLocaleString('vi-VN') : '',
+        a.checkinTime ? new Date(a.checkinTime).toLocaleString('vi-VN') : '',
+        a.seat?.label || '',
       ]),
     ]
       .map((row) => row.join(','))
@@ -244,7 +226,7 @@ const AttendeesManagementPage = () => {
 
   const sendEmailToSelected = () => {
     const selectedEmails = attendees
-      .filter((a) => selectedAttendees.has(a.id))
+      .filter((a) => selectedAttendees.has(a.ticketId))
       .map((a) => a.email);
     
     if (selectedEmails.length === 0) {
@@ -275,7 +257,7 @@ const AttendeesManagementPage = () => {
         </label>
         <select
           value={selectedEventId || ''}
-          onChange={(e) => setSelectedEventId(Number(e.target.value))}
+          onChange={(e) => setSelectedEventId(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
         >
           {events.length === 0 ? (
@@ -283,7 +265,7 @@ const AttendeesManagementPage = () => {
           ) : (
             events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.title} - {new Date(event.startDate).toLocaleDateString('vi-VN')}
+                {event.title} - {new Date(event.startTime).toLocaleDateString('vi-VN')}
               </option>
             ))
           )}
@@ -304,25 +286,25 @@ const AttendeesManagementPage = () => {
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Tổng đăng ký</div>
+        <div className="bg-orange-100 rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600 ">Tổng đăng ký</div>
           <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Đã check-in</div>
+        <div className="bg-green-100 rounded-xl shadow-sm border border-gray-200 p-4 ">
+          <div className="text-sm text-gray-600 ">Đã check-in</div>
           <div className="text-2xl font-bold text-green-600 mt-1">{stats.checkedIn}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-yellow-100 rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Chưa check-in</div>
           <div className="text-2xl font-bold text-yellow-600 mt-1">{stats.notCheckedIn}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-red-100 rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Đã hủy</div>
           <div className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-blue-100 rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Tỷ lệ tham dự</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.attendanceRate}%</div>
+          <div className="text-2xl font-bold text-blue-600 mt-1">{Math.round(stats.attendanceRate)}%</div>
         </div>
       </div>
 
@@ -417,26 +399,26 @@ const AttendeesManagementPage = () => {
                     className="w-4 h-4 text-[#F27125] border-gray-300 rounded focus:ring-[#F27125]"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Mã SV
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Họ tên
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Liên hệ
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Ghế
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {/* <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Trạng thái
+                </th> */}
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Đăng ký
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check-in
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Thời gian
                 </th>
               </tr>
             </thead>
@@ -450,17 +432,17 @@ const AttendeesManagementPage = () => {
                 </tr>
               ) : (
                 filteredAttendees.map((attendee) => (
-                  <tr key={attendee.id} className="hover:bg-gray-50">
+                  <tr key={attendee.ticketId} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedAttendees.has(attendee.id)}
-                        onChange={() => handleSelectAttendee(attendee.id)}
+                        checked={selectedAttendees.has(attendee.ticketId)}
+                        onChange={() => handleSelectAttendee(attendee.ticketId)}
                         className="w-4 h-4 text-[#F27125] border-gray-300 rounded focus:ring-[#F27125]"
                       />
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {attendee.studentId}
+                      {attendee.studentCode || '-'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -476,29 +458,34 @@ const AttendeesManagementPage = () => {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Mail size={14} />
+                          <a
+                          href={`mailto:${attendee.email}`}
+                          className="text-sm text-[#F27125] hover:text-[#d95c0b] hover:underline"
+                          >
                           {attendee.email}
+                          </a>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Phone size={14} />
-                          {attendee.phone}
+                          {attendee.phoneNumber || '-'}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {attendee.seat || '-'}
+                      {attendee.seat?.label || '-'} {attendee.seat?.row ? `(${attendee.seat.row})` : ''}
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(attendee.checkInStatus)}</td>
+                    <td className="px-6 py-4">{(attendee.status)}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(attendee.registeredAt).toLocaleDateString('vi-VN')}
+                      {attendee.bookingDate ? new Date(attendee.bookingDate).toLocaleDateString('vi-VN') : '-'}
                       <br />
-                      {new Date(attendee.registeredAt).toLocaleTimeString('vi-VN', {
+                      {attendee.bookingDate ? new Date(attendee.bookingDate).toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
                         minute: '2-digit',
-                      })}
+                      }) : ''}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {attendee.checkInTime
-                        ? new Date(attendee.checkInTime).toLocaleString('vi-VN', {
+                      {attendee.checkinTime
+                        ? new Date(attendee.checkinTime).toLocaleString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
                             day: '2-digit',

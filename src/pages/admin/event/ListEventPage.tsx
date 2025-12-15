@@ -24,10 +24,11 @@ const ListEventPage = () => {
   const fetchEvents = async () => {
     setIsLoading(true);
     try {
-      const response = await eventService.getAllEvents({ status: "PUBLISHED" });
-      if(response){
-        setEvents(response.data.data);
+      const response: any = await eventService.getAllEvents({ status: "PUBLISHED" });
+      if(response && response.data){
+        setEvents(response.data.data || []);
         console.log("response loaded", response);
+        console.log(response.data.meta?.total);
       }
     } catch (error: any) {
       console.error("Error fetching events:", error);
@@ -150,7 +151,7 @@ const ListEventPage = () => {
     };
 
     return (
-      <span className={`px-3 py-1 rounded-lg text-sm font-medium ${statusConfig[status] || "bg-gray-100 text-gray-700"}`}>
+      <span className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${statusConfig[status] || "bg-gray-100 text-gray-700"}`}>
         {statusLabel[status] || status}
       </span>
     );
@@ -334,7 +335,7 @@ const ListEventPage = () => {
                 <span className="font-semibold min-w-[120px]">Trạng thái:</span>
                 {getStatusBadge(selectedEvent.status)}
               </div>
-              {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
+              {/* {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
                 <div className="flex gap-2 items-start">
                   <span className="font-semibold min-w-[120px]">URL Ảnh:</span>
                   <a 
@@ -346,7 +347,7 @@ const ListEventPage = () => {
                     {selectedEvent.bannerUrl || selectedEvent.imageUrl}
                   </a>
                 </div>
-              )}
+              )} */}
               {selectedEvent.description && (
                 <div className="flex gap-2 items-start">
                   <span className="font-semibold min-w-[120px]">Mô tả:</span>

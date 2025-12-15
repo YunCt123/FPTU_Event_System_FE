@@ -26,3 +26,43 @@ export interface UpdateAttendeeRequest {
   seat?: string;
   notes?: string;
 }
+
+export interface AttendanceReponse{
+    summary: Sumary;
+    data: Data[];
+    meta: meta; 
+}
+
+export interface Sumary{
+    totalRegistered: number;
+    checkedIn: number;
+    cancelled: number;
+    attendanceRate: number;
+}
+
+export interface Data{
+    ticketId: string,
+    qrCode: string,
+    status: string,
+    bookingDate?: string,
+    checkinTime?: string ,
+    fullName: string,
+    email: string,
+    phoneNumber?: string,
+    studentCode?: string,
+    seat?: Seat
+}
+
+export interface Seat{
+    label: string,
+    row: string,
+    col: number,
+    type: string
+}
+
+export interface meta{
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
