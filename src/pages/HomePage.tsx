@@ -4,7 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 
 const HomePage: React.FC = () => {
-  const [stats, setStats] = useState({
+  const [stats, _setStats] = useState({
     totalEvents: 40,
     upcomingEvents: 20,
     totalParticipants: 420
@@ -31,7 +31,7 @@ const HomePage: React.FC = () => {
           className="h-full"
         >
           <SwiperSlide>
-            <div className="relative h-full bg-gradient-to-r from-slate-900 to-slate-700">
+            <div className="relative h-full bg-linear-to-r from-slate-900 to-slate-700">
               <div 
                 className="absolute inset-0 bg-cover bg-center opacity-40"
                 style={{
@@ -55,7 +55,7 @@ const HomePage: React.FC = () => {
           </SwiperSlide>
 
           <SwiperSlide>
-            <div className="relative h-full bg-gradient-to-r from-blue-900 to-indigo-700">
+            <div className="relative h-full bg-linear-to-r from-blue-900 to-indigo-700">
               <div 
                 className="absolute inset-0 bg-cover bg-center opacity-40"
                 style={{
@@ -79,7 +79,7 @@ const HomePage: React.FC = () => {
           </SwiperSlide>
 
           <SwiperSlide>
-            <div className="relative h-full bg-gradient-to-r from-purple-900 to-pink-700">
+            <div className="relative h-full bg-linear-to-r from-purple-900 to-pink-700">
               <div 
                 className="absolute inset-0 bg-cover bg-center opacity-40"
                 style={{
@@ -234,7 +234,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+      <section className="py-20 bg-linear-to-r from-orange-500 to-orange-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Sẵn Sàng Tổ Chức Sự Kiện Của Bạn?

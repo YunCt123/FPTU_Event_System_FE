@@ -365,7 +365,7 @@ const EventManagementPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white">
+      <div className="bg-linear-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">Quản lý Sự kiện</h1>
         <p className="text-orange-100">Tạo, chỉnh sửa và quản lý vòng đời sự kiện</p>
       </div>
@@ -406,7 +406,7 @@ const EventManagementPage = () => {
           </select>
           <button
             onClick={handleCreateEvent}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
+            className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
           >
             <Plus size={20} />
             Tạo sự kiện mới
@@ -427,7 +427,7 @@ const EventManagementPage = () => {
             <p className="text-gray-600 mb-6">Bắt đầu bằng cách tạo sự kiện đầu tiên</p>
             <button
               onClick={handleCreateEvent}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
             >
               <Plus size={20} />
               Tạo sự kiện mới

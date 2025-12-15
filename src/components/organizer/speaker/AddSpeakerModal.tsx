@@ -156,7 +156,7 @@ const AddSpeakerModal = ({ onClose, onSuccess }: AddSpeakerModalProps) => {
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header - Rounded top */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 rounded-t-2xl bg-gradient-to-r from-[#F27125] to-[#d65d1a]">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 rounded-t-2xl bg-linear-to-r from-[#F27125] to-[#d65d1a]">
           <h2 className="text-2xl font-bold text-white">Thêm Speaker Mới</h2>
           <button
             onClick={onClose}
