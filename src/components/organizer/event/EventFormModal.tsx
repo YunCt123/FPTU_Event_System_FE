@@ -9,13 +9,18 @@ import {
   Image as ImageIcon,
   Tag,
   UserPlus,
-  AlertCircle,
 } from "lucide-react";
 import type { Event, CreateEventRequest, UpdateEventRequest } from "../../../types/Event";
 import type { User } from "../../../types/User";
 import type { Venue } from "../../../types/Venue";
 import { toast } from "react-toastify";
-import { organizerService, venueService, eventService } from "../../../services"; // ✅ THÊM eventService
+import { organizerService, venueService, eventService } from "../../../services"; 
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { registerLocale } from 'react-datepicker';
+import vi from 'date-fns/locale/vi';
+
+registerLocale('vi', vi);
 
 interface EventFormModalProps {
   event: Event | null;
@@ -28,8 +33,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [staffList, setStaffList] = useState<User[]>([]);
   const [selectedStaffIds, setSelectedStaffIds] = useState<number[]>([]);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
-
-  // ✅ THÊM STATE CHO ORGANIZER VÀ VENUE
   const [organizerInfo, setOrganizerInfo] = useState<{
     id: number;
     name: string;
@@ -38,7 +41,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [venueList, setVenueList] = useState<Venue[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
   const [isLoadingOrganizer, setIsLoadingOrganizer] = useState(false);
-
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -52,32 +54,28 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     bannerUrl: "",
     imageUrl: "",
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ✅ FETCH ORGANIZER INFO VÀ STAFF KHI MOUNT
+  //FETCH ORGANIZER INFO VÀ STAFF KHI MOUNT
   useEffect(() => {
     fetchOrganizerInfo();
     fetchStaffList();
   }, []);
 
-  // ✅ FETCH VENUES KHI CÓ ORGANIZER INFO
+  //FETCH VENUES KHI CÓ ORGANIZER INFO
   useEffect(() => {
     if (organizerInfo?.campusId) {
       fetchVenuesByCampus(organizerInfo.campusId);
     }
   }, [organizerInfo]);
 
-  // ✅ THÊM STATE ĐỂ LƯU DỮ LIỆU GỐC
   const [originalData, setOriginalData] = useState<CreateEventRequest | null>(null);
 
-  // ✅ PRE-FILL FORM DATA KHI EDIT
   useEffect(() => {
     const fetchInitialData = async () => {
       if (event) {
         console.log('📝 Editing event:', event);
-        
-        // ✅ FORMAT DATES TỪ ISO STRING SANG INPUT DATETIME-LOCAL
+
         const formatToDatetimeLocal = (isoString: string): string => {
           if (!isoString) return '';
           const date = new Date(isoString);
@@ -90,7 +88,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           return `${year}-${month}-${day}T${hours}:${minutes}`;
         };
 
-        // ✅ NẾU CẦN LẤY THÊM CHI TIẾT TỪ API
         try {
           const response = await eventService.getEventById(String(event.id));
           console.log('📡 Full event details from API:', response.data);
@@ -103,7 +100,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           console.log('endTimeRegistration:', fullEvent.endTimeRegistration);
           console.log('Event prop registrationDeadline:', event.registrationDeadline);
 
-          // ✅ LƯU STAFF IDs ĐÃ CHỌN
           let staffIds: number[] = [];
           if (fullEvent.eventStaffs && Array.isArray(fullEvent.eventStaffs)) {
             staffIds = fullEvent.eventStaffs.map((staff: any) => staff.userId);
@@ -111,7 +107,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             console.log('👥 Pre-selected staff IDs:', staffIds);
           }
 
-          // ✅ XÁC ĐỊNH ĐÚNG FIELD endTimeRegistration
           let endTimeRegisterValue = '';
           
           // Priority 1: Lấy từ fullEvent.endTimeRegistration
@@ -129,17 +124,17 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             const startDate = new Date(fullEvent.startTimeRegistration);
             startDate.setDate(startDate.getDate() + 1); // Thêm 1 ngày
             endTimeRegisterValue = formatToDatetimeLocal(startDate.toISOString());
-            console.log('⚠️ Calculated endTimeRegister from startTimeRegistration + 1 day');
+            console.log('Calculated endTimeRegister from startTimeRegistration + 1 day');
           }
           // Priority 4: Fallback về event.startDate
           else if (event.startDate) {
             endTimeRegisterValue = formatToDatetimeLocal(event.startDate);
-            console.log('⚠️ Fallback endTimeRegister to event.startDate');
+            console.log('Fallback endTimeRegister to event.startDate');
           }
 
-          console.log('📅 Final endTimeRegister value:', endTimeRegisterValue);
+          console.log('Final endTimeRegister value:', endTimeRegisterValue);
 
-          // ✅ SET FORM DATA VỚI DỮ LIỆU ĐẦY ĐỦ TỪ API
+          //SET FORM DATA VỚI DỮ LIỆU ĐẦY ĐỦ TỪ API
           const formattedData = {
             title: fullEvent.title || '',
             description: fullEvent.description || '',
@@ -152,18 +147,16 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
               fullEvent.startTimeRegister || 
               event.registrationDeadline
             ),
-            endTimeRegister: endTimeRegisterValue, // ✅ FIX: Dùng giá trị đã xác định
+            endTimeRegister: endTimeRegisterValue,
             maxParticipants: fullEvent.maxCapacity || event.maxParticipants || 0,
             venueId: String(fullEvent.venueId || event.venueId || ''),
             imageUrl: '',
           };
 
-          console.log('✅ Formatted form data:', formattedData);
-          console.log('✅ endTimeRegister in formData:', formattedData.endTimeRegister);
+          console.log('Formatted form data:', formattedData);
+          console.log('endTimeRegister in formData:', formattedData.endTimeRegister);
 
           setFormData(formattedData);
-
-          // ✅ LƯU ORIGINAL DATA
           setOriginalData({
             title: fullEvent.title,
             description: fullEvent.description,
@@ -187,8 +180,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
         } catch (error) {
           console.error('Error fetching full event details:', error);
-          
-          // ✅ FALLBACK: DÙNG DỮ LIỆU TỪ PROPS - FIX ĐỂ CÓ endTimeRegister
           const fallbackData = {
             title: event.title || '',
             description: event.description || '',
@@ -197,20 +188,19 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             startDate: formatToDatetimeLocal(event.startDate),
             endDate: formatToDatetimeLocal(event.endDate),
             registrationDeadline: formatToDatetimeLocal(event.registrationDeadline),
-            endTimeRegister: formatToDatetimeLocal(event.startDate), // ✅ FIX: Fallback về startDate thay vì để trống
+            endTimeRegister: formatToDatetimeLocal(event.startDate),
             maxParticipants: event.maxParticipants || 0,
             venueId: String(event.venueId || ''),
             imageUrl: '',
           };
           
-          console.log('⚠️ Using fallback data with endTimeRegister:', fallbackData.endTimeRegister);
+          console.log('Using fallback data with endTimeRegister:', fallbackData.endTimeRegister);
           setFormData(fallbackData);
         }
 
-        console.log('✅ Form pre-filled with existing data');
+        console.log('Form pre-filled with existing data');
       } else {
         console.log('Creating new event - empty form');
-        // ✅ RESET FORM CHO TẠO MỚI
         setFormData({
           title: '',
           description: '',
@@ -240,17 +230,17 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       const response = await organizerService.getAllOrganizers();
       
       console.log('Full organizer response:', response);
-
+      const responseData = response.data as any;
       let organizersArray: any[] = [];
 
-      if (response.data?.success && response.data?.data && Array.isArray(response.data.data)) {
-        organizersArray = response.data.data;
+      if (responseData?.success && responseData?.data && Array.isArray(responseData.data)) {
+        organizersArray = responseData.data;
         console.log('Case 1: Found organizers in response.data.data (with wrapper)');
-      } else if (Array.isArray(response.data)) {
-        organizersArray = response.data;
+      } else if (Array.isArray(responseData)) {
+        organizersArray = responseData;
         console.log('Case 2: Found organizers in response.data (direct array)');
-      } else if (response.data?.data && Array.isArray(response.data.data)) {
-        organizersArray = response.data.data;
+      } else if (responseData?.data && Array.isArray(responseData.data)) {
+        organizersArray = responseData.data;
         console.log('Case 3: Found organizers in response.data.data (no success flag)');
       }
 
@@ -277,16 +267,9 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       });
       
       console.log('Organizer info set successfully');
-      // toast.success(`Đã tải thông tin: ${organizer.name}`);
       
     } catch (error: any) {
-      // if (error.response?.status === 404) {
-      //   toast.error('API organizers không tồn tại');
-      // } else if (error.response?.status === 401) {
-      //   toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-      // } else {
-      //   toast.error(error.message || 'Không thể tải thông tin organizer');
-      // }
+      console.error('Error fetching organizer:', error);
     } finally {
       setIsLoadingOrganizer(false);
     }
@@ -294,15 +277,14 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const fetchVenuesByCampus = async (campusId: number) => {
     setIsLoadingVenues(true);
     try {
-      console.log('🏢 Fetching venues for campus ID:', campusId);
+      console.log('Fetching venues for campus ID:', campusId);
       
       const response = await venueService.getAllVenues();
       
-      console.log('📍 Full venues response:', response);
+      console.log('Full venues response:', response);
 
       let allVenues: Venue[] = [];
 
-      // ✅ FIX: Cast response.data to any để tránh lỗi TypeScript
       const responseData = response.data as any;
 
       if (responseData?.success && responseData?.data && Array.isArray(responseData.data)) {
@@ -339,7 +321,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         return matchesCampus && isActive;
       });
 
-      console.log('✅ Filtered venues:', filteredVenues);
+      console.log('Filtered venues:', filteredVenues);
       
       setVenueList(filteredVenues);
 
@@ -354,7 +336,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const fetchStaffList = async () => {
     setIsLoadingStaff(true);
     try {
-      console.log('🔍 Fetching staff list...');
+      console.log('Fetching staff list...');
       
       const response = await organizerService.getStaffEvent({
         isActive: true,
@@ -362,7 +344,6 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       
       console.log('Full staff response:', response);
 
-      // ✅ FIX: Cast to any
       const responseData = response.data as any;
       let staffData: User[] = [];
       
@@ -488,7 +469,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     console.log("Is editing:", !!event);
 
     if (!validateForm()) {
-      console.log("❌ Validation failed");
+      console.log("Validation failed");
       toast.error("Vui lòng kiểm tra lại thông tin");
       return;
     }
@@ -521,18 +502,16 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
       let response;
       
       if (event) {
-        // ✅ UPDATE MODE - CHỈ GỬI FIELDS ĐƯỢC PHÉP
         console.log("🔄 UPDATE MODE");
         
         const eventIdString = String(event.id);
         
         if (!eventIdString || eventIdString.trim() === '') {
-          console.error("❌ Invalid event ID");
+          console.error("Invalid event ID");
           toast.error("ID sự kiện không hợp lệ");
           return;
         }
 
-        // ✅ CHỈ GỬI CÁC FIELD ĐƯỢC PHÉP KHI UPDATE
         const updateData: UpdateEventRequest = {};
 
         // SO SÁNH VÀ CHỈ GỬI NẾU THAY ĐỔI
@@ -587,8 +566,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             updateData.venueId = newVenueId;
           }
 
-          // ⚠️ KHÔNG GỬI hostId, staffIds, speakers KHI UPDATE
-          console.log("⚠️ Skipping hostId, staffIds, speakers for UPDATE");
+          console.log("Skipping hostId, staffIds, speakers for UPDATE");
         } else {
           // KHÔNG CÓ ORIGINAL DATA - GỬI TẤT CẢ TRỪ hostId, staffIds, speakers
           updateData.title = formData.title.trim();
@@ -605,10 +583,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           updateData.organizerId = organizerInfo.id;
         }
 
-        console.log("📤 Sending UPDATE data (without hostId/staffIds/speakers):", updateData);
+        console.log("Sending UPDATE data (without hostId/staffIds/speakers):", updateData);
 
         if (Object.keys(updateData).length === 0) {
-          console.log("ℹ️ No changes detected");
+          console.log("ℹNo changes detected");
           toast.info("Không có thay đổi nào để lưu");
           onClose();
           return;
@@ -619,11 +597,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           data: updateData,
         });
         
-        console.log("✅ Update response:", response);
+        console.log("Update response:", response);
         
       } else {
-        // ✅ CREATE MODE - GỬI ĐẦY ĐỦ
-        console.log("➕ CREATE MODE - sending all fields");
+        console.log("CREATE MODE - sending all fields");
         
         const requestData: CreateEventRequest = {
           title: formData.title.trim(),
@@ -643,17 +620,16 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           speakers: [],
         };
 
-        console.log("📤 Sending CREATE data:", requestData);
+        console.log("Sending CREATE data:", requestData);
         
         response = await eventService.postEvent(requestData);
-        console.log("✅ Create response:", response);
+        console.log("Create response:", response);
       }
 
-      // ✅ XỬ LÝ SUCCESS RESPONSE
+      // XỬ LÝ SUCCESS RESPONSE
       if (response.status === 201 || response.status === 200) {
         let apiEvent: any = null;
 
-        // ✅ FIX: Cast to any
         const responseData = response.data as any;
 
         if (responseData?.data) {
@@ -687,7 +663,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           isPublished: false,
         };
 
-        console.log("✅ Event saved successfully:", savedEvent);
+        console.log("Event saved successfully:", savedEvent);
         
         if (event) {
           toast.success(`Cập nhật sự kiện "${savedEvent.title}" thành công!`, {
@@ -905,16 +881,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Calendar size={16} className="text-orange-500" />
                     Thời gian bắt đầu <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="startDate"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.startDate ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.startDate ? new Date(formData.startDate) : null}
+                    onChange={(date) => setFormData({ ...formData, startDate: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.startDate && (
                     <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>
@@ -929,16 +907,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Calendar size={16} className="text-orange-500" />
                     Thời gian kết thúc <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="endDate"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.endDate ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.endDate ? new Date(formData.endDate) : null}
+                    onChange={(date) => setFormData({ ...formData, endDate: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.endDate && (
                     <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>
@@ -956,16 +936,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Clock size={16} className="text-orange-500" />
                     Thời gian mở đăng ký <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="registrationDeadline"
-                    name="registrationDeadline"
-                    value={formData.registrationDeadline}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.registrationDeadline ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.registrationDeadline ? new Date(formData.registrationDeadline) : null}
+                    onChange={(date) => setFormData({ ...formData, registrationDeadline: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.registrationDeadline && (
                     <p className="text-red-500 text-xs mt-1">{errors.registrationDeadline}</p>
@@ -980,16 +962,18 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     <Clock size={16} className="text-orange-500" />
                     Thời gian đóng đăng ký <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    id="endTimeRegister"
-                    name="endTimeRegister"
-                    value={formData.endTimeRegister}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.endTimeRegister ? "border-red-500" : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                  <DatePicker
+                    selected={formData.endTimeRegister ? new Date(formData.endTimeRegister) : null}
+                    onChange={(date) => setFormData({ ...formData, endTimeRegister: date?.toISOString() || '' })}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    locale="vi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
+                    wrapperClassName="w-full"
                   />
                   {errors.endTimeRegister && (
                     <p className="text-red-500 text-xs mt-1">{errors.endTimeRegister}</p>

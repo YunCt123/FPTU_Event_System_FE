@@ -60,16 +60,14 @@ const userService = {
 
   async getAttendUser(
     eventId: string,
-    param?: {
+    param: {
       page?: number;
       limit?: number;
       search?: string;
     }
   ): Promise<AxiosResponse<ApiResponse<AttendanceReponse>>> {
     return await apiUtils.get<ApiResponse<AttendanceReponse>>(
-      `${TICKET_URL}events/${eventId}/attendees`,
-       param 
-    );
+      `${TICKET_URL}events/${eventId}/attendees`,param);
   },
 };
 

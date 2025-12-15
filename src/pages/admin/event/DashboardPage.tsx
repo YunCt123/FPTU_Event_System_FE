@@ -163,35 +163,70 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Giống OrganizerDashboardPage */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatsCard 
-          label="Tổng số sự kiện" 
-          value={responseData?.meta?.total || 0}
-          icon={Calendar}
-          color="blue"
-        />
-        
-        <StatsCard 
-          label="Đang xử lý" 
-          value={responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
-          icon={Clock}
-          color="yellow"
-        />
-        
-        <StatsCard 
-          label="Đã duyệt" 
-          value={responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
-          icon={CheckCircle}
-          color="green"
-        />
-        
-        <StatsCard 
-          label="Đã từ chối" 
-          value={responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
-          icon={XCircle}
-          color="red"
-        />
+        {/* Card 1: Tổng số sự kiện - Màu xanh dương */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Tổng số sự kiện</p>
+              <p className="text-5xl font-bold text-white">{responseData?.meta?.total || 0}</p>
+            </div>
+            <div className="bg-blue-100 p-4 rounded-xl shadow-md">
+              <Calendar className="text-blue-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Đang xử lý - Màu vàng */}
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đang xử lý</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "PENDING").length || 0}
+              </p>
+            </div>
+            <div className="bg-yellow-100 p-4 rounded-xl shadow-md">
+              <Clock className="text-yellow-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Đã duyệt - Màu xanh lá */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đã duyệt</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "PUBLISHED").length || 0}
+              </p>
+              <p className="text-sm text-white/80 mt-2 font-medium">
+                Tỷ lệ: {responseData?.meta?.total > 0 
+                  ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
+                  : 0}%
+              </p>
+            </div>
+            <div className="bg-green-100 p-4 rounded-xl shadow-md">
+              <CheckCircle className="text-green-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Đã từ chối - Màu đỏ */}
+        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white/90 mb-2">Đã từ chối</p>
+              <p className="text-5xl font-bold text-white">
+                {responseData?.data?.filter((e: any) => e.status === "CANCELED").length || 0}
+              </p>
+            </div>
+            <div className="bg-red-100 p-4 rounded-xl shadow-md">
+              <XCircle className="text-red-600" size={32} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts Grid - 2 Columns */}
@@ -245,7 +280,6 @@ const DashboardPage = () => {
                           setSelectedYear(year);
                           setYearInput(year.toString());
                         } else {
-                          // Reset về giá trị hiện tại
                           setYearInput(selectedYear.toString());
                         }
                       }}
@@ -259,7 +293,6 @@ const DashboardPage = () => {
                           }
                           e.currentTarget.blur();
                         }
-                        // Cho phép Escape để cancel
                         if (e.key === 'Escape') {
                           setYearInput(selectedYear.toString());
                           e.currentTarget.blur();
@@ -363,48 +396,6 @@ const DashboardPage = () => {
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Quick Stats Footer */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Tổng người tham gia</h4>
-            <Users size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">
-            {responseData?.data?.reduce((sum: number, e: any) => sum + (e.checkinCount || 0), 0) || 0}
-          </p>
-          <p className="text-xs opacity-75 mt-2">Tổng check-in tham gia</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Tỷ lệ duyệt</h4>
-            <CheckCircle size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">
-            {responseData?.meta?.total > 0 
-              ? ((responseData.data.filter((e: any) => e.status === "PUBLISHED").length / responseData.meta.total) * 100).toFixed(1)
-              : 0}%
-          </p>
-          <p className="text-xs opacity-75 mt-2">Sự kiện được duyệt</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-medium opacity-90">Sự kiện tháng này</h4>
-            <TrendingUp size={24} className="opacity-80" />
-          </div>
-          <p className="text-3xl font-bold">
-            {responseData?.data?.filter((e: any) => {
-              const eventDate = new Date(e.startTime);
-              const now = new Date();
-              return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear();
-            }).length || 0}
-          </p>
-          <p className="text-xs opacity-75 mt-2">Diễn ra trong tháng</p>
         </div>
       </div>
     </div>
