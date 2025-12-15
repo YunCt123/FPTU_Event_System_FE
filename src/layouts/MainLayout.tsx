@@ -6,7 +6,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-6 w-full">
+      <main className="flex-1 mx-auto w-full">
         {children}
       </main>
       <Footer />

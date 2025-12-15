@@ -4,10 +4,7 @@ import {
   X,
   Search,
   LogOut,
-  Ticket,
-  Settings,
   ChevronDown,
-  University,
   UserRound,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +49,7 @@ const Header = () => {
 
   const navItems = [
     { label: "Trang chủ", href: "/home" },
-    { label: "Sự kiện", href: "/events" },
+    { label: "Về chúng tôi", href: "/about" },
     ...(UserLoggedIn?.roleName === "event_organizer"
       ? [{ label: "Dashboard", href: "/organizer/dashboard" }]
       : []),
@@ -96,17 +93,7 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center bg-gray-100 rounded-full px-3 py-1.5 focus-within:ring-2 focus-within:ring-[#F27125] transition-all">
-              <Search size={18} className="text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm sự kiện..."
-                className="bg-transparent border-none focus:outline-none text-sm ml-2 w-32 placeholder-gray-400 text-gray-700"
-              />
-            </div>
-
             <NotificationDropdown />
-
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -143,45 +130,6 @@ const Header = () => {
                   >
                     <UserRound size={16} /> Hồ sơ cá nhân
                   </a>
-
-                  {/* <a
-                      href="/admin/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <University size={16} /> Quản lý địa điểm
-                    </a>
-
-                    <a
-                      href="/organizer/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Settings size={16} /> Quản lý chỗ ngồi
-                    </a> */}
-
-                  {/* {user.role === "student" && (
-                    <a
-                      href="/my-tickets"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Ticket size={16} /> Vé đã đặt
-                    </a>
-                  )} */}
-                  {/* {userLoggedIn?.roleName === "event_organizer" && (
-                    <a
-                      href="/organizer/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Settings size={16} /> Quản lý chỗ ngồi
-                    </a>
-                  )}
-                  {userLoggedIn?.roleName === "admin" && (
-                    <a
-                      href="/admin/venues"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#F27125]"
-                    >
-                      <Settings size={16} /> Quản lý địa điểm
-                    </a>
-                  )} */}
 
                   <div className="border-t border-gray-100 mt-1 pt-1">
                     <button

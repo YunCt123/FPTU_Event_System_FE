@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Calendar,
   Building2,
-  MapPin,
   Users,
   ChevronDown,
   ChevronRight,
@@ -13,6 +12,8 @@ import {
   UserStar,
   User,
   LogOut,
+  Award,
+  AlertTriangle,
 } from 'lucide-react';
 
 import Logout from '../auth/Logout';
@@ -107,6 +108,12 @@ const SideBar = ({ userRole }: SideBarProps) => {
         },
       ],
     },
+    {
+      id: 'incidents',
+      label: 'Quản lý Sự cố',
+      icon: <AlertTriangle size={20} />,
+      path: '/admin/incidents',
+    },
   ];
 
   // Organizer menu items
@@ -149,9 +156,15 @@ const SideBar = ({ userRole }: SideBarProps) => {
     },
     {
       id: 'reports',
-      label: 'Báo cáo',
-      icon: <MapPin size={20} />,
+      label: 'Đánh giá',
+      icon: <Award size={20} />,
       path: '/organizer/reports',
+    },
+    {
+      id: 'incidents',
+      label: 'Quản lý Sự cố',
+      icon: <AlertTriangle size={20} />,
+      path: '/organizer/incidents',
     },
   ];
 

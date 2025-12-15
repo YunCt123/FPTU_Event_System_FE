@@ -6,7 +6,6 @@ import OrganizerRoute from "./OrganizerRoute";
 import { Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import HomePage from "../pages/HomePage";
-import EventsPage from "../pages/EventsPage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import NotificationsPage from "../pages/NotificationsPage";
@@ -30,8 +29,9 @@ import EditEventPage from "../pages/admin/event/EditEventPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import UserList from "../pages/admin/user/UserList";
 import AccountPage from "../pages/AccountPage";
-import type { Speaker } from "lucide-react";
 import SpeakerManagementPage from "../pages/organizer/speaker/SpeakerManagementPage";
+import AdminIncidentsPage from "../pages/admin/incident/AdminIncidentsPage";
+import OrganizerIncidentsPage from "../pages/organizer/incident/OrganizerIncidentsPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -53,7 +53,6 @@ const MainRoute: React.FC = () => {
         {/* User area - protected and wrapped by MainLayout */}
         <Route element={<UserRoute />}>
           <Route path="/home" element={<HomePage />} />
-          <Route path="/events" element={<EventsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/profile" element={<AccountPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
@@ -82,6 +81,7 @@ const MainRoute: React.FC = () => {
             <Route path="/admin/organizers" element={<OrganizerList />} />
             <Route path="/admin/users" element={<UserList />} />
             <Route path="/admin/users/pending" element={<div>User Detail Page</div>} />
+            <Route path="/admin/incidents" element={<AdminIncidentsPage />} />
           </Route>
         </Route>
 
@@ -98,6 +98,7 @@ const MainRoute: React.FC = () => {
             <Route path="/organizer/reports" element={<EventReportsPage />} />
             <Route path="/organizer/speakers" element={<SpeakerManagementPage />} />
             <Route path="/organizer/organizers" element={<OrganizerList />} />
+            <Route path="/organizer/incidents" element={<OrganizerIncidentsPage />} />
           </Route>
         </Route>
 
