@@ -59,7 +59,7 @@ const SpeakerDetailModal = ({ speakerId, onClose }: SpeakerDetailModalProps) => 
     <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#F27125] to-[#d65d1a] text-white px-6 py-4 flex justify-between items-center">
+        <div className="bg-linear-to-r from-[#F27125] to-[#d65d1a] text-white px-6 py-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">Chi tiết Speaker</h2>
           <button
             onClick={onClose}
@@ -82,7 +82,7 @@ const SpeakerDetailModal = ({ speakerId, onClose }: SpeakerDetailModalProps) => 
               <div className="bg-gray-50 rounded-lg p-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Avatar */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-0">
                     {speaker.avatar ? (
                       <img
                         src={speaker.avatar}
@@ -135,7 +135,7 @@ const SpeakerDetailModal = ({ speakerId, onClose }: SpeakerDetailModalProps) => 
                 {/* Bio */}
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <div className="flex items-start gap-2">
-                    <FileText size={18} className="text-[#F27125] mt-1 flex-shrink-0" />
+                    <FileText size={18} className="text-[#F27125] mt-1 flex-0" />
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-2">Tiểu sử</h4>
                       <p className="text-gray-700 leading-relaxed">{speaker.bio}</p>

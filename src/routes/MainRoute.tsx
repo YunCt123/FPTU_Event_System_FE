@@ -30,6 +30,8 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import UserList from "../pages/admin/user/UserList";
 import AccountPage from "../pages/AccountPage";
 import SpeakerManagementPage from "../pages/organizer/speaker/SpeakerManagementPage";
+import AdminIncidentsPage from "../pages/admin/incident/AdminIncidentsPage";
+import OrganizerIncidentsPage from "../pages/organizer/incident/OrganizerIncidentsPage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -79,6 +81,7 @@ const MainRoute: React.FC = () => {
             <Route path="/admin/organizers" element={<OrganizerList />} />
             <Route path="/admin/users" element={<UserList />} />
             <Route path="/admin/users/pending" element={<div>User Detail Page</div>} />
+            <Route path="/admin/incidents" element={<AdminIncidentsPage />} />
           </Route>
         </Route>
 
@@ -94,6 +97,7 @@ const MainRoute: React.FC = () => {
             <Route path="/organizer/staff" element={<StaffManagementPage />} />
             <Route path="/organizer/reports" element={<EventReportsPage />} />
             <Route path="/organizer/speakers" element={<SpeakerManagementPage />} />
+            <Route path="/organizer/incidents" element={<OrganizerIncidentsPage />} />
           </Route>
         </Route>
 
