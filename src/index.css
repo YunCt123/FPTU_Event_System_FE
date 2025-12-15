@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Swiper styles */
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+@import 'swiper/css/navigation';
+@import 'swiper/css/effect-fade';
+
 @theme {
   --color-fpt-orange: #F36F21;
   --color-fpt-blue: #004070;
