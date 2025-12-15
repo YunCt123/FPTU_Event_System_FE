@@ -23,12 +23,17 @@ const OrganizerRequestsTab = () => {
   const [meta, setMeta] = useState<OrganizerRequestMeta | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<OrganizerRequestStatus | "">("");
+  const [statusFilter, setStatusFilter] = useState<OrganizerRequestStatus | "">(
+    ""
+  );
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<OrganizerRequestItem | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<OrganizerRequestItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [reviewAction, setReviewAction] = useState<"APPROVED" | "REJECTED">("APPROVED");
+  const [reviewAction, setReviewAction] = useState<"APPROVED" | "REJECTED">(
+    "APPROVED"
+  );
   const [rejectReason, setRejectReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,7 +57,9 @@ const OrganizerRequestsTab = () => {
       }
     } catch (error: any) {
       console.error("Error fetching organizer requests:", error);
-      toast.error(error.response?.data?.message || "Không thể tải danh sách yêu cầu");
+      toast.error(
+        error.response?.data?.message || "Không thể tải danh sách yêu cầu"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +70,10 @@ const OrganizerRequestsTab = () => {
     setIsDetailModalOpen(true);
   };
 
-  const handleOpenReviewModal = (request: OrganizerRequestItem, action: "APPROVED" | "REJECTED") => {
+  const handleOpenReviewModal = (
+    request: OrganizerRequestItem,
+    action: "APPROVED" | "REJECTED"
+  ) => {
     setSelectedRequest(request);
     setReviewAction(action);
     setRejectReason("");
@@ -221,7 +231,10 @@ const OrganizerRequestsTab = () => {
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-[#F27125] border-t-transparent rounded-full animate-spin"></div>
                       <span>Đang tải...</span>
@@ -230,14 +243,22 @@ const OrganizerRequestsTab = () => {
                 </tr>
               ) : filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Không có yêu cầu nào
                   </td>
                 </tr>
               ) : (
                 filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{request.id}</td>
+                  <tr
+                    key={request.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {request.id}
+                    </td>
                     <td className="px-6 py-4">
                       <img
                         src={request.logoUrl}
@@ -246,14 +267,20 @@ const OrganizerRequestsTab = () => {
                       />
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{request.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">{request.contactEmail}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {request.name}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {request.contactEmail}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
                         {request.user.firstName} {request.user.lastName}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">{request.user.email}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {request.user.email}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {request.campus.name}
@@ -261,7 +288,9 @@ const OrganizerRequestsTab = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {formatDate(request.createdAt)}
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(request.status)}</td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(request.status)}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -274,14 +303,18 @@ const OrganizerRequestsTab = () => {
                         {request.status === "PENDING" && (
                           <>
                             <button
-                              onClick={() => handleOpenReviewModal(request, "APPROVED")}
+                              onClick={() =>
+                                handleOpenReviewModal(request, "APPROVED")
+                              }
                               className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                               title="Duyệt"
                             >
                               <CheckCircle size={18} />
                             </button>
                             <button
-                              onClick={() => handleOpenReviewModal(request, "REJECTED")}
+                              onClick={() =>
+                                handleOpenReviewModal(request, "REJECTED")
+                              }
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Từ chối"
                             >
@@ -304,7 +337,8 @@ const OrganizerRequestsTab = () => {
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
             Hiển thị {(currentPage - 1) * limit + 1} -{" "}
-            {Math.min(currentPage * limit, meta.total)} trong tổng số {meta.total} yêu cầu
+            {Math.min(currentPage * limit, meta.total)} trong tổng số{" "}
+            {meta.total} yêu cầu
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -318,7 +352,9 @@ const OrganizerRequestsTab = () => {
               Trang {currentPage} / {meta.totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage((p) => Math.min(meta.totalPages, p + 1))}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(meta.totalPages, p + 1))
+              }
               disabled={currentPage === meta.totalPages}
               className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -334,7 +370,9 @@ const OrganizerRequestsTab = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
-              <h2 className="text-xl font-bold text-gray-900">Chi tiết yêu cầu</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Chi tiết yêu cầu
+              </h2>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -353,62 +391,95 @@ const OrganizerRequestsTab = () => {
                   className="w-24 h-24 object-cover rounded-xl border border-gray-200"
                 />
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900">{selectedRequest.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{selectedRequest.description}</p>
-                  <div className="mt-3">{getStatusBadge(selectedRequest.status)}</div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {selectedRequest.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedRequest.description}
+                  </p>
+                  <div className="mt-3">
+                    {getStatusBadge(selectedRequest.status)}
+                  </div>
                 </div>
               </div>
 
               {/* Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 uppercase">Email liên hệ</label>
-                  <p className="text-sm text-gray-900 mt-1">{selectedRequest.contactEmail}</p>
+                  <label className="text-xs font-medium text-gray-500 uppercase">
+                    Email liên hệ
+                  </label>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {selectedRequest.contactEmail}
+                  </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 uppercase">Cơ sở</label>
-                  <p className="text-sm text-gray-900 mt-1">{selectedRequest.campus.name}</p>
+                  <label className="text-xs font-medium text-gray-500 uppercase">
+                    Cơ sở
+                  </label>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {selectedRequest.campus.name}
+                  </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 uppercase">Ngày tạo</label>
-                  <p className="text-sm text-gray-900 mt-1">{formatDate(selectedRequest.createdAt)}</p>
+                  <label className="text-xs font-medium text-gray-500 uppercase">
+                    Ngày tạo
+                  </label>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {formatDate(selectedRequest.createdAt)}
+                  </p>
                 </div>
                 {selectedRequest.reviewedAt && (
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-xs font-medium text-gray-500 uppercase">Ngày duyệt</label>
-                    <p className="text-sm text-gray-900 mt-1">{formatDate(selectedRequest.reviewedAt)}</p>
+                    <label className="text-xs font-medium text-gray-500 uppercase">
+                      Ngày duyệt
+                    </label>
+                    <p className="text-sm text-gray-900 mt-1">
+                      {formatDate(selectedRequest.reviewedAt)}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Requester Info */}
               <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin người yêu cầu</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                  Thông tin người yêu cầu
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-gray-500">Họ tên:</span>{" "}
                     <span className="text-gray-900">
-                      {selectedRequest.user.firstName} {selectedRequest.user.lastName}
+                      {selectedRequest.user.firstName}{" "}
+                      {selectedRequest.user.lastName}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-500">Email:</span>{" "}
-                    <span className="text-gray-900">{selectedRequest.user.email}</span>
+                    <span className="text-gray-900">
+                      {selectedRequest.user.email}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-500">Username:</span>{" "}
-                    <span className="text-gray-900">{selectedRequest.user.userName}</span>
+                    <span className="text-gray-900">
+                      {selectedRequest.user.userName}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-500">Role:</span>{" "}
-                    <span className="text-gray-900 capitalize">{selectedRequest.user.roleName}</span>
+                    <span className="text-gray-900 capitalize">
+                      {selectedRequest.user.roleName}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Proof Image */}
               <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Hình ảnh minh chứng</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                  Hình ảnh minh chứng
+                </h4>
                 <a
                   href={selectedRequest.proofImageUrl}
                   target="_blank"
@@ -428,19 +499,28 @@ const OrganizerRequestsTab = () => {
               </div>
 
               {/* Rejection Reason */}
-              {selectedRequest.status === "REJECTED" && selectedRequest.reason && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-red-800 mb-2">Lý do từ chối</h4>
-                  <p className="text-sm text-red-700">{selectedRequest.reason}</p>
-                </div>
-              )}
+              {selectedRequest.status === "REJECTED" &&
+                selectedRequest.reason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-red-800 mb-2">
+                      Lý do từ chối
+                    </h4>
+                    <p className="text-sm text-red-700">
+                      {selectedRequest.reason}
+                    </p>
+                  </div>
+                )}
 
               {/* Admin Reviewer */}
               {selectedRequest.adminReviewer && (
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Người duyệt</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                    Người duyệt
+                  </h4>
                   <p className="text-sm text-gray-600">
-                    {selectedRequest.adminReviewer.firstName} {selectedRequest.adminReviewer.lastName} ({selectedRequest.adminReviewer.email})
+                    {selectedRequest.adminReviewer.firstName}{" "}
+                    {selectedRequest.adminReviewer.lastName} (
+                    {selectedRequest.adminReviewer.email})
                   </p>
                 </div>
               )}
@@ -480,7 +560,9 @@ const OrganizerRequestsTab = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">
-                {reviewAction === "APPROVED" ? "Xác nhận duyệt" : "Xác nhận từ chối"}
+                {reviewAction === "APPROVED"
+                  ? "Xác nhận duyệt"
+                  : "Xác nhận từ chối"}
               </h3>
               <button
                 onClick={() => setIsReviewModalOpen(false)}
@@ -499,16 +581,20 @@ const OrganizerRequestsTab = () => {
                   className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                 />
                 <div>
-                  <h4 className="font-semibold text-gray-900">{selectedRequest.name}</h4>
+                  <h4 className="font-semibold text-gray-900">
+                    {selectedRequest.name}
+                  </h4>
                   <p className="text-sm text-gray-500">
-                    {selectedRequest.user.firstName} {selectedRequest.user.lastName}
+                    {selectedRequest.user.firstName}{" "}
+                    {selectedRequest.user.lastName}
                   </p>
                 </div>
               </div>
 
               {reviewAction === "APPROVED" ? (
                 <p className="text-sm text-gray-600">
-                  Bạn có chắc chắn muốn duyệt yêu cầu này? Người dùng sẽ được cấp quyền Organizer.
+                  Bạn có chắc chắn muốn duyệt yêu cầu này? Người dùng sẽ được
+                  cấp quyền Organizer.
                 </p>
               ) : (
                 <div className="space-y-3">
