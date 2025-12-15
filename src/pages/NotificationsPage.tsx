@@ -45,6 +45,19 @@ const NotificationsPage = () => {
     { value: "cancellation_request", label: "Yêu cầu hủy sự kiện" },
     { value: "cancellation_approved", label: "Yêu cầu hủy được duyệt" },
     { value: "cancellation_rejected", label: "Yêu cầu hủy bị từ chối" },
+    {
+      value: "organizer_request_submitted",
+      label: "Yêu cầu làm Organizer (Admin)",
+    },
+    { value: "organizer_request_received", label: "Đã nhận yêu cầu Organizer" },
+    {
+      value: "organizer_request_approved",
+      label: "Yêu cầu Organizer được duyệt",
+    },
+    {
+      value: "organizer_request_rejected",
+      label: "Yêu cầu Organizer bị từ chối",
+    },
   ];
 
   const fetchNotifications = useCallback(async () => {
