@@ -6,6 +6,7 @@ import { organizerService, userService } from '../../../services';
 import UserDetailModal from '../../admin/user/UserDetailModal';
 import { ConfirmModal } from '../..';
 import { toast } from 'react-toastify';
+import ActionDropdown from '../../ActionDropdown';
 
 interface StaffTableProps {
   staffList: eventStaff[];
@@ -117,7 +118,7 @@ const cancelDelete = () => {
                 Trạng thái
               </th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                Hành động
+                
               </th>
             </tr>
           </thead>
@@ -180,8 +181,24 @@ const cancelDelete = () => {
                       {staff.user?.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-6 py-4 text-right">
+
+                      <ActionDropdown
+                        actions={[
+                          {
+                            label: 'Xem chi tiết',
+                            onClick: () => handleViewDetail(staff.user.id),
+                            icon: Eye,
+                          },
+                          {
+                            label: 'Xóa',
+                            onClick: () => handleDeleteClick(staff.user.id),
+                            icon: Trash2,
+                            danger: true,
+                          }
+                        ]}
+                      />
+                    {/* <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewDetail(staff.user.id)}
                           disabled={isLoading}
@@ -198,7 +215,7 @@ const cancelDelete = () => {
                         >
                           <Trash2 size={18} />
                         </button>
-                      </div>
+                      </div> */}
                   </td>
                 </tr>
               ))
