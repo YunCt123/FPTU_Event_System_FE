@@ -1,6 +1,7 @@
 import { apiUtils } from "../api/axios";
 import { TICKET_URL, USER_URL } from "../constants/apiEndPoints";
 import type {
+  CreateStaffRequest,
   GetUsersStatusResponse,
   PatchUserResponse,
   User,
@@ -70,6 +71,12 @@ const userService = {
       `${TICKET_URL}events/${eventId}/attendees`,
       { param }
     );
+  },
+
+  async createStaff(
+    data: CreateStaffRequest
+  ): Promise<AxiosResponse<ApiResponse<User>>> {
+    return await apiUtils.post<ApiResponse<User>>(`${USER_URL}`, data);
   },
 };
 
