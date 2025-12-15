@@ -6,6 +6,7 @@ import { organizerService, userService } from '../../../services';
 import UserDetailModal from '../../admin/user/UserDetailModal';
 import { ConfirmModal } from '../..';
 import { toast } from 'react-toastify';
+import ActionDropdown from '../../ActionDropdown';
 
 interface StaffTableProps {
   staffList: eventStaff[];
@@ -47,6 +48,7 @@ const handleCloseDetailModal = () => {
   };
 
 const handleViewDetail = async(id: number) => {
+    
     setIsLoading(true);
     try {
         const response = await userService.getUserById(id);
@@ -89,6 +91,10 @@ const confirmDelete = async () => {
         setConfirmModal({ isOpen: false, userId: null });
     }
 };
+      
+
+
+      
 
 const cancelDelete = () => {
     setConfirmModal({ isOpen: false, userId: null });
@@ -96,8 +102,8 @@ const cancelDelete = () => {
 
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-lg shadow-md">
+        <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -117,7 +123,7 @@ const cancelDelete = () => {
                 Trạng thái
               </th>
               <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                Hành động
+                
               </th>
             </tr>
           </thead>
@@ -180,8 +186,25 @@ const cancelDelete = () => {
                       {staff.user?.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-6 py-4 relative overflow-visible">
+                      
+                      <ActionDropdown
+                        actions={[
+                          {
+                            label: 'Xem chi tiết',
+                            onClick: () => handleViewDetail(staff.user.id),
+                            icon: Eye,
+                           
+                          },
+                          {
+                            label: 'Xóa',
+                            onClick: () => handleDeleteClick(staff.user.id),
+                            icon: Trash2,
+                            danger: true,
+                          }
+                        ]}
+                      />
+                    {/* <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewDetail(staff.user.id)}
                           disabled={isLoading}
@@ -198,7 +221,7 @@ const cancelDelete = () => {
                         >
                           <Trash2 size={18} />
                         </button>
-                      </div>
+                      </div> */}
                   </td>
                 </tr>
               ))

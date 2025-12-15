@@ -28,7 +28,14 @@ const eventService = {
     },
 
     async getEventById(id: string): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
-        return await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
+        console.log('📡 API Call: getEventById with ID:', id);
+        console.log('📡 Full URL:', `${EVENT_URL}${id}`);
+        
+        // ✅ ĐÚNG: /api/events/{id}
+        const response = await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
+        
+        console.log('📡 API Response:', response);
+        return response;
     },
 
     async deleteEvent(params?: { 

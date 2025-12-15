@@ -3,8 +3,6 @@ import {
   Plus,
   Filter,
   Search,
-  Edit,
-  Trash2,
   Calendar,
   Users,
   MapPin,
@@ -14,6 +12,8 @@ import EventFormModal from '../../../components/organizer/event/EventFormModal';
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
+import ActionDropdown from '../../../components/ActionDropdown';
+import { Edit, Trash2, Eye } from 'lucide-react'; // ✅ Thêm Eye icon
 
 const EventManagementPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -146,25 +146,22 @@ const EventManagementPage = () => {
         console.log('Raw apiEvent:', apiEvent);
         console.log('apiEvent.id:', apiEvent.id, 'type:', typeof apiEvent.id);
         
-        // ✅ FIX: ID LÀ STRING (UUID)
+        // ✅ QUAN TRỌNG: CONVERT ID SANG STRING
         let eventId: string = '';
         
         if (apiEvent.id !== null && apiEvent.id !== undefined) {
-          eventId = String(apiEvent.id); 
-          console.log('✅ Event ID (string):', eventId);
+          eventId = String(apiEvent.id).trim();
+          console.log('✅ Converted Event ID:', eventId);
         }
         
-        
-        if (!eventId || eventId.trim() === '' || eventId === 'undefined' || eventId === 'null') {
-          console.error('❌ Invalid event ID:', {
+        if (!eventId || eventId === 'undefined' || eventId === 'null') {
+          console.error('❌ Invalid event ID after conversion:', {
             rawId: apiEvent.id,
             convertedId: eventId,
             title: apiEvent.title,
           });
-          return null; 
+          return null;
         }
-        
-        console.log('Final event ID:', eventId);
         
         const mappedStatus = normalizeStatus(apiEvent.status || 'PENDING');
         
@@ -190,8 +187,7 @@ const EventManagementPage = () => {
         };
       }).filter((event): event is Event => event !== null);
 
-      console.log('\n✅ Total valid mapped events:', mappedEvents.length);
-      console.log('✅ All event IDs:', mappedEvents.map(e => e.id));
+      console.log('\n✅ All mapped event IDs:', mappedEvents.map(e => `${e.id} (${e.title})`));
       
       setEvents(mappedEvents);
       setFilteredEvents(mappedEvents);
@@ -447,7 +443,7 @@ const EventManagementPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white">
+      <div className="bg-linear-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">Quản lý Sự kiện</h1>
         <p className="text-orange-100">Tạo, chỉnh sửa và quản lý vòng đời sự kiện</p>
       </div>
@@ -488,7 +484,7 @@ const EventManagementPage = () => {
           </select>
           <button
             onClick={handleCreateEvent}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
+            className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
           >
             <Plus size={20} />
             Tạo sự kiện mới
@@ -537,18 +533,17 @@ const EventManagementPage = () => {
                       Người tham gia
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
-                      Hành động
+                      {/* Hành động */}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {/* ✅ ĐỔI filteredEvents THÀNH currentEvents */}
                   {currentEvents.map((event, index) => (
                     <tr 
                       key={`event-${event.id}-${index}`}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      {/* Cột Sự kiện */}
+                      {/* Sự kiện */}
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           <div className="font-semibold text-gray-900 text-sm">
@@ -560,12 +555,12 @@ const EventManagementPage = () => {
                         </div>
                       </td>
 
-                      {/* Cột Trạng thái */}
+                      {/* Trạng thái */}
                       <td className="px-6 py-4 text-center">
                         {getStatusBadge(event.status)}
                       </td>
 
-                      {/* Cột Thời gian */}
+                      {/* Thời gian */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
                           <Calendar size={16} className="text-orange-500 flex-shrink-0" />
@@ -579,7 +574,7 @@ const EventManagementPage = () => {
                         </div>
                       </td>
 
-                      {/* Cột Địa điểm */}
+                      {/* Địa điểm */}
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-2">
                           <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
@@ -596,7 +591,7 @@ const EventManagementPage = () => {
                         </div>
                       </td>
 
-                      {/* Cột Người tham gia */}
+                      {/* Người tham gia */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Users size={16} className="text-gray-400 flex-shrink-0" />
@@ -606,23 +601,58 @@ const EventManagementPage = () => {
                         </div>
                       </td>
 
-                      {/* Cột Hành động */}
+                      {/* ✅ Hành động - SỬ DỤNG ActionDropdown */}
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() => handleEditEvent(event)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Chỉnh sửa"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEvent(event)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Xóa"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                        <div className="flex items-center justify-center">
+                          <ActionDropdown
+                            actions={[
+                              {
+                                label: 'Xem chi tiết',
+                                icon: Eye,
+                                onClick: () => {
+                                  console.group('🔍 CLICK XEM CHI TIẾT');
+                                  console.log('1. Full event object:', event);
+                                  console.log('2. Event ID:', event.id);
+                                  console.log('3. Event ID type:', typeof event.id);
+                                  console.log('4. Event Title:', event.title);
+                                  console.log('5. Current URL:', window.location.href);
+                                  
+                                  if (!event.id) {
+                                    console.error('❌ Event ID is missing!');
+                                    toast.error('Không thể mở chi tiết sự kiện: Thiếu ID');
+                                    console.groupEnd();
+                                    return;
+                                  }
+                                  
+                                  if (typeof event.id !== 'string' || event.id.trim() === '') {
+                                    console.error('❌ Invalid Event ID:', event.id);
+                                    toast.error('Không thể mở chi tiết sự kiện: ID không hợp lệ');
+                                    console.groupEnd();
+                                    return;
+                                  }
+                                  
+                                  const targetUrl = `/organizer/events/${event.id}`;
+                                  console.log('6. ✅ Target URL:', targetUrl);
+                                  console.log('7. ✅ Navigating...');
+                                  console.groupEnd();
+                                  
+                                  // ✅ SỬA: Dùng window.location.href (hoặc navigate nếu có useNavigate)
+                                  window.location.href = targetUrl;
+                                },
+                              },
+                              {
+                                label: 'Chỉnh sửa',
+                                icon: Edit,
+                                onClick: () => handleEditEvent(event),
+                              },
+                              {
+                                label: 'Xóa',
+                                icon: Trash2,
+                                onClick: () => handleDeleteEvent(event),
+                                danger: true,
+                              },
+                            ]}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -631,20 +661,17 @@ const EventManagementPage = () => {
               </table>
             </div>
 
-            {/* ✅ THÊM PAGINATION COMPONENT */}
+            {/* ✅ PAGINATION */}
             {totalPages > 1 && (
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between">
-                  {/* Hiển thị thông tin */}
                   <div className="text-sm text-gray-700">
-                    {/* Hiển thị <span className="font-semibold">{startIndex + 1}</span> đến{' '} */}
-                    {/* <span className="font-semibold">{Math.min(endIndex, filteredEvents.length)}</span> trong tổng số{' '} */}
-                    {/* <span className="font-semibold">{filteredEvents.length}</span> sự kiện */}
+                    {/* Hiển thị <span className="font-semibold">{startIndex + 1}</span> đến{' '}
+                    <span className="font-semibold">{Math.min(endIndex, filteredEvents.length)}</span> trong tổng số{' '}
+                    <span className="font-semibold">{filteredEvents.length}</span> sự kiện */}
                   </div>
 
-                  {/* Pagination buttons */}
                   <div className="flex items-center gap-2">
-                    {/* Previous button */}
                     <button
                       onClick={handlePreviousPage}
                       disabled={currentPage === 1}
@@ -657,7 +684,6 @@ const EventManagementPage = () => {
                       Trước
                     </button>
 
-                    {/* Page numbers */}
                     <div className="flex items-center gap-1">
                       {getPageNumbers().map((page, index) => (
                         <React.Fragment key={index}>
@@ -679,7 +705,6 @@ const EventManagementPage = () => {
                       ))}
                     </div>
 
-                    {/* Next button */}
                     <button
                       onClick={handleNextPage}
                       disabled={currentPage === totalPages}
@@ -765,7 +790,7 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    console.error('❌❌❌ EventFormModal Error:', error, errorInfo);
+    console.error('EventFormModal Error:', error, errorInfo);
     console.error('Error stack:', error.stack);
     toast.error('Có lỗi xảy ra khi mở form chỉnh sửa');
   }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   X,
   Mail,
@@ -22,7 +22,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   onClose,
   user,
 }) => {
-  if (!isOpen || !user) return null;
+  console.log(isOpen);
+  if (!isOpen ) return null;
 
   // const getCampusName = (campusId: number) => {
   //   const campuses: { [key: number]: string } = {
@@ -73,27 +74,27 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         style={{ height: "calc(100vh - 4rem)", maxHeight: "90vh" }}
       >
         {/* Header - Fixed with Gradient */}
-        <div className="relative bg-gradient-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
+        <div className="relative bg-linear-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {user.avatar ? (
+              {user?.avatar ? (
                 <img
-                  src={user.avatar}
-                  alt={user.userName}
+                  src={user?.avatar}
+                  alt={user?.userName}
                   className="w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-[#F27125] font-bold text-lg shadow-lg">
-                  {user.firstName.charAt(0)}
-                  {user.lastName.charAt(0)}
+                  {user?.firstName.charAt(0)}
+                  {user?.lastName.charAt(0)}
                 </div>
               )}
               <div className="text-white">
                 <h2 className="text-lg font-bold drop-shadow-sm">
-                  {user.firstName} {user.lastName}
+                  {user?.firstName} {user?.lastName}
                 </h2>
                 <p className="text-white/90 text-xs">
-                  @{user.userName} • ID: {user.id}
+                  @{user?.userName} • ID: {user?.id}
                 </p>
               </div>
             </div>
@@ -112,7 +113,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             {/* Left Column */}
             <div className="flex flex-col gap-2 h-full overflow-hidden">
               {/* Student Card - Takes up 2/3 of the space */}
-              {user.studentCardImage ? (
+              {user?.studentCardImage ? (
                 <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-[2] min-h-0 flex flex-col">
                   <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
                     <div className="p-0.5 bg-indigo-50 rounded">
@@ -122,7 +123,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   </h3>
                   <div className="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-lg p-2 overflow-hidden">
                     <img
-                      src={user.studentCardImage}
+                      src={user?.studentCardImage}
                       alt="Student Card"
                       className="max-w-full max-h-full rounded object-contain shadow-lg border border-white"
                     />
@@ -153,7 +154,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Username
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.userName}
+                      {user?.userName}
                     </p>
                   </div>
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -161,7 +162,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Họ tên
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.firstName} {user.lastName}
+                      {user?.firstName} {user?.lastName}
                     </p>
                   </div>
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -191,7 +192,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   <span>Liên hệ</span>
                 </h3>
                 <div className="space-y-1.5 text-xs">
-                  <div className="p-1.5 bg-gradient-to-r from-orange-50 to-white rounded border border-orange-100">
+                  <div className="p-1.5 bg-linear-to-r from-orange-50 to-white rounded border border-orange-100">
                     <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                       <Mail size={10} className="text-orange-500" />
                       <span className="uppercase text-[10px]">Email</span>
@@ -205,7 +206,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </a>
                   </div>
                   {user.phoneNumber && (
-                    <div className="p-1.5 bg-gradient-to-r from-green-50 to-white rounded border border-green-100">
+                    <div className="p-1.5 bg-linear-to-r from-green-50 to-white rounded border border-green-100">
                       <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                         <Phone size={10} className="text-green-500" />
                         <span className="uppercase text-[10px]">SĐT</span>
@@ -216,7 +217,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </div>
                   )}
                   {user.address && (
-                    <div className="p-1.5 bg-gradient-to-r from-purple-50 to-white rounded border border-purple-100">
+                    <div className="p-1.5 bg-linear-to-r from-purple-50 to-white rounded border border-purple-100">
                       <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                         <MapPin size={10} className="text-purple-500" />
                         <span className="uppercase text-[10px]">Địa chỉ</span>
@@ -260,11 +261,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       </p>
                     </div>
                   )}
-                  <div className="p-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded border border-purple-200">
+                  <div className="p-1.5 bg-linear-to-r from-purple-50 to-pink-50 rounded border border-purple-200">
                     <label className="font-medium text-gray-500 uppercase text-[10px] mb-0.5 block">
                       Vai trò
                     </label>
-                    <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                    <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-linear-to-r from-purple-600 to-pink-600 text-white">
                       {getRoleLabel(user.roleName)}
                     </p>
                   </div>
@@ -330,11 +331,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         </div>
 
         {/* Footer - Fixed */}
-        <div className="border-t px-4 py-2.5 shrink-0 bg-gradient-to-r from-gray-50 to-white rounded-b-2xl">
+        <div className="border-t px-4 py-2.5 shrink-0 bg-linear-to-r from-gray-50 to-white rounded-b-2xl">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all font-semibold text-xs shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="px-6 py-2 bg-linear-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all font-semibold text-xs shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Đóng
             </button>

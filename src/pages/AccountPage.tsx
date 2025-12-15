@@ -200,7 +200,7 @@ const AccountPage = () => {
           </h2>
 
           <div className="max-w-md mx-auto rounded-xl overflow-hidden border">
-            <div className="bg-gradient-to-r from-[#F27125] to-[#d95c0b] text-white p-3 font-semibold">
+            <div className="bg-linear-to-r from-[#F27125] to-[#d95c0b] text-white p-3 font-semibold">
               Student Card
             </div>
             <img

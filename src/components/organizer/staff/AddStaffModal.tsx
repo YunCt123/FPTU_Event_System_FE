@@ -96,7 +96,7 @@ const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onS
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50  flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '90vh' }}>
                 {/* Header - Fixed */}
-                <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
+                <div className="flex items-center justify-between p-6 bg-linear-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
                     <div className="flex items-center gap-3">
                         <div>
                             <h2 className="text-xl font-bold text-white">Thêm Staff vào Sự kiện</h2>

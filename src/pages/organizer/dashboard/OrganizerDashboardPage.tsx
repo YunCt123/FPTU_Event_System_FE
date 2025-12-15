@@ -12,6 +12,7 @@ import {
 import organizerService from '../../../services/organizerService';
 import userService from '../../../services/userService';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardStats {
   totalEvents: number;
@@ -33,6 +34,8 @@ interface EventChartData {
 }
 
 const OrganizerDashboardPage = () => {
+  const navigate = useNavigate();
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalEvents: 0,
     activeEvents: 0,
@@ -212,7 +215,7 @@ const OrganizerDashboardPage = () => {
         setChartData(resolvedChartData);
       }
     } catch (error: any) {
-      console.error('❌ Error fetching dashboard data:', error);
+      console.error('Error fetching dashboard data:', error);
       toast.error('Không thể tải dữ liệu dashboard. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
@@ -571,7 +574,7 @@ const OrganizerDashboardPage = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Sự kiện gần đây</h2>
             <button
-              onClick={() => (window.location.href = '/organizer/events')}
+              onClick={() => navigate('/organizer/events')}
               className="text-sm text-[#F27125] hover:text-[#d65d1a] font-medium"
             >
               Xem tất cả →
@@ -580,40 +583,63 @@ const OrganizerDashboardPage = () => {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
+            {/* ✅ BỎ CỘT HÀNH ĐỘNG - CHỈ CÒN 4 CỘT */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sự kiện
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ngày bắt đầu
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Đăng ký / Tham dự
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hành động
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {recentEvents.map((event) => (
-                <tr key={event.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
+                <tr 
+                  key={event.id} 
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    if (!event.id) {
+                      console.error('Event ID is missing:', event);
+                      toast.error('Không thể mở chi tiết sự kiện');
+                      return;
+                    }
+                    console.log('Navigating to event:', event.id);
+                    navigate(`/organizer/events/${event.id}`);
+                  }}
+                >
+                  {/* Cột 1: Sự kiện - Căn trái, chiếm nhiều không gian */}
+                  <td className="px-6 py-4 w-[40%]">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                      <div className="text-sm font-medium text-gray-900 hover:text-orange-600 transition-colors">
+                        {event.title}
+                      </div>
                       <div className="text-sm text-gray-500">{event.category || 'N/A'}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">{getStatusBadge(event.status)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(event.startTime).toLocaleDateString('vi-VN')}
+                  
+                  {/* Cột 2: Trạng thái - Căn giữa, 20% */}
+                  <td className="px-6 py-4 text-center w-[20%]">
+                    {getStatusBadge(event.status)}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
+                  
+                  {/* Cột 3: Ngày bắt đầu - Căn giữa, 20% */}
+                  <td className="px-6 py-4 text-center w-[20%]">
+                    <span className="text-sm text-gray-600">
+                      {new Date(event.startTime).toLocaleDateString('vi-VN')}
+                    </span>
+                  </td>
+                  
+                  {/* Cột 4: Đăng ký / Tham dự - Căn giữa, 20% */}
+                  <td className="px-6 py-4 w-[20%]">
+                    <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-blue-400" />
                         <span className="text-xs text-gray-900">
@@ -627,14 +653,6 @@ const OrganizerDashboardPage = () => {
                         </span>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => (window.location.href = `/organizer/events/${event.id}`)}
-                      className="text-sm text-[#F27125] hover:text-[#d65d1a] font-medium"
-                    >
-                      Chi tiết
-                    </button>
                   </td>
                 </tr>
               ))}
