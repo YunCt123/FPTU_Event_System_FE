@@ -1,7 +1,18 @@
 import { apiUtils } from "../api/axios";
 import { EVENT_URL } from "../constants/apiEndPoints";
 import type { AxiosResponse } from "axios";
-import type { CreateEventRequest, EventDeleteResponse, GetEventResponse, GetTotalEventsResponse, UpdateEventRequest, UpdateEventResponse } from "../types/Event";
+import type { 
+    CancellationReason, 
+    CreateEventRequest, 
+    DeleteEventByOrganizersRequest, 
+    DeleteEventByOrganizersResponse, 
+    EventDeleteResponse, 
+    GetEventResponse, 
+    GetTotalEventsResponse, 
+    UpdateEventRequest, 
+    UpdateEventResponse,
+    GetDeleteRequestsResponse
+} from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
 
 const eventService = {
@@ -43,44 +54,58 @@ const eventService = {
         return await apiUtils.patch<ApiResponse<UpdateEventResponse>>(`${EVENT_URL}${id}`, data);
     },
 
-    async requestDeleteEvent(params: { 
+    // ✅ API GỬI YÊU CẦU XÓA TỪ ORGANIZER (KHÔNG ĐỔI STATUS)
+    async requestCancelEvent(params: {
         eventId: string;
-        reason: string;
-    }): Promise<AxiosResponse<ApiResponse<any>>> {
-        console.log('📤 Sending delete request:', params);
-        return await apiUtils.post<ApiResponse<any>>(`${EVENT_URL}${params.eventId}/delete-request`, {
-            reason: params.reason
-        });
-    },
-
-    async getDeleteRequests(params?: {
-        page?: number;
-        limit?: number;
-        status?: 'PENDING' | 'APPROVED' | 'REJECTED';
-    }): Promise<AxiosResponse<ApiResponse<any>>> {
-        return await apiUtils.get<ApiResponse<any>>(`${EVENT_URL}delete-requests`, params);
-    },
-
-    async approveDeleteRequest(params: {
-        requestId: string;
-        action: 'APPROVE' | 'REJECT';
-        note?: string;
-    }): Promise<AxiosResponse<ApiResponse<any>>> {
-        return await apiUtils.patch<ApiResponse<any>>(
-            `${EVENT_URL}delete-requests/${params.requestId}`,
-            {
-                action: params.action,
-                note: params.note
-            }
+        data: DeleteEventByOrganizersRequest
+    }): Promise<AxiosResponse<ApiResponse<DeleteEventByOrganizersResponse>>> {
+        console.log('📤 Organizer sending cancel request:', params);
+        return await apiUtils.post<ApiResponse<DeleteEventByOrganizersResponse>>(
+            `${EVENT_URL}${params.eventId}/cancel`, 
+            params.data
         );
     },
 
-    // XÓA HOẶC COMMENT OUT hàm này
-    // async getTotalEventsByMoth(param?:{
-    //     year?: number;
-    // }): Promise<AxiosResponse<ApiResponse<{ month: string; totalEvents: number }[]>>> {
-    //     return await apiUtils.get<ApiResponse<{ month: string; totalEvents: number }[]>>(`${EVENT_URL}stats/monthly`, { param});
-    // }
+    // ✅ API LẤY DANH SÁCH YÊU CẦU XÓA (ADMIN)
+    async getDeleteRequests(params?: {
+        page?: number;
+        limit?: number;
+        status?: string;
+        eventId?: string;
+        requestedBy?: number;
+    }): Promise<AxiosResponse<ApiResponse<GetDeleteRequestsResponse>>> {
+        console.log('📋 Fetching delete requests with params:', params);
+        
+        // ✅ ĐÚNG THEO SWAGGER: /events/cancellation-requests (CÓ DẤU GẠCH NGANG)
+        return await apiUtils.get<ApiResponse<GetDeleteRequestsResponse>>(
+            `${EVENT_URL}cancellation-requests`, // ✅ cancellation-requests
+            params
+        );
+    },
+
+    // ✅ API PHÊ DUYỆT/TỪ CHỐI - CŨNG CẦN FIX URL
+    async approveDeleteRequest(params: {
+        requestId: number;
+        action: 'APPROVED' | 'REJECTED';
+    }): Promise<AxiosResponse<ApiResponse<any>>> {
+        console.log('✅ Admin processing delete request:', params);
+        
+        // ✅ SỬA URL ENDPOINT (NẾU CÓ TRONG SWAGGER)
+        // Kiểm tra Swagger xem endpoint approve là gì
+        // Có thể là: /events/cancellation-requests/{id} hoặc /events/cancellations/{id}
+        return await apiUtils.patch<ApiResponse<any>>(
+            `${EVENT_URL}cancellation-requests/${params.requestId}`, // ✅ Thử endpoint này trước
+            { status: params.action }
+        );
+    },
+
+    async getCancellationReasons(params?: {
+        page?: number;
+        limit?: number;
+        status?: string;
+    }): Promise<AxiosResponse<ApiResponse<CancellationReason[]>>> { 
+        return await apiUtils.get<ApiResponse<CancellationReason[]>>(`${EVENT_URL}cancellations`, params);
+    }
 };
 
 export default eventService;

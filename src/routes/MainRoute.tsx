@@ -30,6 +30,7 @@ import EditEventPage from "../pages/admin/event/EditEventPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import UserList from "../pages/admin/user/UserList";
 import AccountPage from "../pages/AccountPage";
+import DeleteResponsePage from "../pages/admin/event/DeleteResponsePage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -90,6 +91,7 @@ const MainRoute: React.FC = () => {
               element={<DetailEventPage />}
             />
             <Route path="/admin/list-events" element={<ListEventPage />} />
+            <Route path="/admin/list-delete-events" element={<DeleteResponsePage />} />
             <Route path="/admin/dashboard-events" element={<DashboardPage />} />
             <Route path="/admin/events" element={<EditEventPage />} />
             <Route path="/admin/organizers" element={<OrganizerList />} />

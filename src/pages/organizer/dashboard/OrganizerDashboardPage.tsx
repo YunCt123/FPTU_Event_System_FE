@@ -18,6 +18,7 @@ interface DashboardStats {
   activeEvents: number;
   pendingEvents: number;
   completedEvents: number;
+  rejectedEvents?: number;
   totalRegistrations: number;
   totalAttendance: number;
   averageAttendance: number;
@@ -65,59 +66,100 @@ const OrganizerDashboardPage = () => {
         limit: 100,
       });
 
-      console.log('Events response:', eventsResponse);
+      console.log('📊 Events response:', eventsResponse);
 
       if (eventsResponse && eventsResponse.data) {
         const eventsData = eventsResponse.data.data || [];
         const meta = eventsResponse.data.meta;
 
-        const totalEvents = meta?.total || eventsData.length;
-        const approvedEvents = eventsData.filter(
-          (e: any) => e.status === 'PUBLISHED' || e.status === 'APPROVED'
+        // ✅ LOG TẤT CẢ STATUS ĐỂ DEBUG
+        console.log('📊 All event statuses:', eventsData.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          status: e.status
+      })));
+
+      const totalEvents = meta?.total || eventsData.length;
+      
+      const approvedEvents = eventsData.filter(
+        (e: any) => e.status === 'PUBLISHED' || e.status === 'APPROVED'
+      );
+      console.log('✅ Approved events:', approvedEvents.length);
+      
+      const pendingEvents = eventsData.filter((e: any) => e.status === 'PENDING');
+      console.log('⏳ Pending events:', pendingEvents.length);
+      
+      const completedEvents = eventsData.filter((e: any) => e.status === 'COMPLETED');
+      console.log('🎉 Completed events:', completedEvents.length);
+      
+      // ✅ MỞ RỘNG FILTER CHO REJECTED EVENTS - BAO GỒM TẤT CẢ TRẠNG THÁI CÓ THỂ
+      const rejectedEvents = eventsData.filter((e: any) => {
+        const status = e.status?.toUpperCase(); // Chuyển về uppercase để so sánh
+        return (
+          status === 'CANCELED' || 
+          status === 'CANCELLED' ||  // UK spelling
+          status === 'REJECTED' ||
+          status === 'REJECT' ||
+          status === 'DENIED'
         );
-        const pendingEvents = eventsData.filter((e: any) => e.status === 'PENDING');
-        const completedEvents = eventsData.filter((e: any) => e.status === 'COMPLETED');
+      });
+      
+      console.log('❌ Rejected events:', rejectedEvents.length);
+      console.log('❌ Rejected event details:', rejectedEvents.map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        status: e.status
+      })));
 
-        const totalAttendance = eventsData.reduce(
-          (sum: number, event: any) => sum + (event.checkinCount || 0),
-          0
-        );
+      const totalAttendance = eventsData.reduce(
+        (sum: number, event: any) => sum + (event.checkinCount || 0),
+        0
+      );
 
-        let totalRegistrations = 0;
+      let totalRegistrations = 0;
 
-        for (const event of eventsData) {
-          try {
-            const attendeesResponse = await userService.getAttendUser(
-              String(event.id),
-              {
-                page: 1,
-                limit: 1,
-              }
-            );
-
-            if (attendeesResponse && attendeesResponse.data) {
-              const attendeesTotal = attendeesResponse.data.meta?.total || 0;
-              totalRegistrations += attendeesTotal;
+      for (const event of eventsData) {
+        try {
+          const attendeesResponse = await userService.getAttendUser(
+            String(event.id),
+            {
+              page: 1,
+              limit: 1,
             }
-          } catch (error) {
-            totalRegistrations += event.registeredCount || 0;
+          );
+
+          if (attendeesResponse && attendeesResponse.data) {
+            const attendeesTotal = attendeesResponse.data.meta?.total || 0;
+            totalRegistrations += attendeesTotal;
           }
+        } catch (error) {
+          totalRegistrations += event.registeredCount || 0;
         }
+      }
 
-        const averageAttendance =
-          totalRegistrations > 0
-            ? Math.round((totalAttendance / totalRegistrations) * 100)
-            : 0;
+      const averageAttendance =
+        totalRegistrations > 0
+          ? Math.round((totalAttendance / totalRegistrations) * 100)
+          : 0;
 
-        setStats({
-          totalEvents,
-          activeEvents: approvedEvents.length,
-          pendingEvents: pendingEvents.length,
-          completedEvents: completedEvents.length,
-          totalRegistrations,
-          totalAttendance,
-          averageAttendance,
-        });
+      setStats({
+        totalEvents,
+        activeEvents: approvedEvents.length,
+        pendingEvents: pendingEvents.length,
+        completedEvents: completedEvents.length,
+        rejectedEvents: rejectedEvents.length, // ✅ Set đúng giá trị
+        totalRegistrations,
+        totalAttendance,
+        averageAttendance,
+      });
+
+      console.log('📊 Final stats:', {
+        totalEvents,
+        activeEvents: approvedEvents.length,
+        pendingEvents: pendingEvents.length,
+        completedEvents: completedEvents.length,
+        rejectedEvents: rejectedEvents.length,
+      });
 
         const sortedEvents = [...eventsData]
           .sort(
@@ -224,6 +266,16 @@ const OrganizerDashboardPage = () => {
       iconBg: 'bg-yellow-100',
     },
     {
+      title: 'Bị từ chối',
+      value: stats.rejectedEvents || 0,
+      icon: AlertCircle,
+      bgGradient: 'bg-gradient-to-br from-red-500 to-red-600',
+      textColor: 'text-red-600',
+      bgLight: 'bg-red-50',
+      borderColor: 'border-red-200',
+      iconBg: 'bg-red-100',
+    },
+    {
       title: 'Đã hoàn thành',
       value: stats.completedEvents,
       icon: TrendingUp,
@@ -236,20 +288,27 @@ const OrganizerDashboardPage = () => {
   ];
 
   const getStatusBadge = (status: string) => {
+    const statusUpper = status?.toUpperCase();
+    
     const statusConfig: Record<string, { label: string; className: string }> = {
       DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-700' },
       PENDING: { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-700' },
       PUBLISHED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700' },
       APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700' },
-      CANCELED: { label: 'Từ chối', className: 'bg-red-100 text-red-700' },
-      REJECTED: { label: 'Từ chối', className: 'bg-red-100 text-red-700' },
+      CANCELED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
+      CANCELLED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
+      REJECTED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
+      REJECT: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
+      DENIED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
       COMPLETED: { label: 'Hoàn thành', className: 'bg-blue-100 text-blue-700' },
+      PENDING_DELETE: { label: 'Chờ xóa', className: 'bg-orange-100 text-orange-700' },
     };
 
-    const config = statusConfig[status] || {
+    const config = statusConfig[statusUpper] || {
       label: status,
       className: 'bg-gray-100 text-gray-700',
     };
+    
     return (
       <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.className}`}>
         {config.label}
@@ -293,7 +352,7 @@ const OrganizerDashboardPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
@@ -479,6 +538,14 @@ const OrganizerDashboardPage = () => {
                 <span className="text-sm font-medium text-gray-700">Đã hoàn thành</span>
               </div>
               <span className="text-lg font-bold text-purple-600">{stats.completedEvents}</span>
+            </div>
+            {/* ✅ Thêm card Bị từ chối */}
+            <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">Bị từ chối</span>
+              </div>
+              <span className="text-lg font-bold text-red-600">{stats.rejectedEvents || 0}</span>
             </div>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-200 space-y-2">
