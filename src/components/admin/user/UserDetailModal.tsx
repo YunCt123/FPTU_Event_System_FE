@@ -73,7 +73,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         style={{ height: "calc(100vh - 4rem)", maxHeight: "90vh" }}
       >
         {/* Header - Fixed with Gradient */}
-        <div className="relative bg-gradient-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
+        <div className="relative bg-linear-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {user.avatar ? (
@@ -191,7 +191,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   <span>Liên hệ</span>
                 </h3>
                 <div className="space-y-1.5 text-xs">
-                  <div className="p-1.5 bg-gradient-to-r from-orange-50 to-white rounded border border-orange-100">
+                  <div className="p-1.5 bg-linear-to-r from-orange-50 to-white rounded border border-orange-100">
                     <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                       <Mail size={10} className="text-orange-500" />
                       <span className="uppercase text-[10px]">Email</span>
@@ -205,7 +205,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </a>
                   </div>
                   {user.phoneNumber && (
-                    <div className="p-1.5 bg-gradient-to-r from-green-50 to-white rounded border border-green-100">
+                    <div className="p-1.5 bg-linear-to-r from-green-50 to-white rounded border border-green-100">
                       <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                         <Phone size={10} className="text-green-500" />
                         <span className="uppercase text-[10px]">SĐT</span>
@@ -216,7 +216,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </div>
                   )}
                   {user.address && (
-                    <div className="p-1.5 bg-gradient-to-r from-purple-50 to-white rounded border border-purple-100">
+                    <div className="p-1.5 bg-linear-to-r from-purple-50 to-white rounded border border-purple-100">
                       <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                         <MapPin size={10} className="text-purple-500" />
                         <span className="uppercase text-[10px]">Địa chỉ</span>
@@ -260,11 +260,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       </p>
                     </div>
                   )}
-                  <div className="p-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded border border-purple-200">
+                  <div className="p-1.5 bg-linear-to-r from-purple-50 to-pink-50 rounded border border-purple-200">
                     <label className="font-medium text-gray-500 uppercase text-[10px] mb-0.5 block">
                       Vai trò
                     </label>
-                    <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                    <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-linear-to-r from-purple-600 to-pink-600 text-white">
                       {getRoleLabel(user.roleName)}
                     </p>
                   </div>
@@ -330,11 +330,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         </div>
 
         {/* Footer - Fixed */}
-        <div className="border-t px-4 py-2.5 shrink-0 bg-gradient-to-r from-gray-50 to-white rounded-b-2xl">
+        <div className="border-t px-4 py-2.5 shrink-0 bg-linear-to-r from-gray-50 to-white rounded-b-2xl">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all font-semibold text-xs shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="px-6 py-2 bg-linear-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all font-semibold text-xs shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Đóng
             </button>
