@@ -65,7 +65,7 @@ const SideBar = ({ userRole }: SideBarProps) => {
         },
         {
           id: 'delette-events-list',
-          label: 'Danh sách yêu cầu xóa sự kiện',
+          label: 'Danh sách yêu cầu hủy sự kiện',
           icon: <Calendar size={20} />,
         path: '/admin/list-delete-events',
         },
