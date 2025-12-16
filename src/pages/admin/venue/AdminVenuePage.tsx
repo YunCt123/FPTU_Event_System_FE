@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import type {
   Venue,
@@ -20,6 +20,11 @@ const AdminVenuePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    venueId: number | null;
+  }>({ isOpen: false, venueId: null });
+  
+  const [activateModal, setActivateModal] = useState<{
     isOpen: boolean;
     venueId: number | null;
   }>({ isOpen: false, venueId: null });
@@ -58,8 +63,11 @@ const AdminVenuePage = () => {
       setIsLoading(true);
       const response = await venueService.getAllVenues();
 
+      // Handle both array and ApiResponse wrapper
+      const venueData = Array.isArray(response.data) ? response.data : response.data.data || [];
+
       // Filter venues by selected campus
-      const filteredVenues = response.data.filter(
+      const filteredVenues = venueData.filter(
         (venue: Venue) => venue.campusId === selectedCampusId
       );
 
@@ -87,6 +95,32 @@ const AdminVenuePage = () => {
 
   const handleDelete = (id: number) => {
     setConfirmModal({ isOpen: true, venueId: id });
+  };
+
+  const handleActivate = (id: number) => {
+    setActivateModal({ isOpen: true, venueId: id });
+  };
+
+  const confirmActivate = async () => {
+    const venueId = activateModal.venueId;
+    if (!venueId) return;
+
+    try {
+      await venueService.activateVenue(venueId);
+      toast.success('Kích hoạt venue thành công!');
+      
+      // Refresh the venue list from API after activate
+      await fetchVenues();
+    } catch (error: any) {
+      console.error('Error activating venue:', error);
+      toast.error(error?.response?.data?.message || 'Không thể kích hoạt venue');
+    } finally {
+      setActivateModal({ isOpen: false, venueId: null });
+    }
+  };
+
+  const cancelActivate = () => {
+    setActivateModal({ isOpen: false, venueId: null });
   };
 
   const confirmDelete = async () => {
@@ -333,13 +367,23 @@ const AdminVenuePage = () => {
                         >
                           <Edit size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(venue.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {venue.status === 'INACTIVE' ? (
+                          <button
+                            onClick={() => handleActivate(venue.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Kích hoạt lại"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(venue.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -366,7 +410,7 @@ const AdminVenuePage = () => {
         />
       )}
 
-      {/* Confirm Modal */}
+      {/* Delete Confirm Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title="Xác nhận xóa"
@@ -376,6 +420,18 @@ const AdminVenuePage = () => {
         type="danger"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      {/* Activate Confirm Modal */}
+      <ConfirmModal
+        isOpen={activateModal.isOpen}
+        title="Xác nhận kích hoạt"
+        message="Bạn có chắc chắn muốn kích hoạt lại venue này? Venue sẽ chuyển sang trạng thái hoạt động."
+        confirmText="Kích hoạt"
+        cancelText="Hủy"
+        type="success"
+        onConfirm={confirmActivate}
+        onCancel={cancelActivate}
       />
     </div>
   );
