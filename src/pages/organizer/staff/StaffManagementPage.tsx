@@ -1,28 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   UserPlus,
   Search,
   Shield,
   Smartphone,
-} from 'lucide-react';
+  UserRoundPlus,
+} from "lucide-react";
 
-import type { eventStaff, GetEventResponse } from '../../../types/Event';
-import { organizerService } from '../../../services';
-import eventService from '../../../services/eventService';
-import StaffTable from '../../../components/organizer/staff/StaffTable';
-import AddStaffModal from '../../../components/organizer/staff/AddStaffModal';
+import type { eventStaff, GetEventResponse } from "../../../types/Event";
+import { organizerService } from "../../../services";
+import eventService from "../../../services/eventService";
+import StaffTable from "../../../components/organizer/staff/StaffTable";
+import AddStaffModal from "../../../components/organizer/staff/AddStaffModal";
+import CreateStaffAccountModal from "../../../components/organizer/staff/CreateStaffAccountModal";
 // import { toast } from 'react-toastify';
 // import { ConfirmModal } from '../../../components';
 
 const StaffManagementPage = () => {
   const [events, setEvents] = useState<GetEventResponse[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
-  const [selectedEvent, setSelectedEvent] = useState<GetEventResponse >();
+  const [selectedEvent, setSelectedEvent] = useState<GetEventResponse>();
   const [staffList, setStaffList] = useState<eventStaff[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredStaff, setFilteredStaff] = useState<eventStaff[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  
+  const [isCreateAccountModalOpen, setIsCreateAccountModalOpen] =
+    useState(false);
 
   
 const fetchEvent = async () => {
@@ -61,32 +64,28 @@ const fetchEvent = async () => {
   }
 };
 
+  useEffect(() => {
+    fetchEvent();
+  }, []);
 
-useEffect(() => {
-  fetchEvent();    
-}, []);
-
- 
-
-useEffect(() => {
-  if (events.length > 0) {
-    setSelectedEventId(events[0].id);
-  }
-}, [events]);
+  useEffect(() => {
+    if (events.length > 0) {
+      setSelectedEventId(events[0].id);
+    }
+  }, [events]);
 
   console.log("eventList", events[0]?.id);
   console.log("eventSelectedId", selectedEventId);
-  
 
   const fetchStaff = async (eventId: string) => {
-    try{
-      const response = await eventService.getEventById(eventId);     
-      if(response){ 
+    try {
+      const response = await eventService.getEventById(eventId);
+      if (response) {
         console.log("response2", response);
         setStaffList(response.data.eventStaffs);
         setSelectedEvent(response.data);
       }
-    }catch(error){
+    } catch (error) {
       console.log("Error fetching staff data:", error);
     }
   };
@@ -123,8 +122,6 @@ useEffect(() => {
     }
   };
 
-
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -132,17 +129,27 @@ useEffect(() => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý Staff</h1>
           <p className="text-gray-600 mt-1">
-            Phân công staff và cấp quyền truy cập Mobile Check-in App theo sự kiện
+            Phân công staff và cấp quyền truy cập Mobile Check-in App theo sự
+            kiện
           </p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          disabled={!selectedEventId}
-          className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <UserPlus size={20} />
-          Thêm Staff
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsCreateAccountModalOpen(true)}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <UserRoundPlus size={20} />
+            Tạo Tài Khoản Staff
+          </button>
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            disabled={!selectedEventId}
+            className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UserPlus size={20} />
+            Thêm Staff
+          </button>
+        </div>
       </div>
 
       {/* Event Selector */}
@@ -151,7 +158,7 @@ useEffect(() => {
           Chọn Sự kiện
         </label>
         <select
-          value={selectedEventId || ''}
+          value={selectedEventId || ""}
           onChange={(e) => setSelectedEventId(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
         >
@@ -160,7 +167,8 @@ useEffect(() => {
           ) : (
             events.map((event) => (
               <option key={event.id} value={event.id}>
-                {event.title} - {new Date(event.startTime).toLocaleDateString('vi-VN')}
+                {event.title} -{" "}
+                {new Date(event.startTime).toLocaleDateString("vi-VN")}
               </option>
             ))
           )}
@@ -180,7 +188,6 @@ useEffect(() => {
       ) : (
         <>
           {/* Stats */}
-          
 
           {/* Search */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -206,8 +213,8 @@ useEffect(() => {
               <p className="text-gray-600">Không tìm thấy staff</p>
             </div>
           ) : (
-            <StaffTable 
-              staffList={filteredStaff} 
+            <StaffTable
+              staffList={filteredStaff}
               onDeleteStaff={handleDeleteStaff}
               eventId={selectedEventId}
             />
@@ -218,9 +225,13 @@ useEffect(() => {
             <div className="flex items-start gap-3">
               <Smartphone className="text-blue-600 mt-0.5" size={20} />
               <div>
-                <h4 className="font-semibold text-blue-900">Mobile Check-in App</h4>
+                <h4 className="font-semibold text-blue-900">
+                  Mobile Check-in App
+                </h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  Staff được cấp quyền App Access có thể sử dụng Mobile App để check-in người tham dự tại sự kiện. Đảm bảo staff đã được đào tạo về cách sử dụng app trước khi sự kiện diễn ra.
+                  Staff được cấp quyền App Access có thể sử dụng Mobile App để
+                  check-in người tham dự tại sự kiện. Đảm bảo staff đã được đào
+                  tạo về cách sử dụng app trước khi sự kiện diễn ra.
                 </p>
               </div>
             </div>
@@ -230,8 +241,8 @@ useEffect(() => {
 
       {/* Add Staff Modal */}
       {isAddModalOpen && (
-        <AddStaffModal 
-          staffList={staffList} 
+        <AddStaffModal
+          staffList={staffList}
           eventId={selectedEventId}
           eventCampusId={selectedEvent?.venue?.campus?.id}
           isOpen={isAddModalOpen}
@@ -240,7 +251,12 @@ useEffect(() => {
         />
       )}
 
-
+      {/* Create Staff Account Modal */}
+      <CreateStaffAccountModal
+        isOpen={isCreateAccountModalOpen}
+        onClose={() => setIsCreateAccountModalOpen(false)}
+        onStaffCreated={handleStaffAdded}
+      />
     </div>
   );
 };
