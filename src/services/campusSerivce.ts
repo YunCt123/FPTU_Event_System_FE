@@ -25,6 +25,10 @@ const campusService = {
     return await apiUtils.delete<ApiResponse<{ message: string }>>(`${CAMPUS_URL}/${id}`);
   },
 
+  async activateCampus(id: number): Promise<AxiosResponse<ApiResponse<Campus>>> {
+    return await apiUtils.patch<ApiResponse<Campus>>(`${CAMPUS_URL}/${id}/activate`, {});
+  },
+
   async getCampusVenues(id: number): Promise<AxiosResponse<ApiResponse<Campus>>> {
     return await apiUtils.get<ApiResponse<Campus>>(`${CAMPUS_URL}/${id}/venues`);
   },

@@ -125,3 +125,18 @@ export interface RegisterRequest {
   avatar?: string;
   studentCardImage?: string; // optional
 }
+
+export interface CreateStaffRequest {
+  userName: string;
+  email: string;
+  password: string;
+  campusId: number;
+  roleName: string;
+  firstName: string;
+  lastName: string;
+  studentCode?: string;
+  phoneNumber?: string;
+  gender?: boolean;
+  address?: string;
+  avatar?: string;
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import type { Campus, Status, CreateCampusRequest, UpdateCampusRequest } from '../../../types/Campus';
 import CampusFormModal from '../../../components/admin/campus/CampusFormModal';
@@ -13,6 +13,11 @@ const CampusPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    campusId: number | null;
+  }>({ isOpen: false, campusId: null });
+  
+  const [activateModal, setActivateModal] = useState<{
     isOpen: boolean;
     campusId: number | null;
   }>({ isOpen: false, campusId: null });
@@ -50,23 +55,42 @@ const CampusPage = () => {
     setConfirmModal({ isOpen: true, campusId: id });
   };
 
+  const handleActivate = (id: number) => {
+    setActivateModal({ isOpen: true, campusId: id });
+  };
+
+  const confirmActivate = async () => {
+    const campusId = activateModal.campusId;
+    if (!campusId) return;
+
+    try {
+      await campusService.activateCampus(campusId);
+      toast.success('Kích hoạt campus thành công!');
+      
+      // Refresh the campus list from API after activate
+      await fetchCampuses();
+    } catch (error: any) {
+      console.error('Error activating campus:', error);
+      toast.error(error?.response?.data?.message || 'Không thể kích hoạt campus');
+    } finally {
+      setActivateModal({ isOpen: false, campusId: null });
+    }
+  };
+
+  const cancelActivate = () => {
+    setActivateModal({ isOpen: false, campusId: null });
+  };
+
   const confirmDelete = async () => {
     const campusId = confirmModal.campusId;
     if (!campusId) return;
 
     try {
       await campusService.deleteCampus(campusId);
-      
-      // Update local state - soft delete
-      setCampuses(
-        campuses.map((c) =>
-          c.id === campusId
-            ? { ...c, status: 'INACTIVE' as Status, isActive: false }
-            : c
-        )
-      );
-
       toast.success('Xóa campus thành công!');
+      
+      // Refresh the campus list from API after delete
+      await fetchCampuses();
     } catch (error: any) {
       console.error('Error deleting campus:', error);
       toast.error(error?.response?.data?.message || 'Không thể xóa campus');
@@ -242,13 +266,23 @@ const CampusPage = () => {
                         >
                           <Edit size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(campus.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {campus.status === 'Inactive' ? (
+                          <button
+                            onClick={() => handleActivate(campus.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Kích hoạt lại"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(campus.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -275,7 +309,7 @@ const CampusPage = () => {
         />
       )}
 
-      {/* Confirm Modal */}
+      {/* Delete Confirm Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title="Xác nhận xóa"
@@ -285,6 +319,18 @@ const CampusPage = () => {
         type="danger"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      {/* Activate Confirm Modal */}
+      <ConfirmModal
+        isOpen={activateModal.isOpen}
+        title="Xác nhận kích hoạt"
+        message="Bạn có chắc chắn muốn kích hoạt lại campus này? Campus sẽ chuyển sang trạng thái hoạt động."
+        confirmText="Kích hoạt"
+        cancelText="Hủy"
+        type="success"
+        onConfirm={confirmActivate}
+        onCancel={cancelActivate}
       />
     </div>
   );
