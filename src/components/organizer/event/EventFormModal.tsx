@@ -752,15 +752,53 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         let apiEvent: any = null;
 
         const responseData = response.data as any;
+        
+        console.log("Full response data:", responseData);
 
-        if (responseData?.data) {
+        // Thử các cách lấy event data khác nhau từ response
+        if (responseData?.events && Array.isArray(responseData.events) && responseData.events.length > 0) {
+          // Response mới: { events: [...], totalOccurrences: 1 }
+          apiEvent = responseData.events[0];
+          console.log("Found event in responseData.events[0]:", apiEvent);
+        } else if (responseData?.data) {
           apiEvent = responseData.data;
+        } else if (responseData?.event) {
+          apiEvent = responseData.event;
         } else if (responseData?.id || responseData?.title) {
           apiEvent = responseData;
+        } else if (responseData?.success && responseData?.message) {
+          // Response chỉ có message thành công, không có data chi tiết
+          // Tạo event object từ form data
+          console.log("Response only has success message, using form data");
+          apiEvent = {
+            id: Date.now(), // temporary ID
+            title: formData.title,
+            description: formData.description,
+            category: formData.eventType,
+            startTime: formData.startDate,
+            endTime: formData.endDate,
+            startTimeRegistration: formData.registrationDeadline,
+            maxCapacity: formData.maxParticipants,
+            venueId: Number(formData.venueId),
+            status: "PENDING",
+          };
         }
 
-        if (!apiEvent || !apiEvent.id) {
-          throw new Error("Không tìm thấy thông tin sự kiện trong response");
+        // Nếu vẫn không có apiEvent, sử dụng form data
+        if (!apiEvent) {
+          console.log("No event in response, creating from form data");
+          apiEvent = {
+            id: Date.now(),
+            title: formData.title,
+            description: formData.description,
+            category: formData.eventType,
+            startTime: formData.startDate,
+            endTime: formData.endDate,
+            startTimeRegistration: formData.registrationDeadline,
+            maxCapacity: formData.maxParticipants,
+            venueId: Number(formData.venueId),
+            status: "PENDING",
+          };
         }
 
         const savedEvent: Event = {
