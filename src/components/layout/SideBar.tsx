@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Calendar,
   Building2,
-  MapPin,
   Users,
   ChevronDown,
   ChevronRight,
@@ -13,6 +12,8 @@ import {
   UserStar,
   User,
   LogOut,
+  Award,
+  AlertTriangle,
 } from 'lucide-react';
 
 import Logout from '../auth/Logout';
@@ -54,15 +55,21 @@ const SideBar = ({ userRole }: SideBarProps) => {
       id: 'events',
       label: 'Quản lý Sự kiện',
       icon: <Calendar size={20} />,
-      path: '/admin/list-events'
-      // children: [
-      //   {
-      //     id: 'events-list',
-      //     label: 'Danh sách sự kiện',
-      //     icon: <Building2 size={18} />,
-      //     path: '/admin/list-events',
-      //   },
-      // ],
+      // path: '/admin/list-events',
+      children: [
+        {
+          id: 'events-list',
+          label: 'Danh sách sự kiện',
+          icon: <Calendar size={20} />,
+          path: '/admin/list-events',
+        },
+        {
+          id: 'delette-events-list',
+          label: 'Danh sách yêu cầu xóa sự kiện',
+          icon: <Calendar size={20} />,
+        path: '/admin/list-delete-events',
+        },
+      ],
     },
     {
       id: 'venues',   
@@ -107,6 +114,12 @@ const SideBar = ({ userRole }: SideBarProps) => {
         },
       ],
     },
+    {
+      id: 'incidents',
+      label: 'Quản lý Sự cố',
+      icon: <AlertTriangle size={20} />,
+      path: '/admin/incidents',
+    },
   ];
 
   // Organizer menu items
@@ -124,6 +137,12 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/events',
     },
     {
+      id: 'organizers',
+      label: 'Quản lý Organizers',
+      icon: <Building2 size={20} />,
+      path: '/organizer/organizers',
+    },
+    {
       id: 'attendees',
       label: 'Người tham dự',
       icon: <Users size={20} />,
@@ -136,10 +155,22 @@ const SideBar = ({ userRole }: SideBarProps) => {
       path: '/organizer/staff',
     },
     {
+      id: 'speaker',
+      label: 'Quản lý diễn giả',
+      icon: <UserStar size={20} />,
+      path: '/organizer/speakers',
+    },
+    {
       id: 'reports',
-      label: 'Báo cáo',
-      icon: <MapPin size={20} />,
+      label: 'Đánh giá',
+      icon: <Award size={20} />,
       path: '/organizer/reports',
+    },
+    {
+      id: 'incidents',
+      label: 'Quản lý Sự cố',
+      icon: <AlertTriangle size={20} />,
+      path: '/organizer/incidents',
     },
   ];
 

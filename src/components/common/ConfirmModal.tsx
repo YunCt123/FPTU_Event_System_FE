@@ -8,7 +8,7 @@ interface ConfirmModalProps {
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
-  type?: 'danger' | 'warning' | 'info';
+  type?: 'danger' | 'warning' | 'info' | 'success';
 }
 
 const ConfirmModal = ({
@@ -38,6 +38,11 @@ const ConfirmModal = ({
       icon: <AlertTriangle size={48} className="text-blue-500" />,
       confirmButton: 'bg-blue-600 hover:bg-blue-700',
       titleColor: 'text-blue-900'
+    },
+    success: {
+      icon: <AlertTriangle size={48} className="text-green-500" />,
+      confirmButton: 'bg-green-600 hover:bg-green-700',
+      titleColor: 'text-green-900'
     }
   };
 

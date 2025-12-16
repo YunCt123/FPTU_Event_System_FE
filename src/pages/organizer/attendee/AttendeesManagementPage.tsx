@@ -286,23 +286,23 @@ const AttendeesManagementPage = () => {
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Tổng đăng ký</div>
+        <div className="bg-orange-100 rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="text-sm text-gray-600 ">Tổng đăng ký</div>
           <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Đã check-in</div>
+        <div className="bg-green-100 rounded-xl shadow-sm border border-gray-200 p-4 ">
+          <div className="text-sm text-gray-600 ">Đã check-in</div>
           <div className="text-2xl font-bold text-green-600 mt-1">{stats.checkedIn}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-yellow-100 rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Chưa check-in</div>
           <div className="text-2xl font-bold text-yellow-600 mt-1">{stats.notCheckedIn}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-red-100 rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Đã hủy</div>
           <div className="text-2xl font-bold text-red-600 mt-1">{stats.cancelled}</div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="bg-blue-100 rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="text-sm text-gray-600">Tỷ lệ tham dự</div>
           <div className="text-2xl font-bold text-blue-600 mt-1">{Math.round(stats.attendanceRate)}%</div>
         </div>
@@ -415,11 +415,11 @@ const AttendeesManagementPage = () => {
                   Trạng thái
                 </th> */}
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Đăng ký
+                  Trạng thái
                 </th>
-                {/* <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                  Check-in
-                </th> */}
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Thời gian
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -472,7 +472,7 @@ const AttendeesManagementPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {attendee.seat?.label || '-'}
+                      {attendee.seat?.label || '-'} {attendee.seat?.row ? `(${attendee.seat.row})` : ''}
                     </td>
                     <td className="px-6 py-4">{(attendee.status)}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">

@@ -1,10 +1,11 @@
-import { Search, Filter, Eye, Trash2, Check, X, Image as ImageIcon } from "lucide-react";
+import { Search, Filter, Eye, Trash2, Check, X, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
 import eventService from "../../../services/eventService";
 import type { GetEventResponse } from "../../../types/Event";
 import { toast } from "react-toastify";
+import ActionDropdown from "../../../components/ActionDropdown";
 
 const ListEventPage = () => {
   const [statusFilter, setStatusFilter] = useState("");
@@ -16,6 +17,9 @@ const ListEventPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchEvents();
@@ -49,6 +53,41 @@ const ListEventPage = () => {
 
     return matchesStatus && matchesSearch;
   });
+
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   const handleApproveEvent = async (eventId: string | number, status: string) => {
     setSubmitting(true);
@@ -205,7 +244,7 @@ const ListEventPage = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ngày tạo</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Địa điểm</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Trạng thái</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Thao tác</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900"></th>
               </tr>
             </thead>
 
@@ -223,9 +262,9 @@ const ListEventPage = () => {
                   </td>
                 </tr>
               ) : (
-                filteredEvents.map((e, index) => (
+                currentEvents.map((e, index) => (
                   <tr key={e.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{index + 1}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{startIndex + index + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{e.title}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{e.organizer.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -235,29 +274,29 @@ const ListEventPage = () => {
                     <td className="px-6 py-4 text-sm">{getStatusBadge(e.status)}</td>
 
                     <td className="px-6 py-4">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedEvent(e);
-                            setShowDetailModal(true);                        
-                          }}
-                          className="text-blue-600 hover:text-blue-800 p-1 rounded-md hover:bg-blue-50 transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={20} />
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setSelectedEvent(e);
-                            setShowDeleteConfirm(true);
-                          }}
-                          className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 transition-colors"
-                          title="Xóa"
-                          disabled={submitting}
-                        >
-                          <Trash2 size={20} />
-                        </button>
+                      <div className="flex justify-center">
+                        <ActionDropdown
+                          actions={[
+                            {
+                              label: "Xem chi tiết",
+                              icon: Eye,
+                              onClick: () => {
+                                setSelectedEvent(e);
+                                setShowDetailModal(true);
+                              },
+                            },
+                            // {  
+                            //   label: "Xóa",
+                            //   icon: Trash2,
+                            //   onClick: () => {
+                            //     setSelectedEvent(e);
+                            //     setShowDeleteConfirm(true);
+                            //   },
+                            //   danger: true,
+                            //   disabled: submitting,
+                            // },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -268,104 +307,239 @@ const ListEventPage = () => {
         </div>
       </div>
 
-      {filteredEvents.length > 0 && (
+      {/* {filteredEvents.length > 0 && (
         <div className="mt-4 text-sm text-gray-600">
           Tổng số: <span className="font-semibold">{filteredEvents.length}</span> sự kiện
         </div>
-      )}
+      )} */}
 
-      {/* Detail Modal */}
+      {/* ✅ Detail Modal - ĐÃ THÊM SPEAKER */}
       {showDetailModal && selectedEvent && (
         <EventModal title="Chi tiết sự kiện" onClose={() => setShowDetailModal(false)}>
-          <div className="space-y-6">
-            {/* Event Image */}
-            <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100 mt-4">
-              {selectedEvent.imageUrl || selectedEvent.bannerUrl ? (
-                <img 
-                  src={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
-                  alt={selectedEvent.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                          <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                          <p class="text-sm">Không thể tải ảnh</p>
+          <div className="space-y-4">
+            {/* ✅ Layout 2 cột: Image + Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* ===== CỘT TRÁI: IMAGE ===== */}
+              <div className="space-y-4">
+                {/* Event Image */}
+                <div className="relative w-full h-64 lg:h-80 rounded-lg overflow-hidden bg-gray-100">
+                  {selectedEvent.imageUrl || selectedEvent.bannerUrl ? (
+                    <img 
+                      src={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
+                      alt={selectedEvent.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                              <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                              </svg>
+                              <p class="text-sm">Không thể tải ảnh</p>
+                            </div>
+                          `;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                      <ImageIcon size={48} className="mb-2" />
+                      <p className="text-sm">Không có ảnh</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ===== CỘT PHẢI: INFO ===== */}
+              <div className="space-y-3">
+                {/* Grid thông tin cơ bản */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* ID */}
+                  <div className="col-span-2 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">ID</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{selectedEvent.id}</p>
+                  </div>
+
+                  {/* Tên sự kiện */}
+                  <div className="col-span-2 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">Tên sự kiện</p>
+                    <p className="text-sm font-semibold text-gray-900">{selectedEvent.title}</p>
+                  </div>
+
+                  {/* Ban tổ chức */}
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                    <p className="text-xs text-blue-600 mb-1">Ban tổ chức</p>
+                    <p className="text-sm font-medium text-blue-900">{selectedEvent.organizer.name}</p>
+                  </div>
+
+                  {/* Địa điểm */}
+                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                    <p className="text-xs text-purple-600 mb-1">Địa điểm</p>
+                    <p className="text-sm font-medium text-purple-900">{selectedEvent.venue?.name || "-"}</p>
+                  </div>
+
+                  {/* Ngày bắt đầu */}
+                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                    <p className="text-xs text-green-600 mb-1">Ngày bắt đầu</p>
+                    <p className="text-sm font-medium text-green-900">
+                      {new Date(selectedEvent.startTime).toLocaleString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+
+                  {/* Ngày kết thúc */}
+                  <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                    <p className="text-xs text-orange-600 mb-1">Ngày kết thúc</p>
+                    <p className="text-sm font-medium text-orange-900">
+                      {new Date(selectedEvent.endTime).toLocaleString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+
+                  {/* Trạng thái */}
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">Trạng thái</p>
+                    {getStatusBadge(selectedEvent.status)}
+                  </div>
+
+                  {/* Mô tả */}
+                  {selectedEvent.description && (
+                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                      <p className="text-xs text-amber-600 mb-1">Mô tả</p>
+                      <p className="text-sm text-amber-900 line-clamp-3">
+                        {selectedEvent.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* ✅ THÊM: Speaker Section - DƯỚI GRID INFO */}
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Speaker
+                    {selectedEvent.eventSpeakers && selectedEvent.eventSpeakers.length > 0 && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                        {selectedEvent.eventSpeakers.length}
+                      </span>
+                    )}
+                  </h3>
+                  
+                  {selectedEvent.eventSpeakers && selectedEvent.eventSpeakers.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {selectedEvent.eventSpeakers.map((eventSpeaker) => (
+                        <div 
+                          key={eventSpeaker.id} 
+                          className="bg-white rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Avatar */}
+                            {eventSpeaker.speaker.avatar ? (
+                              <img 
+                                src={eventSpeaker.speaker.avatar} 
+                                alt={eventSpeaker.speaker.name}
+                                className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-blue-200"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(eventSpeaker.speaker.name)}&background=4F46E5&color=fff&size=128`;
+                                }}
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 border-2 border-blue-200">
+                                {eventSpeaker.speaker.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              {/* Name */}
+                              <p className="font-semibold text-sm text-gray-900 mb-0.5">
+                                {eventSpeaker.speaker.name}
+                              </p>
+                              
+                              {/* Company */}
+                              {eventSpeaker.speaker.company && (
+                                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                  </svg>
+                                  {eventSpeaker.speaker.company}
+                                </p>
+                              )}
+                              
+                              {/* Topic */}
+                              {eventSpeaker.topic && (
+                                <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block mb-1">
+                                  📚 {eventSpeaker.topic}
+                                </p>
+                              )}
+                              
+                              {/* Bio */}
+                              {eventSpeaker.speaker.bio && (
+                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                                  {eventSpeaker.speaker.bio}
+                                </p>
+                              )}
+
+                              {/* Email (nếu có) */}
+                              {eventSpeaker.speaker.email && (
+                                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                  {eventSpeaker.speaker.email}
+                                </p>
+                              )}
+
+                              {/* Phone (nếu có) */}
+                              {eventSpeaker.speaker.phone && (
+                                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                  </svg>
+                                  {eventSpeaker.speaker.phone}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      `;
-                    }
-                  }}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <ImageIcon size={48} className="mb-2" />
-                  <p className="text-sm">Không có ảnh</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500 text-sm py-4">
+                      Chưa có thông tin diễn giả cho sự kiện này.
+                    </p>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Thông tin chi tiết */}
-            <div className="space-y-3 overflow-y-auto max-h-96">
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[120px]">ID:</span>
-                <span className="text-gray-700 break-all">{selectedEvent.id}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[120px]">Tên sự kiện:</span>
-                <span className="text-gray-700">{selectedEvent.title}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[120px]">Ban tổ chức:</span>
-                <span className="text-gray-700">{selectedEvent.organizer.name}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[120px]">Ngày tạo:</span>
-                <span className="text-gray-700">{new Date(selectedEvent.createdAt).toLocaleString('vi-VN')}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[120px]">Địa điểm:</span>
-                <span className="text-gray-700">{selectedEvent.venue?.name || "-"}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-semibold min-w-[120px]">Trạng thái:</span>
-                {getStatusBadge(selectedEvent.status)}
-              </div>
-              {/* {(selectedEvent.imageUrl || selectedEvent.bannerUrl) && (
-                <div className="flex gap-2 items-start">
-                  <span className="font-semibold min-w-[120px]">URL Ảnh:</span>
-                  <a 
-                    href={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline break-all flex-1 text-sm"
-                  >
-                    {selectedEvent.bannerUrl || selectedEvent.imageUrl}
-                  </a>
-                </div>
-              )} */}
-              {selectedEvent.description && (
-                <div className="flex gap-2 items-start">
-                  <span className="font-semibold min-w-[120px]">Mô tả:</span>
-                  <span className="text-gray-700 flex-1">{selectedEvent.description}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Action buttons */}
+            {/* ✅ Action buttons - Dính đáy */}
             {selectedEvent.status === "PENDING" && (
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-3 border-t border-gray-200">
                 <button
                   onClick={() => {
                     handleApproveEvent(selectedEvent.id, "PUBLISHED");
                     setShowDetailModal(false);
                   }}
                   disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                 >
                   <Check size={18} />
                   {submitting ? "Đang xử lý..." : "Duyệt"}
@@ -377,7 +551,7 @@ const ListEventPage = () => {
                     setShowDetailModal(false);
                   }}
                   disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                 >
                   <X size={18} />
                   {submitting ? "Đang xử lý..." : "Từ chối"}
@@ -386,11 +560,11 @@ const ListEventPage = () => {
             )}
 
             {(selectedEvent.status === "PUBLISHED" || selectedEvent.status === "CANCELED") && (
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-3 border-t border-gray-200">
                 <p className="text-sm text-gray-500 text-center">
                   {selectedEvent.status === "PUBLISHED" 
-                    ? "Sự kiện đã được duyệt" 
-                    : "Sự kiện đã bị từ chối"}
+                    ? "✅ Sự kiện đã được duyệt" 
+                    : "❌ Sự kiện đã bị từ chối"}
                 </p>
               </div>
             )}
@@ -412,6 +586,60 @@ const ListEventPage = () => {
         }}
         type="danger"
       />
+
+      {/* Pagination Controls */}
+      {filteredEvents.length > 0 && (
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            {/* Showing info */}
+            <div className="text-sm text-gray-600">
+              {/* Hiển thị <span className="font-semibold text-gray-900">{startIndex + 1}</span> đến{' '}
+              <span className="font-semibold text-gray-900">{Math.min(endIndex, filteredEvents.length)}</span> trong tổng số{' '}
+              <span className="font-semibold text-gray-900">{filteredEvents.length}</span> sự kiện */}
+            </div>
+
+            {/* Pagination controls */}
+            <div className="flex items-center gap-2">
+              {/* Previous button */}
+              <button
+                onClick={goToPrevPage}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Trang trước"
+              >
+                <ChevronLeft size={20} className="text-gray-600" />
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => goToPage(pageNum)}
+                    className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-colors ${
+                      pageNum === currentPage
+                        ? 'bg-red-500 text-white'
+                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+              </div>
+
+              {/* Next button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Trang sau"
+              >
+                <ChevronRight size={20} className="text-gray-600" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
