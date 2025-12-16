@@ -94,7 +94,7 @@ const eventService = {
         status: 'APPROVED' | 'REJECTED';
         adminNote?: string;
     }): Promise<AxiosResponse<ApiResponse<any>>> {
-        console.group('🔍 APPROVE/REJECT DELETE REQUEST');
+        console.group('APPROVE/REJECT DELETE REQUEST');
         console.log('1. Request ID:', params.requestId);
         console.log('2. Status:', params.status);
         console.log('3. Admin Note:', params.adminNote);
@@ -117,7 +117,10 @@ const eventService = {
     async postCancellationReason(
         data: { reason: string; isActive: boolean; }): Promise<AxiosResponse<ApiResponse<CancellationReason>>> {
         return await apiUtils.post<ApiResponse<CancellationReason>>(`${EVENT_URL}cancellations`, data);
-    }
+    },
+
+    
+    
 };
 
 export default eventService;
