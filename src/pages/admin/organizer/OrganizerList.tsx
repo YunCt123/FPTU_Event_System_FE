@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import OrganizerListGrid from "../../../components/admin/organizer/OrganizerListGrid";
 import OrganizerRequestsTab from "../../../components/admin/organizer/OrganizerRequestsTab";
 import { Users, FileText } from "lucide-react";
@@ -8,17 +8,30 @@ type TabType = "organizers" | "requests";
 const OrganizerList = () => {
   const [activeTab, setActiveTab] = useState<TabType>("organizers");
 
+  // Get current user from localStorage
+  const currentUser = useMemo(() => {
+    const userData = localStorage.getItem("user");
+    return userData ? JSON.parse(userData) : null;
+  }, []);
+
+  const isAdmin = currentUser?.roleName === "admin";
+
   const tabs = [
     {
       id: "organizers" as TabType,
       label: "Danh sách Organizer",
       icon: <Users size={18} />,
     },
-    {
-      id: "requests" as TabType,
-      label: "Yêu cầu trở thành Organizer",
-      icon: <FileText size={18} />,
-    },
+    // Only show requests tab for admin
+    ...(isAdmin
+      ? [
+          {
+            id: "requests" as TabType,
+            label: "Yêu cầu trở thành Organizer",
+            icon: <FileText size={18} />,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -53,7 +66,7 @@ const OrganizerList = () => {
       {/* Tab Content */}
       <div>
         {activeTab === "organizers" && <OrganizerListGrid />}
-        {activeTab === "requests" && <OrganizerRequestsTab />}
+        {activeTab === "requests" && isAdmin && <OrganizerRequestsTab />}
       </div>
     </div>
   );
