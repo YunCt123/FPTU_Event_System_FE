@@ -32,6 +32,7 @@ import AccountPage from "../pages/AccountPage";
 import SpeakerManagementPage from "../pages/organizer/speaker/SpeakerManagementPage";
 import AdminIncidentsPage from "../pages/admin/incident/AdminIncidentsPage";
 import OrganizerIncidentsPage from "../pages/organizer/incident/OrganizerIncidentsPage";
+import DeleteResponsePage from "../pages/admin/event/DeleteResponsePage";
 
 const MainRoute: React.FC = () => {
   return (
@@ -76,6 +77,7 @@ const MainRoute: React.FC = () => {
             <Route path="/admin/settings" element={<div>System Settings</div>} />
             <Route path="/admin/detail-events/:id" element={<DetailEventPage />}/>
             <Route path="/admin/list-events" element={<ListEventPage />} />
+            <Route path="/admin/list-delete-events" element={<DeleteResponsePage />} />
             <Route path="/admin/dashboard-events" element={<DashboardPage />} />
             <Route path="/admin/events" element={<EditEventPage />} />
             <Route path="/admin/organizers" element={<OrganizerList />} />

@@ -1,7 +1,18 @@
 import { apiUtils } from "../api/axios";
 import { EVENT_URL } from "../constants/apiEndPoints";
 import type { AxiosResponse } from "axios";
-import type { CreateEventRequest, EventDeleteResponse, GetEventResponse, GetTotalEventsResponse, UpdateEventRequest, UpdateEventResponse } from "../types/Event";
+import type { 
+    CancellationReason, 
+    CreateEventRequest, 
+    DeleteEventByOrganizersRequest, 
+    DeleteEventByOrganizersResponse, 
+    EventDeleteResponse, 
+    GetEventResponse, 
+    GetTotalEventsResponse, 
+    UpdateEventRequest, 
+    UpdateEventResponse,
+    GetDeleteRequestsResponse
+} from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
 
 const eventService = {
@@ -17,7 +28,13 @@ const eventService = {
     },
 
     async getEventById(id: string): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
-        return await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
+        console.log('API Call: getEventById with ID:', id);
+        console.log('Full URL:', `${EVENT_URL}${id}`);
+        
+        const response = await apiUtils.get<ApiResponse<GetEventResponse>>(`${EVENT_URL}${id}`);
+        
+        console.log('API Response:', response);
+        return response;
     },
 
     async deleteEvent(params?: { 
@@ -43,44 +60,64 @@ const eventService = {
         return await apiUtils.patch<ApiResponse<UpdateEventResponse>>(`${EVENT_URL}${id}`, data);
     },
 
-    async requestDeleteEvent(params: { 
+    // ✅ API GỬI YÊU CẦU XÓA TỪ ORGANIZER (KHÔNG ĐỔI STATUS)
+    async requestCancelEvent(params: {
         eventId: string;
-        reason: string;
-    }): Promise<AxiosResponse<ApiResponse<any>>> {
-        console.log('📤 Sending delete request:', params);
-        return await apiUtils.post<ApiResponse<any>>(`${EVENT_URL}${params.eventId}/delete-request`, {
-            reason: params.reason
-        });
+        data: DeleteEventByOrganizersRequest
+    }): Promise<AxiosResponse<ApiResponse<DeleteEventByOrganizersResponse>>> {
+        console.log('📤 Organizer sending cancel request:', params);
+        return await apiUtils.post<ApiResponse<DeleteEventByOrganizersResponse>>(
+            `${EVENT_URL}${params.eventId}/cancel`, 
+            params.data
+        );
     },
 
+    // ✅ API LẤY DANH SÁCH YÊU CẦU XÓA (ADMIN)
     async getDeleteRequests(params?: {
         page?: number;
         limit?: number;
-        status?: 'PENDING' | 'APPROVED' | 'REJECTED';
-    }): Promise<AxiosResponse<ApiResponse<any>>> {
-        return await apiUtils.get<ApiResponse<any>>(`${EVENT_URL}delete-requests`, params);
+        status?: string;
+        eventId?: string;
+        requestedBy?: number;
+    }): Promise<AxiosResponse<ApiResponse<GetDeleteRequestsResponse>>> {
+        console.log('📋 Fetching delete requests with params:', params);
+        
+        return await apiUtils.get<ApiResponse<GetDeleteRequestsResponse>>(
+            `${EVENT_URL}cancellation-requests`,
+            params
+        );
     },
 
+    // ✅ API PHÊ DUYỆT/TỪ CHỐI YÊU CẦU XÓA - ĐÚNG THEO SWAGGER
     async approveDeleteRequest(params: {
-        requestId: string;
-        action: 'APPROVE' | 'REJECT';
-        note?: string;
+        requestId: number;
+        status: 'APPROVED' | 'REJECTED';
+        adminNote?: string;
     }): Promise<AxiosResponse<ApiResponse<any>>> {
+        console.group('🔍 APPROVE/REJECT DELETE REQUEST');
+        console.log('1. Request ID:', params.requestId);
+        console.log('2. Status:', params.status);
+        console.log('3. Admin Note:', params.adminNote);
+        console.log('4. Full URL:', `${EVENT_URL}cancellation-requests/${params.requestId}/status`);
+        console.log('5. Request Body:', {
+            status: params.status,
+            adminNote: params.adminNote || 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
+        });
+        console.groupEnd();
+
         return await apiUtils.patch<ApiResponse<any>>(
-            `${EVENT_URL}delete-requests/${params.requestId}`,
+            `${EVENT_URL}cancellation-requests/${params.requestId}/status`,
             {
-                action: params.action,
-                note: params.note
+                status: params.status,
+                adminNote: params.adminNote || 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
             }
         );
     },
 
-    // XÓA HOẶC COMMENT OUT hàm này
-    // async getTotalEventsByMoth(param?:{
-    //     year?: number;
-    // }): Promise<AxiosResponse<ApiResponse<{ month: string; totalEvents: number }[]>>> {
-    //     return await apiUtils.get<ApiResponse<{ month: string; totalEvents: number }[]>>(`${EVENT_URL}stats/monthly`, { param});
-    // }
+    async postCancellationReason(
+        data: { reason: string; isActive: boolean; }): Promise<AxiosResponse<ApiResponse<CancellationReason>>> {
+        return await apiUtils.post<ApiResponse<CancellationReason>>(`${EVENT_URL}cancellations`, data);
+    }
 };
 
 export default eventService;
