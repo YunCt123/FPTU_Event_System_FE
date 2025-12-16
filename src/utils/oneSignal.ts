@@ -22,6 +22,7 @@ const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || "";
 export type NotificationType =
   | "staff_assigned"
   | "event_created"
+  | "event_pending_approval"
   | "event_approved"
   | "event_rejected"
   | "event_cancelled"
@@ -31,7 +32,11 @@ export type NotificationType =
   | "incident_reported"
   | "cancellation_request"
   | "cancellation_approved"
-  | "cancellation_rejected";
+  | "cancellation_rejected"
+  | "organizer_request_submitted"
+  | "organizer_request_received"
+  | "organizer_request_approved"
+  | "organizer_request_rejected";
 
 /**
  * Interface cho notification data từ backend
@@ -44,12 +49,14 @@ export interface NotificationData {
   status?: "PENDING" | "PUBLISHED" | "CANCELED";
   title?: string;
   eventTitle?: string;
+  organizerName?: string;
   requestId?: number;
   reason?: string;
   adminNote?: string;
   incidentId?: number;
   severity?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   reporterName?: string;
+  requesterName?: string;
 }
 
 /**
@@ -269,6 +276,15 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
         if (data.eventId) navigateToEvent(data.eventId);
         break;
 
+      case "event_pending_approval":
+        toast.warning(
+          `Có sự kiện mới "${data.eventTitle || "này"}" từ ${
+            data.organizerName || "organizer"
+          } cần phê duyệt`
+        );
+        if (data.eventId) navigateToEvent(data.eventId);
+        break;
+
       case "event_approved":
         toast.success("🎉 Sự kiện của bạn đã được phê duyệt và công bố!");
         if (data.eventId) navigateToEvent(data.eventId);
@@ -345,6 +361,46 @@ const setupNotificationClickHandler = (OneSignal: any): void => {
           }" đã bị từ chối. Sự kiện vẫn sẽ diễn ra.`
         );
         if (data.eventId) navigateToEvent(data.eventId);
+        break;
+
+      case "organizer_request_submitted":
+        // Admin nhận khi student gửi yêu cầu trở thành organizer
+        toast.info(
+          `📝 Có yêu cầu trở thành Organizer mới từ ${
+            data.requesterName || "student"
+          } cho tổ chức "${data.organizerName || ""}"`
+        );
+        navigateToNotifications();
+        break;
+
+      case "organizer_request_received":
+        // Student nhận khi yêu cầu đang pending
+        toast.info(
+          `✅ Yêu cầu trở thành Organizer của bạn đã được ghi nhận và đang chờ xử lý`
+        );
+        navigateToNotifications();
+        break;
+
+      case "organizer_request_approved":
+        // Student nhận khi yêu cầu được duyệt
+        toast.success(
+          `🎉 Chúc mừng! Yêu cầu trở thành Organizer "${
+            data.organizerName || ""
+          }" của bạn đã được phê duyệt!`
+        );
+        navigateToNotifications();
+        break;
+
+      case "organizer_request_rejected":
+        // Student nhận khi yêu cầu bị từ chối
+        toast.error(
+          `❌ Yêu cầu trở thành Organizer "${
+            data.organizerName || ""
+          }" của bạn đã bị từ chối.${
+            data.reason ? ` Lý do: ${data.reason}` : ""
+          }`
+        );
+        navigateToNotifications();
         break;
 
       default:
