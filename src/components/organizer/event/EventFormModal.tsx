@@ -77,14 +77,19 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     }
   }, [organizerInfo]);
 
-  const [originalData, setOriginalData] = useState<CreateEventRequest | null>(
-    null
-  );
+  // Sửa useEffect để fetch staff khi organizerInfo thay đổi
+  useEffect(() => {
+    if (organizerInfo?.campusId) {
+      fetchStaffList(organizerInfo.campusId);
+    }
+  }, [organizerInfo]);
+
+  const [originalData, setOriginalData] = useState<CreateEventRequest | null>(null);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       if (event) {
-        console.log("📝 Editing event:", event);
+        console.log('Editing event:', event);
 
         const formatToDatetimeLocal = (isoString: string): string => {
           if (!isoString) return "";
@@ -390,42 +395,30 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     }
   };
 
-  const fetchStaffList = async () => {
+  // Sửa fetchStaffList để nhận campusId
+  const fetchStaffList = async (campusId: number) => {
     setIsLoadingStaff(true);
     try {
-      console.log("Fetching staff list...");
+      console.log('Fetching staff list for campus:', campusId);
 
+      // Truyền campusId vào params
       const response = await organizerService.getStaffEvent({
         isActive: true,
+        campusId: campusId,
       });
-
-      console.log("Full staff response:", response);
 
       const responseData = response.data as any;
       let staffData: User[] = [];
 
-      if (
-        responseData?.success &&
-        responseData?.data &&
-        Array.isArray(responseData.data)
-      ) {
+      if (responseData?.success && responseData?.data && Array.isArray(responseData.data)) {
         staffData = responseData.data;
-        console.log("Case 1: Found staff in response.data.data");
       } else if (Array.isArray(responseData)) {
         staffData = responseData;
-        console.log("Case 2: Found staff in response.data");
       } else if (responseData?.data && Array.isArray(responseData.data)) {
         staffData = responseData.data;
-        console.log("Case 3: Found staff in response.data.data");
       }
 
-      console.log("Final staff data:", staffData);
-
-      if (staffData.length > 0) {
-        setStaffList(staffData);
-      } else {
-        setStaffList([]);
-      }
+      setStaffList(staffData.length > 0 ? staffData : []);
     } catch (error: any) {
       console.error("Error fetching staff:", error);
       setStaffList([]);
