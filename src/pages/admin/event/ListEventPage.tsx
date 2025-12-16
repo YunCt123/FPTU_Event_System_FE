@@ -285,16 +285,16 @@ const ListEventPage = () => {
                                 setShowDetailModal(true);
                               },
                             },
-                            {
-                              label: "Xóa",
-                              icon: Trash2,
-                              onClick: () => {
-                                setSelectedEvent(e);
-                                setShowDeleteConfirm(true);
-                              },
-                              danger: true,
-                              disabled: submitting,
-                            },
+                            // {  
+                            //   label: "Xóa",
+                            //   icon: Trash2,
+                            //   onClick: () => {
+                            //     setSelectedEvent(e);
+                            //     setShowDeleteConfirm(true);
+                            //   },
+                            //   danger: true,
+                            //   disabled: submitting,
+                            // },
                           ]}
                         />
                       </div>
