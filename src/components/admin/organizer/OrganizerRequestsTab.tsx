@@ -9,6 +9,8 @@ import {
   ChevronRight,
   X,
   ExternalLink,
+  Users,
+  Mail,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import organizerRequestService from "../../../services/organizerRequestService";
@@ -474,6 +476,29 @@ const OrganizerRequestsTab = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Member Emails */}
+              {selectedRequest.memberEmails &&
+                selectedRequest.memberEmails.length > 0 && (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <Users size={16} className="text-[#F27125]" />
+                      Danh sách thành viên (
+                      {selectedRequest.memberEmails.length})
+                    </h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {selectedRequest.memberEmails.map((email, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg"
+                        >
+                          <Mail size={14} className="text-gray-400" />
+                          <span className="text-sm text-gray-700">{email}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               {/* Proof Image */}
               <div className="border border-gray-200 rounded-lg p-4">

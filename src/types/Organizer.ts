@@ -146,6 +146,7 @@ export interface OrganizerRequestItem {
   name: string;
   description: string;
   contactEmail: string;
+  memberEmails: string[];
   logoUrl: string;
   proofImageUrl: string;
   status: OrganizerRequestStatus;
