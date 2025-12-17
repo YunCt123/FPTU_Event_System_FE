@@ -249,7 +249,7 @@ const OrganizerEventPage = () => {
                   {event.status === 'PUBLISHED' ? 'Đã duyệt' : 
                    event.status === 'APPROVED' ? 'Đã duyệt' :
                    event.status === 'PENDING' ? 'Đang xử lý' :
-                   event.status === 'CANCELED' ? 'Đã hủy' :
+                   event.status === 'CANCELED' ? 'Bị từ chối ' :
                    event.status}
                 </span>
               </div>
