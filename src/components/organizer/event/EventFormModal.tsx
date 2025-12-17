@@ -52,10 +52,20 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [isLoadingOrganizer, setIsLoadingOrganizer] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string>("");
+  const EVENT_TYPE_OPTIONS = [
+    { value: 'CONFERENCE', label: 'Hội nghị (Conference)' },
+    { value: 'WORKSHOP', label: 'Workshop' },
+    { value: 'SEMINAR', label: 'Hội thảo (Seminar)' },
+    { value: 'COMPETITION', label: 'Cuộc thi (Competition)' },
+    { value: 'CULTURAL', label: 'Văn hóa (Cultural)' },
+    { value: 'SPORTS', label: 'Thể thao (Sports)' },
+    { value: 'OTHER', label: 'Khác (Other)' },
+  ];
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    eventType: "",
+    eventType: "WORKSHOP",
     startDate: "",
     endDate: "",
     registrationDeadline: "",
