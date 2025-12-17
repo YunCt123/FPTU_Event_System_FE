@@ -1,16 +1,19 @@
 import { apiUtils } from "../api/axios";
 import { EVENT_URL } from "../constants/apiEndPoints";
 import type { AxiosResponse } from "axios";
-import type {
-  CreateEventRequest,
-  DeleteEventByOrganizersRequest,
-  DeleteEventByOrganizersResponse,
-  EventDeleteResponse,
-  GetEventResponse,
-  GetTotalEventsResponse,
-  UpdateEventRequest,
-  UpdateEventResponse,
-  GetDeleteRequestsResponse,
+import type { 
+    CancellationReason, 
+    CreateEventRequest, 
+    DeleteEventByOrganizersRequest, 
+    DeleteEventByOrganizersResponse, 
+    EventDeleteResponse, 
+    GetEventResponse, 
+    GetTotalEventsResponse, 
+    UpdateEventRequest, 
+    UpdateEventResponse,
+    GetDeleteRequestsResponse,
+    BookingWeeklyResponse,
+    BookingWeeklyRequest
 } from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
 import type {
@@ -155,11 +158,48 @@ const eventService = {
     );
   },
 
-  async bookingOnline(
-    data: BookingOnlineRequest
-  ): Promise<AxiosResponse<BookingOnlineResponse>> {
-    return await apiUtils.post<BookingOnlineResponse>(`${EVENT_URL}`, data);
-  },
+    // ✅ API PHÊ DUYỆT/TỪ CHỐI YÊU CẦU XÓA - ĐÚNG THEO SWAGGER
+    async approveDeleteRequest(params: {
+        requestId: number;
+        status: 'APPROVED' | 'REJECTED';
+        adminNote?: string;
+    }): Promise<AxiosResponse<ApiResponse<any>>> {
+        console.group('APPROVE/REJECT DELETE REQUEST');
+        console.log('1. Request ID:', params.requestId);
+        console.log('2. Status:', params.status);
+        console.log('3. Admin Note:', params.adminNote);
+        console.log('4. Full URL:', `${EVENT_URL}cancellation-requests/${params.requestId}/status`);
+        console.log('5. Request Body:', {
+            status: params.status,
+            adminNote: params.adminNote || 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
+        });
+        console.groupEnd();
+
+        return await apiUtils.patch<ApiResponse<any>>(
+            `${EVENT_URL}cancellation-requests/${params.requestId}/status`,
+            {
+                status: params.status,
+                adminNote: params.adminNote || 'Đã xem xét và chấp thuận yêu cầu hủy sự kiện'
+            }
+        );
+    },
+
+    async postCancellationReason(
+        data: { reason: string; isActive: boolean; }): Promise<AxiosResponse<ApiResponse<CancellationReason>>> {
+        return await apiUtils.post<ApiResponse<CancellationReason>>(`${EVENT_URL}cancellations`, data);
+    },
+
+    async bookingOnline(data: BookingOnlineRequest): Promise<AxiosResponse<BookingOnlineResponse>> {
+        return await apiUtils.post<BookingOnlineResponse>(
+            `${EVENT_URL}`, data
+        );
+    },
+
+async bookingWeekly(data: BookingWeeklyRequest): Promise<AxiosResponse<BookingWeeklyResponse>> {
+    return await apiUtils.post<BookingWeeklyResponse>(
+            `${EVENT_URL}`, data);
+    },
+    
 };
 
 export default eventService;
