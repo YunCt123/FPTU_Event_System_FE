@@ -394,9 +394,15 @@ const EventManagementPage = () => {
       toast.error("Không thể chỉnh sửa sự kiện. Dữ liệu không hợp lệ.");
       return;
     }
-
-    console.log("✅ Event validation passed");
+    
+    console.log('✅ Event validation passed');
+    
+    // ✅ Xác định loại sự kiện (online/offline) dựa vào venueId
+    const eventType = event.venueId ? "offline" : "online";
+    console.log('Event type detected:', eventType);
+    
     setSelectedEvent(event);
+    setEventTypeToCreate(eventType);
     setIsModalOpen(true);
   };
 
@@ -975,9 +981,9 @@ const EventManagementPage = () => {
                 setEvents((prev) =>
                   prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
                 );
-                toast.success('Cập nhật sự kiện thành công!');
+                // toast.success('Cập nhật sự kiện thành công!');
               } else {
-                toast.success('Tạo sự kiện thành công!');
+                // toast.success('Tạo sự kiện thành công!');
               }
               setIsModalOpen(false);
               setSelectedEvent(null);
