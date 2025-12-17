@@ -14,6 +14,7 @@ import type {
     GetDeleteRequestsResponse
 } from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
+import type { BookingOnlineRequest, BookingOnlineResponse } from "../types/Event";
 
 const eventService = {
     async getAllEvents(params?: {
@@ -118,6 +119,12 @@ const eventService = {
     async postCancellationReason(
         data: { reason: string; isActive: boolean; }): Promise<AxiosResponse<ApiResponse<CancellationReason>>> {
         return await apiUtils.post<ApiResponse<CancellationReason>>(`${EVENT_URL}cancellations`, data);
+    },
+
+    async bookingOnline(data: BookingOnlineRequest): Promise<AxiosResponse<BookingOnlineResponse>> {
+        return await apiUtils.post<BookingOnlineResponse>(
+            `${EVENT_URL}`, data
+        );
     },
 
     

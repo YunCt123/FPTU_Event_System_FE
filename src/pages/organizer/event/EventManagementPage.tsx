@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
+import EventFormModalOnline from '../../../components/organizer/event/EventFormModalOnline'; // ✅ IMPORT MODAL ONLINE
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
@@ -37,6 +38,10 @@ const EventManagementPage = () => {
     eventId: null,
     eventTitle: '',
   });
+
+  // ✅ THÊM STATE CHO MODAL LOẠI SỰ KIỆN
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [eventTypeToCreate, setEventTypeToCreate] = useState<"offline" | "online" | null>(null);
 
   useEffect(() => {
     fetchEventsByOrganizer();
@@ -321,7 +326,12 @@ const EventManagementPage = () => {
   };
 
   const handleCreateEvent = () => {
-    setSelectedEvent(null);
+    setShowTypeModal(true);
+  };
+
+  const handleSelectType = (type: "offline" | "online") => {
+    setEventTypeToCreate(type);
+    setShowTypeModal(false);
     setIsModalOpen(true);
   };
 
@@ -480,6 +490,7 @@ const EventManagementPage = () => {
             <option value="CANCELED">Bị từ chối</option>
             <option value="COMPLETED">Hoàn thành</option>
           </select>
+          {/* Thay nút Tạo sự kiện mới */}
           <button
             onClick={handleCreateEvent}
             className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
@@ -489,6 +500,33 @@ const EventManagementPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Modal chọn loại sự kiện */}
+      {showTypeModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 shadow-lg flex flex-col gap-4 min-w-[320px]">
+            <h3 className="text-lg font-bold mb-2 text-gray-800">Bạn muốn tạo sự kiện nào?</h3>
+            <button
+              className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
+              onClick={() => handleSelectType("offline")}
+            >
+              Sự kiện Offline
+            </button>
+            <button
+              className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600"
+              onClick={() => handleSelectType("online")}
+            >
+              Sự kiện Online
+            </button>
+            <button
+              className="w-full px-4 py-2 mt-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              onClick={() => setShowTypeModal(false)}
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Events Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -723,47 +761,66 @@ const EventManagementPage = () => {
       </div>
 
       {/* Event Form Modal */}
-      {isModalOpen && (
-        <ErrorBoundary>
-          <EventFormModal
-            event={selectedEvent}
-            onClose={() => {
+      {isModalOpen && eventTypeToCreate === "offline" && (
+        <EventFormModal
+          event={selectedEvent}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedEvent(null);
+            setEventTypeToCreate(null);
+          }}
+          onSuccess={async (savedEvent) => {
+            try {
+              if (selectedEvent) {
+                setEvents((prev) =>
+                  prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
+                );
+                toast.success('Cập nhật sự kiện thành công!');
+              } else {
+                toast.success('Tạo sự kiện thành công!');
+              }
               setIsModalOpen(false);
               setSelectedEvent(null);
-            }}
-            onSuccess={async (savedEvent: Event) => {
-              try {
-                if (selectedEvent) {
-                  setEvents((prev) =>
-                    prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
-                  );
-                  toast.success('Cập nhật sự kiện thành công!');
-                } else {
-                  toast.success('Tạo sự kiện thành công!');
-                }
-                
-                setIsModalOpen(false);
-                setSelectedEvent(null);
-                
-                await fetchEventsByOrganizer();
-              } catch (error) {
-                console.error('Error in onSuccess:', error);
+              await fetchEventsByOrganizer();
+            } catch (error) {
+              console.error('Error in onSuccess:', error);
+            }
+          }}
+        />
+      )}
+      {isModalOpen && eventTypeToCreate === "online" && (
+        <EventFormModalOnline
+          event={selectedEvent}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedEvent(null);
+            setEventTypeToCreate(null);
+          }}
+          onSuccess={async (savedEvent) => {
+            try {
+              if (selectedEvent) {
+                setEvents((prev) =>
+                  prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
+                );
+                toast.success('Cập nhật sự kiện thành công!');
+              } else {
+                toast.success('Tạo sự kiện thành công!');
               }
-            }}
-          />
-        </ErrorBoundary>
+              setIsModalOpen(false);
+              setSelectedEvent(null);
+              await fetchEventsByOrganizer();
+            } catch (error) {
+              console.error('Error in onSuccess:', error);
+            }
+          }}
+        />
       )}
 
       {/* Delete Request Modal */}
-      {deleteModalState.isOpen && deleteModalState.eventId && (
+      {deleteModalState.isOpen && (
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
-          eventId={deleteModalState.eventId}
-          onClose={() => setDeleteModalState({
-            isOpen: false,
-            eventId: null,
-            eventTitle: '',
-          })}
+          onClose={() => setDeleteModalState({ isOpen: false, eventId: null, eventTitle: '' })}
           onSubmit={handleSubmitDeleteRequest}
         />
       )}
@@ -772,46 +829,4 @@ const EventManagementPage = () => {
 };
 
 export default EventManagementPage;
-
-// Error Boundary component
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: any }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error('EventFormModal Error:', error, errorInfo);
-    console.error('Error stack:', error.stack);
-    toast.error('Có lỗi xảy ra khi mở form chỉnh sửa');
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold text-red-600 mb-2">Đã xảy ra lỗi</h3>
-            <p className="text-gray-600">Vui lòng tải lại trang và thử lại.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-            >
-              Tải lại trang
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
