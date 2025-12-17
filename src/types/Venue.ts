@@ -1,11 +1,11 @@
 import type { Campus } from "./Campus";
 
-export type VenueStatus = 'ACTIVE' | 'MAINTENANCE' | 'INACTIVE';
+export type VenueStatus = "ACTIVE" | "MAINTENANCE" | "INACTIVE";
 
-export type SeatType = 'empty' | 'regular' | 'vip';
+export type SeatType = "empty" | "regular" | "vip";
 
 export interface Seat {
-  id : number;
+  id: number;
   rowLabel: number;
   colLabel: number;
   seatType: SeatType;
@@ -22,7 +22,8 @@ export interface Venue {
   hasSeats: boolean;
   mapImageUrl: string | null;
   status: VenueStatus;
-  campusId: Campus['id'];
+  campusId: Campus["id"];
+  capacity?: number;
 }
 
 export interface CreateVenueRequest {
@@ -33,6 +34,7 @@ export interface CreateVenueRequest {
   hasSeats: boolean;
   mapImageUrl?: string;
   campusId: number;
+  capacity: number;
 }
 
 export interface CreateVenueResponse {
@@ -40,11 +42,11 @@ export interface CreateVenueResponse {
   venue: Venue;
 }
 
-
 export interface UpdateVenueRequest {
   name: string;
   location: string;
   mapImageUrl?: string;
+  capacity?: number;
 }
 
 export interface UpdateVenueResponse {

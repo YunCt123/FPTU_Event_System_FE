@@ -10,6 +10,9 @@ import {
   Users,
   FileX,
   FileCheck,
+  UserPlus,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import type { Notification, NotificationType } from "../../types/Notification";
 
@@ -27,6 +30,8 @@ const getNotificationIcon = (type: NotificationType) => {
       return <Users className="w-5 h-5 text-blue-500" />;
     case "event_created":
       return <Calendar className="w-5 h-5 text-green-500" />;
+    case "event_pending_approval":
+      return <Clock className="w-5 h-5 text-yellow-500" />;
     case "event_approved":
       return <CheckCircle className="w-5 h-5 text-green-500" />;
     case "event_rejected":
@@ -47,6 +52,14 @@ const getNotificationIcon = (type: NotificationType) => {
       return <FileCheck className="w-5 h-5 text-green-500" />;
     case "cancellation_rejected":
       return <XCircle className="w-5 h-5 text-red-500" />;
+    case "organizer_request_submitted":
+      return <UserPlus className="w-5 h-5 text-blue-500" />;
+    case "organizer_request_received":
+      return <UserPlus className="w-5 h-5 text-yellow-500" />;
+    case "organizer_request_approved":
+      return <UserCheck className="w-5 h-5 text-green-500" />;
+    case "organizer_request_rejected":
+      return <UserX className="w-5 h-5 text-red-500" />;
     default:
       return <Bell className="w-5 h-5 text-gray-500" />;
   }
@@ -69,11 +82,19 @@ const getNotificationBgColor = (type: NotificationType, isRead: boolean) => {
       return "bg-red-50";
     case "event_time_changed":
     case "cancellation_request":
+    case "event_pending_approval":
       return "bg-yellow-50";
     case "one_day":
     case "thirty_min":
     case "staff_assigned":
+    case "organizer_request_submitted":
       return "bg-blue-50";
+    case "organizer_request_received":
+      return "bg-yellow-50";
+    case "organizer_request_approved":
+      return "bg-green-50";
+    case "organizer_request_rejected":
+      return "bg-red-50";
     default:
       return "bg-gray-50";
   }

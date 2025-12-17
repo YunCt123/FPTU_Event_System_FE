@@ -42,7 +42,6 @@ const EventManagementPage = () => {
     fetchEventsByOrganizer();
   }, []);
 
-  // ✅ SỬA HÀM normalizeStatus ĐỂ XỬ LÝ PUBLISHED
   const normalizeStatus = (status: string): EventStatus => {
     const normalizedStatus = status?.toUpperCase().trim();
     
@@ -77,14 +76,14 @@ const EventManagementPage = () => {
 
       // FETCH TẤT CẢ PAGES
       do {
-        console.log(`\n📄 Fetching page ${currentPage}/${totalPages}...`);
+        console.log(`\n Fetching page ${currentPage}/${totalPages}...`);
         
         const response: any = await organizerService.getOrganizerEvents({
           page: currentPage,
           limit: 10,
         });
 
-        console.log(`✅ Page ${currentPage} response:`, response.data);
+        console.log(`Page ${currentPage} response:`, response.data);
         
         // ✅ THÊM LOG ĐỂ DEBUG
         console.log('Full response object:', response);
@@ -106,7 +105,7 @@ const EventManagementPage = () => {
         if (response.data?.meta) {
           totalPages = response.data.meta.totalPages || 1;
           totalItems = response.data.meta.total || 0;
-          console.log(`📊 Meta: page ${currentPage}/${totalPages}, total: ${totalItems}`);
+          console.log(`Meta: page ${currentPage}/${totalPages}, total: ${totalItems}`);
         }
 
         // EXTRACT EVENTS
@@ -166,7 +165,7 @@ const EventManagementPage = () => {
         const mappedStatus = normalizeStatus(apiEvent.status || 'PENDING');
         
         return {
-          id: eventId, // ✅ STRING UUID
+          id: eventId,
           title: apiEvent.title || '',
           description: apiEvent.description || '',
           eventType: apiEvent.category || apiEvent.eventType || 'OTHER',

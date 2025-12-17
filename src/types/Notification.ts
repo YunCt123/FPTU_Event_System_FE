@@ -4,6 +4,7 @@
 export type NotificationType =
   | "staff_assigned"
   | "event_created"
+  | "event_pending_approval"
   | "event_approved"
   | "event_rejected"
   | "event_cancelled"
@@ -13,7 +14,11 @@ export type NotificationType =
   | "incident_reported"
   | "cancellation_request"
   | "cancellation_approved"
-  | "cancellation_rejected";
+  | "cancellation_rejected"
+  | "organizer_request_submitted"
+  | "organizer_request_received"
+  | "organizer_request_approved"
+  | "organizer_request_rejected";
 
 /**
  * Interface cho notification data từ backend
@@ -26,12 +31,14 @@ export interface NotificationData {
   status?: "PENDING" | "PUBLISHED" | "CANCELED";
   title?: string;
   eventTitle?: string;
+  organizerName?: string;
   requestId?: number;
   reason?: string;
   adminNote?: string;
   incidentId?: number;
   severity?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   reporterName?: string;
+  requesterName?: string;
 }
 
 /**

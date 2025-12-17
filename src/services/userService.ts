@@ -56,8 +56,14 @@ const userService = {
     return await apiUtils.get<ApiResponse<User>>(`${USER_URL}${id}`);
   },
 
-  async getStaffUser(): Promise<AxiosResponse<ApiResponse<User[]>>> {
-    return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}staff`);
+  async getStaffUser(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    isActive?: boolean;
+    campusId?: number;
+  }): Promise<AxiosResponse<ApiResponse<User[]>>> {
+    return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}staff`, params);
   },
 
   async getAttendUser(

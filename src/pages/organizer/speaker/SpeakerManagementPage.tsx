@@ -20,12 +20,33 @@ const SpeakerManagementPage = () => {
 
       const fetchEvent = async () => {
         try {
-          const response = await organizerService.getOrganizerEvents();
-          if (response.status === 200 ) {
-            setEvents(response.data.data);
-          } else {
-            console.log("No event Data or Api");
-          }
+          let page = 1;
+          let totalPages = 1;
+          let allEvents: GetEventResponse[] = [];
+
+          do {
+            const response = await organizerService.getOrganizerEvents({
+              page,
+              limit: 20,
+            });
+
+            const payload: any = response.data;
+            const pageEvents: GetEventResponse[] =
+              Array.isArray(payload?.data?.data) ? payload.data.data :
+              Array.isArray(payload?.data) ? payload.data :
+              Array.isArray(payload) ? payload :
+              [];
+
+            allEvents = [...allEvents, ...pageEvents];
+
+            totalPages = payload?.meta?.totalPages
+              ?? payload?.data?.meta?.totalPages
+              ?? totalPages;
+
+            page += 1;
+          } while (page <= totalPages);
+
+          setEvents(allEvents);
         } catch (error) {
           console.log("Error fetching event data:", error);
         }
