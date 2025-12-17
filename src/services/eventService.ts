@@ -14,20 +14,26 @@ import type {
   GetDeleteRequestsResponse,
 } from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
-import type { BookingOnlineRequest, BookingOnlineResponse } from "../types/Event";
+import type {
+  BookingOnlineRequest,
+  BookingOnlineResponse,
+} from "../types/Event";
 
 const eventService = {
-    async getAllEvents(params?: {
-        page?: number;
-        limit?: number;
-        search?: string;
-        status?: string;
-        organizerId?: number;
-        venueId?: number;
-    }): Promise<AxiosResponse<ApiResponse<GetTotalEventsResponse[]>>> {
-        // SỬA LẠI: truyền params trực tiếp, KHÔNG bọc trong { params: params }
-        return await apiUtils.get<ApiResponse<GetTotalEventsResponse[]>>(`${EVENT_URL}`, params);
-    },
+  async getAllEvents(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    organizerId?: number;
+    venueId?: number;
+  }): Promise<AxiosResponse<ApiResponse<GetTotalEventsResponse[]>>> {
+    // SỬA LẠI: truyền params trực tiếp, KHÔNG bọc trong { params: params }
+    return await apiUtils.get<ApiResponse<GetTotalEventsResponse[]>>(
+      `${EVENT_URL}`,
+      params
+    );
+  },
 
   async getEventById(
     id: string
@@ -106,15 +112,17 @@ const eventService = {
     requestedBy?: number;
   }): Promise<AxiosResponse<ApiResponse<GetDeleteRequestsResponse>>> {
     console.log("📋 Fetching delete requests with params:", params);
+    return await apiUtils.get<ApiResponse<GetDeleteRequestsResponse>>(
+      `${EVENT_URL}cancellation-requests`,
+      params
+    );
+  },
 
-    async bookingOnline(data: BookingOnlineRequest): Promise<AxiosResponse<BookingOnlineResponse>> {
-        return await apiUtils.post<BookingOnlineResponse>(
-            `${EVENT_URL}`, data
-        );
-    },
-
-    
-    
+  async bookingOnline(
+    data: BookingOnlineRequest
+  ): Promise<AxiosResponse<BookingOnlineResponse>> {
+    return await apiUtils.post<BookingOnlineResponse>(`${EVENT_URL}`, data);
+  },
 };
 
 export default eventService;
