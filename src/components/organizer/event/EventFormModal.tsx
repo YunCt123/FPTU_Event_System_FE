@@ -35,9 +35,10 @@ interface EventFormModalProps {
   event: Event | null;
   onClose: () => void;
   onSuccess: (event: Event) => void;
+  onOpenOther?: (type: "offline" | "weekly" | "online") => void;
 }
 
-const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
+const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [staffList, setStaffList] = useState<User[]>([]);
   const [selectedStaffIds, setSelectedStaffIds] = useState<number[]>([]);
@@ -1534,6 +1535,14 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
               className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Hủy
+            </button>
+            {/* Lựa chọn khác - nằm ngay cạnh nút tạo */}
+            <button
+              type="button"
+              onClick={() => onOpenOther?.("weekly")}
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Lựa chọn khác
             </button>
             <button
               type="submit"

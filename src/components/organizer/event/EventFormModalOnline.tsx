@@ -32,9 +32,10 @@ interface Props {
   event?: any | null; // optional edit mode, match backend shape if provided
   onClose: () => void;
   onSuccess: (data: BookingOnlineResponse) => void;
+  onOpenOther?: (type: "offline" | "weekly" | "online") => void;
 }
 
-const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) => {
+const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess, onOpenOther }) => {
   const storedUserId = Number(localStorage.getItem("userId") || sessionStorage.getItem("userId") || 0) || 0;
 
   const [organizers, setOrganizers] = useState<organizer[]>([]);
@@ -432,7 +433,7 @@ const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) =>
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">
-                {event ? "Chỉnh sửa Event Online" : "Tạo Event Online"}
+                {event ? "Chỉnh sửa Event Online" : "Tạo Sự kiện mới"}
               </h2>
               <p className="text-white/90 text-sm mt-1">
                 {event ? "Cập nhật thông tin sự kiện trực tuyến" : "Tạo sự kiện dạng trực tuyến"}
@@ -817,6 +818,15 @@ const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) =>
             >
               Hủy
             </button>
+            <button
+              type="button"
+              onClick={() => onOpenOther?.("weekly")}
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Lựa chọn khác
+            </button>
+            
             <button 
               type="submit" 
               disabled={isSubmitting || isUploadingBanner}
