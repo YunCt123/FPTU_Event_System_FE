@@ -82,6 +82,8 @@ const OrganizerEventPage = () => {
     fetchEventDetail();
   }, [id, navigate]);
 
+  console.log("event", event);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -172,6 +174,27 @@ const OrganizerEventPage = () => {
               </div>
             </div>
 
+            {/* Ngày mở đăng ký - CHỈ OFFLINE */}
+            {event.venue && event.startTimeRegister && (
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Ngày mở đăng ký</p>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-cyan-100 rounded-lg">
+                    <Calendar size={20} className="text-cyan-600" />
+                  </div>
+                  <p className="text-base font-semibold text-gray-900">
+                    {new Date(event.startTimeRegister).toLocaleString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Địa điểm */}
             <div>
               <p className="text-sm text-gray-500 mb-2">Địa điểm</p>
@@ -197,6 +220,8 @@ const OrganizerEventPage = () => {
                 </p>
               </div>
             </div>
+
+            
           </div>
 
           {/* Cột phải */}
@@ -219,6 +244,27 @@ const OrganizerEventPage = () => {
                 </p>
               </div>
             </div>
+
+            {/* Ngày kết thúc đăng ký - CHỈ OFFLINE */}
+            {event.venue && event.endTimeRegister && (
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Ngày kết thúc đăng ký</p>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-pink-100 rounded-lg">
+                    <Calendar size={20} className="text-pink-600" />
+                  </div>
+                  <p className="text-base font-semibold text-gray-900">
+                    {new Date(event.endTimeRegister).toLocaleString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Campus */}
             <div>
@@ -254,6 +300,8 @@ const OrganizerEventPage = () => {
                 </span>
               </div>
             </div>
+
+            
           </div>
         </div>
       </div>
