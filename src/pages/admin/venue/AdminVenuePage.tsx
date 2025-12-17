@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Edit, CheckCircle, Ban } from "lucide-react";
 import { toast } from "react-toastify";
 import type {
   Venue,
@@ -23,7 +23,7 @@ const AdminVenuePage = () => {
     isOpen: boolean;
     venueId: number | null;
   }>({ isOpen: false, venueId: null });
-  
+
   const [activateModal, setActivateModal] = useState<{
     isOpen: boolean;
     venueId: number | null;
@@ -64,7 +64,9 @@ const AdminVenuePage = () => {
       const response = await venueService.getAllVenues();
 
       // Handle both array and ApiResponse wrapper
-      const venueData = Array.isArray(response.data) ? response.data : response.data.data || [];
+      const venueData = Array.isArray(response.data)
+        ? response.data
+        : response.data.data || [];
 
       // Filter venues by selected campus
       const filteredVenues = venueData.filter(
@@ -107,13 +109,15 @@ const AdminVenuePage = () => {
 
     try {
       await venueService.activateVenue(venueId);
-      toast.success('Kích hoạt venue thành công!');
-      
+      toast.success("Kích hoạt venue thành công!");
+
       // Refresh the venue list from API after activate
       await fetchVenues();
     } catch (error: any) {
-      console.error('Error activating venue:', error);
-      toast.error(error?.response?.data?.message || 'Không thể kích hoạt venue');
+      console.error("Error activating venue:", error);
+      toast.error(
+        error?.response?.data?.message || "Không thể kích hoạt venue"
+      );
     } finally {
       setActivateModal({ isOpen: false, venueId: null });
     }
@@ -380,7 +384,7 @@ const AdminVenuePage = () => {
                         >
                           <Edit size={18} />
                         </button>
-                        {venue.status === 'INACTIVE' ? (
+                        {venue.status === "INACTIVE" ? (
                           <button
                             onClick={() => handleActivate(venue.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -392,9 +396,9 @@ const AdminVenuePage = () => {
                           <button
                             onClick={() => handleDelete(venue.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Xóa"
+                            title="Vô hiệu hóa"
                           >
-                            <Trash2 size={18} />
+                            <Ban size={18} />
                           </button>
                         )}
                       </div>
@@ -426,9 +430,9 @@ const AdminVenuePage = () => {
       {/* Delete Confirm Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa venue này? Venue sẽ chuyển sang trạng thái ngừng hoạt động."
-        confirmText="Xóa"
+        title="Xác nhận vô hiệu hóa"
+        message="Bạn có chắc chắn muốn vô hiệu hóa venue này? Venue sẽ chuyển sang trạng thái ngừng hoạt động."
+        confirmText="Vô hiệu hóa"
         cancelText="Hủy"
         type="danger"
         onConfirm={confirmDelete}
