@@ -1528,14 +1528,6 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
 
           {/* Footer - ✅ THÊM FLEX-SHRINK-0 */}
           <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 flex-shrink-0">
-            {/* Lựa chọn khác -> mở modal định kỳ */}
-            <button
-              type="button"
-              onClick={() => onOpenOther?.("weekly")}
-              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Lựa chọn khác
-            </button>
             <button
               type="button"
               onClick={onClose}
@@ -1543,6 +1535,14 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
               className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Hủy
+            </button>
+            {/* Lựa chọn khác - nằm ngay cạnh nút tạo */}
+            <button
+              type="button"
+              onClick={() => onOpenOther?.("weekly")}
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Lựa chọn khác
             </button>
             <button
               type="submit"
