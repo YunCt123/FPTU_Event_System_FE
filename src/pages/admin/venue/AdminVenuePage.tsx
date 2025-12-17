@@ -178,6 +178,9 @@ const AdminVenuePage = () => {
           hasSeats: newVenue.hasSeats,
           mapImageUrl: newVenue.mapImageUrl || undefined,
           campusId: selectedCampusId,
+          capacity:
+            newVenue.capacity ||
+            (newVenue.hasSeats ? newVenue.row * newVenue.column : 0),
         };
 
         await venueService.createVenue(createData);
@@ -281,6 +284,9 @@ const AdminVenuePage = () => {
                   Sơ đồ ghế
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Sức chứa
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Trạng thái
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
@@ -291,7 +297,7 @@ const AdminVenuePage = () => {
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F27125]"></div>
                       <span className="text-gray-500">Đang tải...</span>
@@ -301,7 +307,7 @@ const AdminVenuePage = () => {
               ) : !selectedCampusId ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     Vui lòng chọn campus để xem danh sách venues
@@ -310,7 +316,7 @@ const AdminVenuePage = () => {
               ) : venues.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     Campus này chưa có venue nào. Nhấn "Thêm Venue" để bắt đầu.
@@ -354,6 +360,13 @@ const AdminVenuePage = () => {
                       {venue.hasSeats
                         ? `${venue.row} x ${venue.column}`
                         : "Không có ghế"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 text-sm font-medium text-[#F27125]">
+                        {venue.capacity ||
+                          (venue.hasSeats ? venue.row * venue.column : 0)}
+                        <span className="text-gray-500 font-normal">người</span>
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       {getStatusBadge(venue.status)}

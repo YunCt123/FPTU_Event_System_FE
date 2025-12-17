@@ -24,7 +24,8 @@ const eventService = {
         organizerId?: number;
         venueId?: number;
     }): Promise<AxiosResponse<ApiResponse<GetTotalEventsResponse[]>>> {
-        return await apiUtils.get<ApiResponse<GetTotalEventsResponse[]>>(`${EVENT_URL}`);
+        // SỬA LẠI: truyền params trực tiếp, KHÔNG bọc trong { params: params }
+        return await apiUtils.get<ApiResponse<GetTotalEventsResponse[]>>(`${EVENT_URL}`, params);
     },
 
     async getEventById(id: string): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
