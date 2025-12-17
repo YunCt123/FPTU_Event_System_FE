@@ -14,6 +14,7 @@ import type {
     GetDeleteRequestsResponse
 } from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
+import type { BookingOnlineRequest, BookingOnlineResponse } from "../types/Event";
 
 const eventService = {
     async getAllEvents(params?: {
@@ -24,7 +25,8 @@ const eventService = {
         organizerId?: number;
         venueId?: number;
     }): Promise<AxiosResponse<ApiResponse<GetTotalEventsResponse[]>>> {
-        return await apiUtils.get<ApiResponse<GetTotalEventsResponse[]>>(`${EVENT_URL}`);
+        // SỬA LẠI: truyền params trực tiếp, KHÔNG bọc trong { params: params }
+        return await apiUtils.get<ApiResponse<GetTotalEventsResponse[]>>(`${EVENT_URL}`, params);
     },
 
     async getEventById(id: string): Promise<AxiosResponse<ApiResponse<GetEventResponse>>> {
@@ -117,6 +119,12 @@ const eventService = {
     async postCancellationReason(
         data: { reason: string; isActive: boolean; }): Promise<AxiosResponse<ApiResponse<CancellationReason>>> {
         return await apiUtils.post<ApiResponse<CancellationReason>>(`${EVENT_URL}cancellations`, data);
+    },
+
+    async bookingOnline(data: BookingOnlineRequest): Promise<AxiosResponse<BookingOnlineResponse>> {
+        return await apiUtils.post<BookingOnlineResponse>(
+            `${EVENT_URL}`, data
+        );
     },
 
     

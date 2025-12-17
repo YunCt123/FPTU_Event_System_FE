@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import ActionDropdown from "../../../components/ActionDropdown";
 
 const ListEventPage = () => {
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [events, setEvents] = useState<GetEventResponse[]>([]);
 
@@ -20,19 +20,28 @@ const ListEventPage = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [totalEvents, setTotalEvents] = useState(0); // Thêm biến này
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [currentPage, statusFilter, searchTerm]); // Thêm các biến này để fetch lại khi đổi trang/filter/search
 
   const fetchEvents = async () => {
     setIsLoading(true);
     try {
-      const response: any = await eventService.getAllEvents({ status: "PUBLISHED" });
-      if(response && response.data){
+      const params: any = {
+  page: currentPage,
+  limit: itemsPerPage,
+  search: searchTerm || undefined,
+};
+
+if (statusFilter !== "all") {
+  params.status = statusFilter;
+}
+      const response: any = await eventService.getAllEvents(params);
+      if (response && response.data) {
         setEvents(response.data.data || []);
-        console.log("response loaded", response);
-        console.log(response.data.meta?.total);
+        setTotalEvents(response.data.meta?.total || 0); // Lưu tổng số sự kiện
       }
     } catch (error: any) {
       console.error("Error fetching events:", error);
@@ -42,22 +51,7 @@ const ListEventPage = () => {
     }
   };
 
-  const filteredEvents = events.filter((e) => {
-    const matchesStatus =
-      statusFilter === "" || statusFilter === "all" || e.status === statusFilter;
-    const matchesSearch =
-      searchTerm === "" ||
-      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.organizer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.venue?.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesStatus && matchesSearch;
-  });
-
-  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(totalEvents / itemsPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -255,16 +249,16 @@ const ListEventPage = () => {
                     Đang tải...
                   </td>
                 </tr>
-              ) : filteredEvents.length === 0 ? (
+              ) : events.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     Không có dữ liệu
                   </td>
                 </tr>
               ) : (
-                currentEvents.map((e, index) => (
+                events.map((e, index) => (
                   <tr key={e.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{startIndex + index + 1}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{e.title}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{e.organizer.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -558,7 +552,7 @@ const ListEventPage = () => {
       />
 
       {/* Pagination Controls */}
-      {filteredEvents.length > 0 && (
+      {events.length > 0 && (
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             {/* Showing info */}
@@ -588,7 +582,7 @@ const ListEventPage = () => {
                     onClick={() => goToPage(pageNum)}
                     className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-colors ${
                       pageNum === currentPage
-                        ? 'bg-red-500 text-white'
+                        ? 'bg-orange-600 text-white'
                         : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
