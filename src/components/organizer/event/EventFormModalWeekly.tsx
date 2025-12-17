@@ -31,7 +31,8 @@ const RECURRENCE_OPTIONS = [
 const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) => {
   const storedUserId = Number(localStorage.getItem("userId") || sessionStorage.getItem("userId") || 0) || 0;
   const [organizers, setOrganizers] = useState<organizer[]>([]);
-  const [venues, setVenues] = useState<venue[]>([]);
+  const [allVenues, setAllVenues] = useState<venue[]>([]); // keep full list
+  const [venues, setVenues] = useState<venue[]>([]); // filtered by campus
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -58,13 +59,33 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
         setOrganizers(Array.isArray(oData) ? oData : []);
         const vRes: any = await venueService.getAllVenues();
         const vData = vRes?.data?.data ?? vRes?.data ?? vRes;
-        setVenues(Array.isArray(vData) ? vData : []);
+        const venuesArray = Array.isArray(vData) ? vData : [];
+        setAllVenues(venuesArray);
+        // if an organizer already selected, filter immediately; otherwise keep empty
+        if (form.organizerId) {
+          const org = (oData || []).find((x: any) => x.id === form.organizerId);
+          const campusId = org?.campusId ?? org?.campus?.id;
+          setVenues(campusId ? venuesArray.filter((v: any) => v.campusId === campusId || v.campus?.id === campusId) : []);
+        } else {
+          setVenues([]); // don't show all venues by default
+        }
       } catch (e) {
         console.error(e);
       }
     };
     init();
   }, []);
+  
+  // when organizer changes, filter venues by organizer's campus
+  useEffect(() => {
+    const org = organizers.find((o) => o.id === form.organizerId);
+    const campusId = org?.campusId ?? org?.campus?.id;
+    if (campusId) {
+      setVenues(allVenues.filter((v: any) => v.campusId === campusId || v.campus?.id === campusId));
+    } else {
+      setVenues([]); // or setAllVenues if you prefer to show all
+    }
+  }, [form.organizerId, organizers, allVenues]);
 
   useEffect(() => {
     if (event) {
