@@ -33,6 +33,14 @@ const seatService = {
     const url = `${SEAT_URL}${seatId}/type`;
     return await apiUtils.patch<ApiResponse<any>>(url, { seatType, eventId });
   },
+
+  async updateSeatStatus(
+    seatId: number,
+    status: boolean
+  ): Promise<AxiosResponse<ApiResponse<any>>> {
+    const url = `${SEAT_URL}${seatId}/status`;
+    return await apiUtils.patch<ApiResponse<any>>(url, { isActive: status });
+  },
 };
 
 export default seatService;
