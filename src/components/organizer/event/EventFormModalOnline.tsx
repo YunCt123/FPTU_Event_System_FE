@@ -32,9 +32,10 @@ interface Props {
   event?: any | null; // optional edit mode, match backend shape if provided
   onClose: () => void;
   onSuccess: (data: BookingOnlineResponse) => void;
+  onOpenOther?: (type: "offline" | "weekly" | "online") => void;
 }
 
-const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) => {
+const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess, onOpenOther }) => {
   const storedUserId = Number(localStorage.getItem("userId") || sessionStorage.getItem("userId") || 0) || 0;
 
   const [organizers, setOrganizers] = useState<organizer[]>([]);
@@ -809,6 +810,14 @@ const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) =>
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => onOpenOther?.("weekly")}
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Lựa chọn khác
+            </button>
             <button 
               type="button" 
               onClick={onClose} 

@@ -35,9 +35,10 @@ interface EventFormModalProps {
   event: Event | null;
   onClose: () => void;
   onSuccess: (event: Event) => void;
+  onOpenOther?: (type: "offline" | "weekly" | "online") => void;
 }
 
-const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
+const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [staffList, setStaffList] = useState<User[]>([]);
   const [selectedStaffIds, setSelectedStaffIds] = useState<number[]>([]);
@@ -1527,6 +1528,14 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
 
           {/* Footer - ✅ THÊM FLEX-SHRINK-0 */}
           <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 flex-shrink-0">
+            {/* Lựa chọn khác -> mở modal định kỳ */}
+            <button
+              type="button"
+              onClick={() => onOpenOther?.("weekly")}
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Lựa chọn khác
+            </button>
             <button
               type="button"
               onClick={onClose}

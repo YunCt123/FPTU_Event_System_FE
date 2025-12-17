@@ -370,12 +370,13 @@ const EventManagementPage = () => {
   };
 
   const handleCreateEvent = () => {
-    setShowTypeModal(true);
+    // Mở modal tạo sự kiện Online theo mặc định
+    setEventTypeToCreate("online");
+    setIsModalOpen(true);
   };
 
-  const handleSelectType = (type: "offline" | "online") => {
+  const handleCreateOther = (type: "offline" | "weekly") => {
     setEventTypeToCreate(type);
-    setShowTypeModal(false);
     setIsModalOpen(true);
   };
 
@@ -954,7 +955,6 @@ const EventManagementPage = () => {
           onClose={() => {
             setIsModalOpen(false);
             setSelectedEvent(null);
-            setEventTypeToCreate(null);
           }}
           onSuccess={async (savedEvent) => {
             try {
@@ -1038,4 +1038,3 @@ const EventManagementPage = () => {
 };
 
 export default EventManagementPage;
-
