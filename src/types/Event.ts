@@ -346,3 +346,60 @@ export interface DeleteRequestItem {
   } | null;
 }
 
+export interface BookingOnlineRequest {
+  title: string;
+  description: string;
+  category?: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  organizerId: number;
+  hostId: number;
+  staffIds?: number[];
+  speakers?: {
+    speakerId: number;
+    topic: string;
+  }[];
+  isOnline: boolean;
+  onlineMeetingUrl?: string;
+}
+
+export interface BookingOnlineResponse {
+  event:{
+    id: string;
+    title: string;
+    description: string;
+    category?: string;
+    bannerUrl?: string;
+    startTimeRegistration: string;
+    endTimeRegistration: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    maxCapacity: number;
+    registeredCount: number;
+    isOnline: boolean;
+    onlineMeetingUrl?: string;
+    recurrenceType?: string;
+    recurrenceInterval?: number;
+    recurrenceEndDate?: string;
+    recurrenceCount?: number;
+    isGlobal: boolean;
+    createdAt: string;
+    hostId: number;
+    organizerId: number;
+    venueId?: number;
+    organizer: organizer;
+    venue?: venue;
+    host: host;
+    eventSpeakers?: eventSpeaker[];
+    eventStaffs?: eventStaff[];
+    checkinCount: number;
+  }
+  totalOccurrences: number;
+}
+
+
+
+
+
