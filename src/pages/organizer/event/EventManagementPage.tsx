@@ -415,7 +415,7 @@ const EventManagementPage = () => {
       return;
     }
 
-    // ✅ Check nếu event đang PENDING thì xóa trực tiếp, không cần lý do
+    // ✅ Check nếu event đang PENDING thì hiện modal xác nhận đơn giản
     const isPending = event.status === "PENDING";
 
     setDeleteModalState({
@@ -426,7 +426,7 @@ const EventManagementPage = () => {
     });
   };
 
-  // ✅ Thêm hàm xử lý xóa trực tiếp event PENDING
+  // ✅ Hàm xử lý xóa trực tiếp event PENDING (sau khi user xác nhận trong modal)
   const handleDeletePendingEvent = async () => {
     if (!deleteModalState.eventId) {
       toast.error("Không tìm thấy ID sự kiện");
@@ -435,13 +435,10 @@ const EventManagementPage = () => {
 
     try {
       console.log("🗑️ Deleting PENDING event:", deleteModalState.eventId);
-
       const response = await eventService.deleteEventByOrganizer(
         deleteModalState.eventId
       );
-
       console.log("✅ Event deleted:", response.data);
-
       toast.success(
         `Đã xóa sự kiện "${deleteModalState.eventTitle}" thành công!`,
         {
@@ -461,9 +458,7 @@ const EventManagementPage = () => {
       await fetchEventsByOrganizer();
     } catch (error: any) {
       console.error("❌ Error deleting event:", error);
-
       let errorMessage = "Không thể xóa sự kiện";
-
       if (error.response?.status === 400) {
         errorMessage =
           error.response.data?.message ||
@@ -475,10 +470,7 @@ const EventManagementPage = () => {
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-
-      toast.error(errorMessage, {
-        autoClose: 5000,
-      });
+      toast.error(errorMessage, { autoClose: 5000 });
     }
   };
 
@@ -995,12 +987,14 @@ const EventManagementPage = () => {
         />
       )}
 
-      {/* Delete Request Modal */}
+      {/* Delete Request Modal - HIỆN CHO CẢ PENDING VÀ PUBLISHED/APPROVED */}
       {deleteModalState.isOpen && (
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
-          onClose={() => setDeleteModalState({ isOpen: false, eventId: null, eventTitle: '' })}
+          eventId={deleteModalState.eventId || ""}
+          onClose={() => setDeleteModalState({ isOpen: false, eventId: null, eventTitle: '', isPending: false })}
           onSubmit={handleSubmitDeleteRequest}
+          isPending={deleteModalState.isPending}
           onDeletePending={handleDeletePendingEvent}
         />
       )}

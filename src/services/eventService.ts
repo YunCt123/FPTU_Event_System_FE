@@ -2,7 +2,6 @@ import { apiUtils } from "../api/axios";
 import { EVENT_URL } from "../constants/apiEndPoints";
 import type { AxiosResponse } from "axios";
 import type {
-  CancellationReason,
   CreateEventRequest,
   DeleteEventByOrganizersRequest,
   DeleteEventByOrganizersResponse,
@@ -58,6 +57,15 @@ const eventService = {
     );
   },
 
+  // ✅ API XÓA SỰ KIỆN CHO ORGANIZER (CHỈ PENDING STATUS)
+  async deleteEventByOrganizer(
+    id: string
+  ): Promise<AxiosResponse<ApiResponse<EventDeleteResponse>>> {
+    return await apiUtils.delete<ApiResponse<EventDeleteResponse>>(
+      `${EVENT_URL}${id}`
+    );
+  },
+
   async patchEvent(
     id: string,
     data: { status: string }
@@ -74,6 +82,35 @@ const eventService = {
     return await apiUtils.post<ApiResponse<GetEventResponse>>(
       `${EVENT_URL}`,
       data
+    );
+  },
+
+  async approveDeleteRequest(params: {
+    requestId: number;
+    status: "APPROVED" | "REJECTED";
+    adminNote?: string;
+  }): Promise<AxiosResponse<ApiResponse<any>>> {
+    console.group("APPROVE/REJECT DELETE REQUEST");
+    console.log("1. Request ID:", params.requestId);
+    console.log("2. Status:", params.status);
+    console.log("3. Admin Note:", params.adminNote);
+    console.log(
+      "4. Full URL:",
+      `${EVENT_URL}cancellation-requests/${params.requestId}/status`
+    );
+    console.log("5. Request Body:", {
+      status: params.status,
+      adminNote:
+        params.adminNote || "Đã xem xét và chấp thuận yêu cầu hủy sự kiện",
+    });
+    console.groupEnd();
+    return await apiUtils.patch<ApiResponse<any>>(
+      `${EVENT_URL}cancellation-requests/${params.requestId}/status`,
+      {
+        status: params.status,
+        adminNote:
+          params.adminNote || "Đã xem xét và chấp thuận yêu cầu hủy sự kiện",
+      }
     );
   },
 
