@@ -68,7 +68,7 @@ const userService = {
 
   async getAttendUser(
     eventId: string,
-    param: {
+    param?: {
       page?: number;
       limit?: number;
       search?: string;

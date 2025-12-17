@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import OrganizerModal from "./OrganizerModal";
+import OrganizerDetailModal from "./OrganizerDetailModal";
 import AddOrganizerModal from "./AddOrganizerModal";
-import { Search, Plus, Trash2, Edit } from "lucide-react";
+import { Search, Plus, Trash2, Edit, Eye } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
 import organizerService from "../../../services/organizerService";
 import { toast } from "react-toastify";
@@ -12,6 +13,7 @@ const OrganizerListGrid = () => {
   const [selectedOrganizer, setSelectedOrganizer] = useState<OrganizerResponse | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -51,8 +53,18 @@ const OrganizerListGrid = () => {
     setIsEditOpen(false);
   };
 
+  const handleViewDetails = (org: OrganizerResponse) => {
+    setSelectedOrganizer(org);
+    setIsDetailOpen(true);
+  };
+
+  const handleCloseViewDetails = () => {
+    setSelectedOrganizer(null);
+    setIsDetailOpen(false);
+  };
+
   const handleUpdateSuccess = () => {
-    fetchOrganizers(); // Refresh list after updating
+    fetchOrganizers(); 
   };
 
   const handleAddNew = () => {
@@ -119,13 +131,13 @@ const OrganizerListGrid = () => {
             className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full placeholder-gray-400 text-gray-700"
           />
         </div>
-        <button 
+        {/* <button 
           onClick={handleAddNew}
           className="flex items-center gap-2 bg-[#F27125] text-white px-6 py-2.5 rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md"
         >
           <Plus size={20} />
           <span>Thêm mới</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Table */}
@@ -232,6 +244,12 @@ const OrganizerListGrid = () => {
                               onClick: () => handleDelete(org.id),
                               type: 'danger'
                             },
+                            {
+                              label: "Chi tiết",
+                              icon: Eye,
+                              onClick: () => handleViewDetails(org),
+                              
+                            }
                           ]}
                         />
                       </div>
@@ -251,6 +269,15 @@ const OrganizerListGrid = () => {
           <span className="font-semibold">{filteredOrganizers.length}</span> nhà
           tổ chức
         </div>
+      )}
+
+      {/* Detail Modal */}
+      {isDetailOpen && (
+        <OrganizerDetailModal
+          organizer={selectedOrganizer}
+          isOpen={isDetailOpen}
+          onClose={handleCloseViewDetails}
+        />
       )}
 
       {/* Edit Modal */}

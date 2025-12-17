@@ -333,7 +333,7 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
                 </div>
 
                 {/* Thông tin thời gian */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tạo</label>
                     <input
@@ -352,7 +352,7 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 text-sm"
                     />
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
