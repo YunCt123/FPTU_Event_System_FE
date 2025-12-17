@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import authService from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
+import { uploadImageToCloudinary } from '../../utils/uploadImg';
+import { Upload, X } from 'lucide-react';
 // import { jwtDecode } from 'jwt-decode';
 
 interface RegisterUserModalProps {
@@ -12,6 +14,10 @@ interface RegisterUserModalProps {
 const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [studentCardFile, setStudentCardFile] = useState<File | null>(null);
+  const [studentCardPreview, setStudentCardPreview] = useState<string>('');
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
@@ -31,6 +37,48 @@ const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Kích thước ảnh không được vượt quá 5MB');
+        return;
+      }
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleStudentCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Kích thước ảnh không được vượt quá 5MB');
+        return;
+      }
+      setStudentCardFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setStudentCardPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview('');
+  };
+
+  const removeStudentCard = () => {
+    setStudentCardFile(null);
+    setStudentCardPreview('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,6 +102,20 @@ const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }
 
     setIsSubmitting(true);
     try {
+      // Upload images if selected
+      let avatarUrl = formData.avatar;
+      let studentCardUrl = formData.studentCardImage;
+
+      if (avatarFile) {
+        toast.info('Đang tải ảnh đại diện...');
+        avatarUrl = await uploadImageToCloudinary(avatarFile);
+      }
+
+      if (studentCardFile) {
+        toast.info('Đang tải ảnh thẻ sinh viên...');
+        studentCardUrl = await uploadImageToCloudinary(studentCardFile);
+      }
+
       const registerData = {
         userName: formData.userName,
         email: formData.email,
@@ -65,8 +127,8 @@ const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }
         phoneNumber: formData.phoneNumber || undefined,
         gender: formData.gender,
         address: formData.address || undefined,
-        avatar: formData.avatar || undefined,
-        studentCardImage: formData.studentCardImage || undefined
+        avatar: avatarUrl || undefined,
+        studentCardImage: studentCardUrl || undefined
       };
 
       const response = await authService.register(registerData);
@@ -103,6 +165,10 @@ const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }
       avatar: '',
       studentCardImage: ''
     });
+    setAvatarFile(null);
+    setAvatarPreview('');
+    setStudentCardFile(null);
+    setStudentCardPreview('');
     onClose();
   };
 
@@ -238,7 +304,7 @@ const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
               >
                 <option value="0">Chọn cơ sở</option>
-                <option value="1">FU - Hà Nội</option>
+                <option value="1">FU - Hòa Lạc</option>
                 <option value="2">FU - Hồ Chí Minh</option>
                 <option value="3">FU - Đà Nẵng</option>
                 <option value="4">FU - Cần Thơ</option>
@@ -305,34 +371,78 @@ const RegisterUserModal: React.FC<RegisterUserModalProps> = ({ isOpen, onClose }
               placeholder="Nhập địa chỉ của bạn"
             />
           </div>
-          {/* Avatar URL */}
+          {/* Avatar Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Avatar
+              Ảnh đại diện
             </label>
-            <input
-              type="url"
-              name="avatar"
-              value={formData.avatar}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
-              placeholder="https://example.com/avatar.jpg"
-            />
+            <div className="space-y-3">
+              {avatarPreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar preview"
+                    className="w-32 h-32 rounded-lg object-cover border-2 border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeAvatar}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#F27125] transition-colors bg-gray-50 hover:bg-gray-100">
+                  <Upload className="text-gray-400 mb-2" size={32} />
+                  <span className="text-sm text-gray-500">Nhấn để chọn ảnh</span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG (tối đa 5MB)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
-          {/* Student Card Image URL */}
+          {/* Student Card Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Ảnh thẻ sinh viên
+              Ảnh thẻ sinh viên
             </label>
-            <input
-              type="url"
-              name="studentCardImage"
-              value={formData.studentCardImage}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
-              placeholder="https://example.com/student-card.jpg"
-            />
+            <div className="space-y-3">
+              {studentCardPreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={studentCardPreview}
+                    alt="Student card preview"
+                    className="w-48 h-32 rounded-lg object-cover border-2 border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeStudentCard}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#F27125] transition-colors bg-gray-50 hover:bg-gray-100">
+                  <Upload className="text-gray-400 mb-2" size={32} />
+                  <span className="text-sm text-gray-500">Nhấn để chọn ảnh thẻ</span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG (tối đa 5MB)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleStudentCardChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
           {/* Buttons */}

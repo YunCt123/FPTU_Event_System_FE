@@ -224,12 +224,13 @@ const OrganizerListGrid = () => {
                               label: "Chỉnh sửa",
                               icon: Edit,
                               onClick: () => handleOpenDetails(org),
+                              type: 'detail'
                             },
                             {
                               label: "Xóa",
                               icon: Trash2,
                               onClick: () => handleDelete(org.id),
-                              danger: true,
+                              type: 'danger'
                             },
                           ]}
                         />

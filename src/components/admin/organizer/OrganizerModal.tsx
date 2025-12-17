@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
+import { X } from 'lucide-react'
 import type { OrganizerResponse } from '../../../types/Organizer'
 import organizerService from '../../../services/organizerService'
 import userService from '../../../services/userService'
+import { uploadImageToCloudinary } from '../../../utils/uploadImg'
 import type { User } from '../../../types/User'
 
 interface OrganizerModalProps {
@@ -16,6 +18,8 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventOrganizers, setEventOrganizers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,7 +32,6 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
     createdAt: '',
     updatedAt: ''
   });
-  
 
   useEffect(() => {
     if (isOpen && organizer) {
@@ -44,8 +47,15 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
         createdAt: organizer.createdAt,
         updatedAt: organizer.updatedAt
       });
+      setPreviewUrl(organizer.logoUrl || '');
       fetchEventOrganizers();
     }
+
+    return () => {
+      if (previewUrl && previewUrl !== organizer?.logoUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
   }, [isOpen, organizer]);
 
   const fetchEventOrganizers = async () => {
@@ -69,12 +79,56 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      return;
+    }
+
+    if (previewUrl && previewUrl !== organizer?.logoUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      setFormData(prev => ({ ...prev, logoUrl: imageUrl }));
+      toast.success('Tải ảnh lên thành công!');
+    } catch (err: any) {
+      toast.error('Có lỗi xảy ra khi tải ảnh lên');
+      console.error('Error uploading image:', err);
+      if (previewUrl && previewUrl !== organizer?.logoUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(organizer?.logoUrl || '');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (previewUrl && previewUrl !== organizer?.logoUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl('');
+    setFormData(prev => ({ ...prev, logoUrl: '' }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!organizer) return;
 
-    // Validate
     if (!formData.logoUrl) {
       toast.error('URL Logo là bắt buộc!');
       return;
@@ -82,6 +136,11 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
 
     if (!formData.ownerId) {
       toast.error('Vui lòng chọn Event Organizer!');
+      return;
+    }
+
+    if (!formData.campusId) {
+      toast.error('Vui lòng chọn cơ sở!');
       return;
     }
 
@@ -117,189 +176,201 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
   if (!organizer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40  z-50 flex justify-center items-center p-4" onClick={onClose}>
-      {/* Modal Content */}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl transform transition-all duration-300 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-xl w-full max-w-3xl"
         onClick={(e) => e.stopPropagation()} 
       >
-        <div className="flex justify-between items-start border-b pb-4 mb-6">
-          <h3 className="text-3xl font-bold text-gray-800">Cập nhật nhà tổ chức</h3>
-          <button
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
+          <div>
+            <h2 className="text-xl font-bold text-white">Cập nhật nhà tổ chức</h2>
+            <p className="text-sm text-white/90">Chỉnh sửa thông tin nhà tổ chức</p>
+          </div>
+          <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            className="text-white/80 hover:text-white transition-colors"
+            aria-label="Đóng"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X size={24} />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Logo URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Logo <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="url"
-              name="logoUrl"
-              value={formData.logoUrl}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
-              placeholder="https://example.com/logo.png"
-            />
-            {formData.logoUrl && (
-              <div className="mt-3 flex justify-center">
-                <img 
-                  src={formData.logoUrl} 
-                  alt="Preview" 
-                  className="w-24 h-24 object-contain p-2 bg-gray-50 border border-gray-200 rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/96?text=No+Image';
-                  }}
-                />
+        <form onSubmit={handleSubmit}>
+          {/* Form Content */}
+          <div className="p-5">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Left Column */}
+              <div className="space-y-4">
+                {/* Logo Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Logo <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-16 h-16 object-contain p-1 bg-gray-50 border border-gray-200 rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs">
+                        No image
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        disabled={isUploading}
+                        aria-label="Chọn ảnh logo"
+                        className="w-full text-sm border border-gray-300 rounded-lg file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#F27125] file:text-white hover:file:bg-[#d65d1a] disabled:opacity-50"
+                      />
+                      {isUploading && <p className="text-xs text-[#F27125] mt-1">Đang tải...</p>}
+                      {previewUrl && (
+                        <button type="button" onClick={handleRemoveImage} className="text-red-600 text-xs mt-1">
+                          Xóa ảnh
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tên nhà tổ chức */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên nhà tổ chức <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm"
+                    placeholder="Nhập tên nhà tổ chức"
+                  />
+                </div>
+
+                {/* Cơ sở */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cơ sở <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="campusId"
+                    value={formData.campusId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, campusId: parseInt(e.target.value) }))}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm"
+                  >
+                    <option value="0">Chọn cơ sở</option>
+                    <option value="1">FU - Hà Nội</option>
+                    <option value="2">FU - Hồ Chí Minh</option>
+                    <option value="3">FU - Đà Nẵng</option>
+                    <option value="4">FU - Cần Thơ</option>
+                    <option value="5">FU - Quy Nhơn</option>
+                  </select>
+                </div>
+
+                {/* Event Organizer */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Organizer <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="ownerId"
+                    value={formData.ownerId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, ownerId: parseInt(e.target.value) }))}
+                    required
+                    disabled={isLoadingUsers}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm disabled:bg-gray-100"
+                  >
+                    <option value="0">{isLoadingUsers ? 'Đang tải...' : 'Chọn Event Organizer'}</option>
+                    {eventOrganizers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Tên nhà tổ chức */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tên nhà tổ chức <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
-              placeholder="Nhập tên nhà tổ chức"
-            />
-          </div>
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email liên hệ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="contactEmail"
+                    value={formData.contactEmail}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm"
+                    placeholder="example@fpt.edu.vn"
+                  />
+                </div>
 
-          {/* Cơ sở */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cơ sở <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="campusId"
-              value={formData.campusId}
-              onChange={(e) => setFormData(prev => ({ ...prev, campusId: parseInt(e.target.value) }))}
-              required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
-            >
-              <option value="0">Chọn cơ sở</option>
-              <option value="1">FU - Hà Nội</option>
-              <option value="2">FU - Hồ Chí Minh</option>
-              <option value="3">FU - Đà Nẵng</option>
-              <option value="4">FU - Cần Thơ</option>
-              <option value="5">FU - Quy Nhơn</option>
-            </select>
-          </div>
+                {/* Mô tả */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mô tả chi tiết <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm resize-none"
+                    placeholder="Mô tả về nhà tổ chức..."
+                  />
+                </div>
 
-          {/* Event Organizer (Owner) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Event Organizer <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="ownerId"
-              value={formData.ownerId}
-              onChange={(e) => setFormData(prev => ({ ...prev, ownerId: parseInt(e.target.value) }))}
-              required
-              disabled={isLoadingUsers}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="0">{isLoadingUsers ? 'Đang tải...' : 'Chọn Event Organizer'}</option>
-              {eventOrganizers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName} ({user.email})
-                </option>
-              ))}
-            </select>
-            {eventOrganizers.length === 0 && !isLoadingUsers && (
-              <p className="text-sm text-amber-600 mt-1">
-                Không có Event Organizer nào. Vui lòng tạo user với role event_organizer trước.
-              </p>
-            )}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email liên hệ <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="email"
-              name="contactEmail"
-              value={formData.contactEmail}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition"
-              placeholder="example@fpt.edu.vn"
-            />
-          </div>
-
-          {/* Mô tả */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mô tả chi tiết <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              rows={4}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none transition resize-none"
-              placeholder="Mô tả về nhà tổ chức..."
-            />
-          </div>
-
-          {/* Thông tin thời gian (Read-only) */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ngày tạo
-              </label>
-              <input
-                type="text"
-                value={formData.createdAt ? new Date(formData.createdAt).toLocaleString('vi-VN') : 'N/A'}
-                disabled
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cập nhật lần cuối
-              </label>
-              <input
-                type="text"
-                value={formData.updatedAt ? new Date(formData.updatedAt).toLocaleString('vi-VN') : 'N/A'}
-                disabled
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-              />
+                {/* Thông tin thời gian */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tạo</label>
+                    <input
+                      type="text"
+                      value={formData.createdAt ? new Date(formData.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cập nhật cuối</label>
+                    <input
+                      type="text"
+                      value={formData.updatedAt ? new Date(formData.updatedAt).toLocaleString('vi-VN') : 'N/A'}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               Hủy
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || isUploading}
+              className="px-5 py-2 bg-[#F27125] text-white rounded-lg hover:bg-[#d65d1a] transition-colors shadow-md disabled:opacity-50"
             >
               {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật'}
             </button>
@@ -309,6 +380,5 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
     </div>
   )
 }
-
 
 export default OrganizerModal

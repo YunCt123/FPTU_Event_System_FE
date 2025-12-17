@@ -5,6 +5,7 @@ import type {
   GetUsersStatusResponse,
   PatchUserResponse,
   User,
+  UserResponse,
 } from "../types/User";
 import type { ApiResponse } from "../types/ApiResponse";
 import type { AxiosResponse } from "axios";
@@ -21,8 +22,8 @@ const userService = {
     search?: string;
     campusId?: number;
     isActive?: boolean;
-  }): Promise<AxiosResponse<ApiResponse<User[]>>> {
-    return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}`, params);
+  }): Promise<AxiosResponse<ApiResponse<UserResponse>>> {
+    return await apiUtils.get<ApiResponse<UserResponse>>(`${USER_URL}`, params);
   },
 
   async patchUserDeactivate(
