@@ -141,14 +141,7 @@ const fetchEvent = async () => {
             <UserRoundPlus size={20} />
             Tạo Tài Khoản Staff
           </button>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            disabled={!selectedEventId}
-            className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <UserPlus size={20} />
-            Thêm Staff
-          </button>
+          
         </div>
       </div>
 
@@ -205,6 +198,15 @@ const fetchEvent = async () => {
               />
             </div>
           </div>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            disabled={!selectedEventId}
+            className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UserPlus size={20} />
+            Phân công Staff
+          </button>
 
           {/* Staff Table */}
           {searchQuery && filteredStaff.length === 0 ? (
