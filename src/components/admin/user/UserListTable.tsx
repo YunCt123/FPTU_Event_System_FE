@@ -1,17 +1,31 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { useSearchParams } from 'react-router-dom';
-import userService from '../../../services/userService';
-import type { Meta, User } from '../../../types/User';
-import { UserStar, UserCog, User as UserIcon, Search, Loader, Trash2, Eye, X, Check, UserPlus } from 'lucide-react';
-import UserDetailModal from './UserDetailModal';
-import ConfirmModal from '../../common/ConfirmModal';
-import ActionDropdown from '../../ActionDropdown';
-
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
+import userService from "../../../services/userService";
+import type { Meta, User } from "../../../types/User";
+import {
+  UserStar,
+  UserCog,
+  User as UserIcon,
+  Search,
+  Loader,
+  Trash2,
+  Eye,
+  X,
+  Check,
+  UserPlus,
+} from "lucide-react";
+import UserDetailModal from "./UserDetailModal";
+import ConfirmModal from "../../common/ConfirmModal";
+import ActionDropdown from "../../ActionDropdown";
 
 const UserListTable = () => {
   const [searchParams] = useSearchParams();
-  const roleFromUrl = searchParams.get('role') as 'event_organizer' | 'staff' | 'student' | null;
+  const roleFromUrl = searchParams.get("role") as
+    | "event_organizer"
+    | "staff"
+    | "student"
+    | null;
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,7 +41,7 @@ const UserListTable = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [pagination, setPagination] = useState<Meta>();
   const [currentPage, setCurrentPage] = useState(1);
-   const [confirmModal, setConfirmModal] = useState<{
+  const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     userId: number | null;
     isDeactivate: boolean;
@@ -67,14 +81,14 @@ const UserListTable = () => {
     try {
       const response = await userService.patchUserStatus(id, { status });
       if (response.data) {
-        toast.success('Cập nhật trạng thái người dùng thành công');
+        toast.success("Cập nhật trạng thái người dùng thành công");
         fetchUsers(currentPage);
       } else {
         toast.error("Cập nhật trạng thái người dùng thất bại");
       }
     } catch (error) {
-      console.error('Error updating user status:', error);
-      toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+      console.error("Error updating user status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái người dùng");
     } finally {
       setLoading(false);
     }
@@ -98,15 +112,15 @@ const UserListTable = () => {
         reason: rejectModal.reason,
       });
       if (response.data) {
-        toast.success('Từ chối người dùng thành công');
-        setRejectModal({ isOpen: false, userId: null, reason: '' });
+        toast.success("Từ chối người dùng thành công");
+        setRejectModal({ isOpen: false, userId: null, reason: "" });
         fetchUsers(currentPage);
       } else {
         toast.error("Từ chối người dùng thất bại");
       }
     } catch (error) {
-      console.error('Error rejecting user:', error);
-      toast.error('Có lỗi xảy ra khi từ chối người dùng');
+      console.error("Error rejecting user:", error);
+      toast.error("Có lỗi xảy ra khi từ chối người dùng");
     } finally {
       setLoading(false);
     }
@@ -134,30 +148,31 @@ const UserListTable = () => {
     console.log("object", roleFromUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchTerm, statusFilter]);
-const fetchUsers = async (page: number = 1) => {
+  const fetchUsers = async (page: number = 1) => {
     setLoading(true);
     try {
-      const response = await userService.getUsers({ 
+      const response = await userService.getUsers({
         roleName: activeTab,
         page: page,
-        limit: 10
+        limit: 10,
       });
       console.log("user", response);
       if (response.status === 200) {
         // Filter out users with PENDING status and inactive users
-        const approvedUsers = response.data.data.filter((user: User) => 
-          user.status !== 'REJECTED'
-        
+        const approvedUsers = response.data.data.filter(
+          (user: User) => user.status !== "REJECTED"
         );
-        const pendingUsers = response.data.data.filter((user: User) => user.status === 'PENDING');
+        const pendingUsers = response.data.data.filter(
+          (user: User) => user.status === "PENDING"
+        );
         setPagination(response.data.meta);
         setPendingUsers(pendingUsers);
         setUsers(approvedUsers);
         setCurrentPage(page);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error('Không thể tải danh sách người dùng');
+      console.error("Error fetching users:", error);
+      toast.error("Không thể tải danh sách người dùng");
     } finally {
       setLoading(false);
     }
@@ -177,10 +192,20 @@ const fetchUsers = async (page: number = 1) => {
         } else {
           toast.error("Vô hiệu người dùng thất bại");
         }
-        fetchUsers(currentPage);
+      } else {
+        const response = await userService.patchUserStatus(userIdConfirm, {
+          status: "APPROVED",
+        });
+        if (response.data) {
+          toast.success("Kích hoạt người dùng thành công");
+        } else {
+          toast.error("Kích hoạt người dùng thất bại");
+        }
+      }
+      fetchUsers(currentPage);
     } catch (error) {
-        console.error('Error updating user status:', error);
-        toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+      console.error("Error updating user status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái người dùng");
     } finally {
       setLoading(false);
       setConfirmModal({ isOpen: false, userId: null, isDeactivate: true });
@@ -253,7 +278,6 @@ const fetchUsers = async (page: number = 1) => {
             />
           </div>
           <select
-   
             value={statusFilter}
             onChange={(e) =>
               setStatusFilter(e.target.value as "all" | "active" | "inactive")
@@ -336,7 +360,7 @@ const fetchUsers = async (page: number = 1) => {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
+      <div className="overflow-x-auto" style={{ overflow: "visible" }}>
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <Loader className="animate-spin text-[#F27125]" size={40} />
@@ -353,7 +377,7 @@ const fetchUsers = async (page: number = 1) => {
             </p>
           </div>
         ) : (
-          <table className="w-full" style={{ overflow: 'visible' }}>
+          <table className="w-full" style={{ overflow: "visible" }}>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
@@ -440,22 +464,24 @@ const fetchUsers = async (page: number = 1) => {
                       <ActionDropdown
                         actions={[
                           {
-                            label: 'Xem chi tiết',
+                            label: "Xem chi tiết",
                             icon: Eye,
                             onClick: () => handleViewDetail(user),
-                            type: 'detail'
+                            type: "detail",
                           },
-                          user.isActive ? {
-                            label: 'Vô hiệu hóa',
-                            icon: Trash2,
-                            onClick: () => handleDelete(user.id),
-                            type: 'danger'
-                          } : {
-                            label: 'Kích hoạt',
-                            icon: UserPlus,
-                            onClick: () => handleActivate(user.id),
-                            type: 'safe'
-                          }
+                          user.isActive
+                            ? {
+                                label: "Vô hiệu hóa",
+                                icon: Trash2,
+                                onClick: () => handleDelete(user.id),
+                                type: "danger",
+                              }
+                            : {
+                                label: "Kích hoạt",
+                                icon: UserPlus,
+                                onClick: () => handleActivate(user.id),
+                                type: "safe",
+                              },
                         ]}
                       />
                     </div>
@@ -472,9 +498,19 @@ const fetchUsers = async (page: number = 1) => {
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Hiển thị <span className="font-semibold">{((currentPage - 1) * 10) + 1}</span> - <span className="font-semibold">{Math.min(currentPage * 10, pagination?.total || 0)}</span> trong tổng số <span className="font-semibold">{pagination?.total || 0}</span> {roleLabels[activeTab]}
+              Hiển thị{" "}
+              <span className="font-semibold">
+                {(currentPage - 1) * 10 + 1}
+              </span>{" "}
+              -{" "}
+              <span className="font-semibold">
+                {Math.min(currentPage * 10, pagination?.total || 0)}
+              </span>{" "}
+              trong tổng số{" "}
+              <span className="font-semibold">{pagination?.total || 0}</span>{" "}
+              {roleLabels[activeTab]}
             </p>
-            
+
             {pagination && pagination.totalPages >= 1 && (
               <div className="flex items-center gap-2">
                 <button
@@ -484,36 +520,39 @@ const fetchUsers = async (page: number = 1) => {
                 >
                   Trước
                 </button>
-                
+
                 <div className="flex gap-1">
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (pagination.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= pagination.totalPages - 2) {
-                      pageNum = pagination.totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
+                  {Array.from(
+                    { length: Math.min(5, pagination.totalPages) },
+                    (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => fetchUsers(pageNum)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            currentPage === pageNum
+                              ? "bg-[#F27125] text-white"
+                              : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
                     }
-                    
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => fetchUsers(pageNum)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === pageNum
-                            ? 'bg-[#F27125] text-white'
-                            : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+                  )}
                 </div>
-                
+
                 <button
                   onClick={() => fetchUsers(currentPage + 1)}
                   disabled={currentPage === pagination.totalPages}
