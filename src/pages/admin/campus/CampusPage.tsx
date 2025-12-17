@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, CheckCircle } from 'lucide-react';
-import { toast } from 'react-toastify';
-import type { Campus, Status, CreateCampusRequest, UpdateCampusRequest } from '../../../types/Campus';
-import CampusFormModal from '../../../components/admin/campus/CampusFormModal';
-import ConfirmModal from '../../../components/common/ConfirmModal';
-import { campusService } from '../../../services';
-
+import { useState, useEffect } from "react";
+import { Plus, Edit, CheckCircle, Ban } from "lucide-react";
+import { toast } from "react-toastify";
+import type {
+  Campus,
+  Status,
+  CreateCampusRequest,
+  UpdateCampusRequest,
+} from "../../../types/Campus";
+import CampusFormModal from "../../../components/admin/campus/CampusFormModal";
+import ConfirmModal from "../../../components/common/ConfirmModal";
+import { campusService } from "../../../services";
 
 const CampusPage = () => {
   const [campuses, setCampuses] = useState<Campus[]>([]);
@@ -16,7 +20,7 @@ const CampusPage = () => {
     isOpen: boolean;
     campusId: number | null;
   }>({ isOpen: false, campusId: null });
-  
+
   const [activateModal, setActivateModal] = useState<{
     isOpen: boolean;
     campusId: number | null;
@@ -33,8 +37,10 @@ const CampusPage = () => {
       const response = await campusService.getAllCampuses();
       setCampuses(response.data);
     } catch (error: any) {
-      console.error('Error fetching campuses:', error);
-      toast.error(error?.response?.data?.message || 'Không thể tải danh sách campus');
+      console.error("Error fetching campuses:", error);
+      toast.error(
+        error?.response?.data?.message || "Không thể tải danh sách campus"
+      );
       setCampuses([]);
     } finally {
       setIsLoading(false);
@@ -64,14 +70,16 @@ const CampusPage = () => {
     if (!campusId) return;
 
     try {
-      await campusService.activateCampus(campusId);
-      toast.success('Kích hoạt campus thành công!');
-      
+      await campusService.updateCampusStatus(campusId, "Active");
+      toast.success("Kích hoạt campus thành công!");
+
       // Refresh the campus list from API after activate
       await fetchCampuses();
     } catch (error: any) {
-      console.error('Error activating campus:', error);
-      toast.error(error?.response?.data?.message || 'Không thể kích hoạt campus');
+      console.error("Error activating campus:", error);
+      toast.error(
+        error?.response?.data?.message || "Không thể kích hoạt campus"
+      );
     } finally {
       setActivateModal({ isOpen: false, campusId: null });
     }
@@ -86,14 +94,16 @@ const CampusPage = () => {
     if (!campusId) return;
 
     try {
-      await campusService.deleteCampus(campusId);
-      toast.success('Xóa campus thành công!');
-      
-      // Refresh the campus list from API after delete
+      await campusService.updateCampusStatus(campusId, "Inactive");
+      toast.success("Vô hiệu hóa campus thành công!");
+
+      // Refresh the campus list from API after deactivate
       await fetchCampuses();
     } catch (error: any) {
-      console.error('Error deleting campus:', error);
-      toast.error(error?.response?.data?.message || 'Không thể xóa campus');
+      console.error("Error deactivating campus:", error);
+      toast.error(
+        error?.response?.data?.message || "Không thể vô hiệu hóa campus"
+      );
     } finally {
       setConfirmModal({ isOpen: false, campusId: null });
     }
@@ -119,9 +129,9 @@ const CampusPage = () => {
           capacity: newCampus.capacity || null,
           image: newCampus.image || undefined,
         };
-        
+
         await campusService.updateCampus(newCampus.id, updateData);
-        toast.success('Cập nhật campus thành công!');
+        toast.success("Cập nhật campus thành công!");
       } else {
         // Add new campus
         const createData: CreateCampusRequest = {
@@ -131,29 +141,31 @@ const CampusPage = () => {
           capacity: newCampus.capacity || null,
           image: newCampus.image || undefined,
         };
-        
+
         await campusService.createCampus(createData);
-        toast.success('Thêm campus thành công!');
+        toast.success("Thêm campus thành công!");
       }
-      
+
       // Refresh the campus list from API after create/update
       await fetchCampuses();
       handleModalClose();
     } catch (error: any) {
-      console.error('Error saving campus:', error);
-      toast.error(error?.response?.data?.message || 'Không thể lưu campus');
+      console.error("Error saving campus:", error);
+      toast.error(error?.response?.data?.message || "Không thể lưu campus");
     }
   };
 
   const getStatusBadge = (status: Status) => {
     const statusConfig = {
-      Active: { label: 'Hoạt động', class: 'bg-green-100 text-green-800' },
-      Inactive: { label: 'Ngừng hoạt động', class: 'bg-red-100 text-red-800' },
+      Active: { label: "Hoạt động", class: "bg-green-100 text-green-800" },
+      Inactive: { label: "Ngừng hoạt động", class: "bg-red-100 text-red-800" },
     };
 
     const config = statusConfig[status] || statusConfig.Inactive;
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.class}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-medium ${config.class}`}
+      >
         {config.label}
       </span>
     );
@@ -216,13 +228,19 @@ const CampusPage = () => {
                 </tr>
               ) : campuses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Chưa có campus nào. Nhấn "Thêm Campus" để bắt đầu.
                   </td>
                 </tr>
               ) : (
                 campuses.map((campus) => (
-                  <tr key={campus.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={campus.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 text-sm font-bold text-blue-600">
                         {campus.code}
@@ -237,7 +255,9 @@ const CampusPage = () => {
                         />
                       ) : (
                         <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No image</span>
+                          <span className="text-gray-400 text-xs">
+                            No image
+                          </span>
                         </div>
                       )}
                     </td>
@@ -256,7 +276,9 @@ const CampusPage = () => {
                         {campus.address}
                       </div>
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(campus.status)}</td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(campus.status)}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -266,7 +288,7 @@ const CampusPage = () => {
                         >
                           <Edit size={18} />
                         </button>
-                        {campus.status === 'Inactive' ? (
+                        {campus.status === "Inactive" ? (
                           <button
                             onClick={() => handleActivate(campus.id)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -278,9 +300,9 @@ const CampusPage = () => {
                           <button
                             onClick={() => handleDelete(campus.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Xóa"
+                            title="Ngừng hoạt động"
                           >
-                            <Trash2 size={18} />
+                            <Ban size={18} />
                           </button>
                         )}
                       </div>
@@ -296,7 +318,8 @@ const CampusPage = () => {
       {/* Total Count */}
       {campuses.length > 0 && (
         <div className="mt-4 text-sm text-gray-600">
-          Tổng số: <span className="font-semibold">{campuses.length}</span> campus
+          Tổng số: <span className="font-semibold">{campuses.length}</span>{" "}
+          campus
         </div>
       )}
 
@@ -312,9 +335,9 @@ const CampusPage = () => {
       {/* Delete Confirm Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa campus này? Campus sẽ chuyển sang trạng thái ngừng hoạt động."
-        confirmText="Xóa"
+        title="Xác nhận Ngừng hoạt động"
+        message="Bạn có chắc chắn muốn ngừng hoạt động campus này? Campus sẽ chuyển sang trạng thái ngừng hoạt động."
+        confirmText="Ngừng hoạt động"
         cancelText="Hủy"
         type="danger"
         onConfirm={confirmDelete}

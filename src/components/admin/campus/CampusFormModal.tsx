@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader } from 'lucide-react';
+import { toast } from 'react-toastify';
 import type { Campus, Status } from '../../../types/Campus';
+import { uploadImageToCloudinary } from '../../../utils/uploadImg';
 
 interface CampusFormModalProps {
   campus: Campus | null;
@@ -37,6 +39,8 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (campus) {
@@ -48,8 +52,20 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
         image: campus.image || '',
         status: campus.status,
       });
+      setPreviewUrl(campus.image || '');
+    } else {
+      setPreviewUrl('');
     }
   }, [campus]);
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -87,6 +103,65 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      return;
+    }
+
+    // Cleanup previous preview URL if it's a blob URL
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    // Create preview URL
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    // Upload to Cloudinary
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      toast.success('Tải ảnh lên thành công!');
+      // Update preview to show Cloudinary URL
+      setPreviewUrl(imageUrl);
+    } catch (err: any) {
+      toast.error('Có lỗi xảy ra khi tải ảnh lên');
+      console.error('Error uploading image:', err);
+      // Revert to previous URL or clear
+      if (campus?.image) {
+        setPreviewUrl(campus.image);
+      } else {
+        setPreviewUrl('');
+        if (previewUrl && previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(previewUrl);
+        }
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    // Cleanup blob URL if exists
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl('');
+    setFormData((prev) => ({ ...prev, image: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -221,31 +296,67 @@ const CampusFormModal = ({ campus, onClose, onSuccess }: CampusFormModalProps) =
             )}
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Hình ảnh
+              Hình ảnh Campus
             </label>
-            <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {formData.image && (
-              <div className="mt-2">
-                <img
-                  src={formData.image}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
+            <div className="space-y-3">
+              {/* Preview */}
+              {previewUrl ? (
+                <div className="relative">
+                  <img
+                    src={previewUrl}
+                    alt="Preview hình ảnh campus"
+                    className="w-full h-48 object-contain bg-gray-50 border border-gray-200 rounded-lg p-2"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  {!isUploading && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 transition-colors"
+                      title="Xóa ảnh"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-2">
+                      Chưa có hình ảnh
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Chọn file để tải lên
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* File Input */}
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                  className="w-full text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
+                {isUploading && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+                    <Loader className="animate-spin" size={16} />
+                    <span>Đang tải ảnh lên...</span>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Chọn file ảnh từ máy tính (tối đa 5MB)
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Status
