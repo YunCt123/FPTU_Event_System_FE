@@ -41,10 +41,20 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [venueList, setVenueList] = useState<Venue[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
   const [isLoadingOrganizer, setIsLoadingOrganizer] = useState(false);
+  const EVENT_TYPE_OPTIONS = [
+    { value: 'CONFERENCE', label: 'Hội nghị (Conference)' },
+    { value: 'WORKSHOP', label: 'Workshop' },
+    { value: 'SEMINAR', label: 'Hội thảo (Seminar)' },
+    { value: 'COMPETITION', label: 'Cuộc thi (Competition)' },
+    { value: 'CULTURAL', label: 'Văn hóa (Cultural)' },
+    { value: 'SPORTS', label: 'Thể thao (Sports)' },
+    { value: 'OTHER', label: 'Khác (Other)' },
+  ];
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    eventType: "",
+    eventType: "WORKSHOP",
     startDate: "",
     endDate: "",
     registrationDeadline: "",
@@ -837,24 +847,26 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                   <Tag size={16} className="text-orange-500" />
                   Loại sự kiện <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="eventType"
-                  name="eventType"
-                  value={formData.eventType}
-                  onChange={handleChange}
-                  placeholder="VD: Workshop, Seminar, Conference, Hackathon..."
-                  className={`w-full px-4 py-3 border ${
-                    errors.eventType ? "border-red-500" : "border-gray-300"
-                  } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                  disabled={isSubmitting}
-                />
-                {errors.eventType && (
-                  <p className="text-red-500 text-xs mt-1">{errors.eventType}</p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Nhập loại sự kiện theo ý bạn (VD: Workshop, Seminar, Conference, Hackathon, Training, Webinar...)
-                </p>
+                  <select
+                    id="eventType"
+                    name="eventType"
+                    value={formData.eventType}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.eventType ? "border-red-500" : "border-gray-300"
+                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                    disabled={isSubmitting}
+                  >
+                    {EVENT_TYPE_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  {errors.eventType && (
+                    <p className="text-red-500 text-xs mt-1">{errors.eventType}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Chọn loại sự kiện phù hợp
+                  </p>
               </div>
 
               {/* Mô tả */}
