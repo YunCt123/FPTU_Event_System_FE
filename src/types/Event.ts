@@ -401,6 +401,68 @@ export interface BookingOnlineResponse {
   totalOccurrences: number;
 }
 
+export interface BookingWeeklyRequest {
+  title: string;
+  description: string;
+  category?: string;
+  startTime: string;
+  endTime: string;
+  StartTimeRegistration: string;
+  EndTimeRegistration: string;
+  maxCapacity: number;
+  organizerId: number;
+  venueId?: number;
+  recurrenceType: string;
+  recurrenceInterval: number;
+  recurrenceCount?: string;
+}
+
+export interface BookingWeeklyRequest {
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  StartTimeRegistration: string;
+  EndTimeRegistration: string;
+  maxCapacity: number;
+  organizerId: number;
+  venueId?: number;
+  recurrenceType: string;
+  recurrenceInterval: number;
+  recurrenceCount?: string;
+}
+
+export interface BookingWeeklyResponse {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  bannerUrl: string | null;
+  startTimeRegister: string;
+  endTimeRegister: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  maxCapacity: number;
+  registeredCount: number;
+  isOnline: boolean;
+  onlineMeetingUrl: string;
+  recurrenceType: string;
+  recurrenceInterval: number;
+  recurrenceEndDate: string;
+  recurrenceCount: number;
+  isGlobal: boolean;
+  createdAt: string;
+  hostId: number;
+  organizerId: number;
+  venueId: number;
+  organizer: organizer;
+  venue:venue;
+  host: host;
+  eventSpeakers: any[];
+  eventStaffs: any[];
+  checkinCount: number;
+}
 
 
 
