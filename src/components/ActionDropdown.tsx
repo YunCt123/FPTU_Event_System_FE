@@ -2,18 +2,31 @@ import { MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 
+type ActionType = 'danger' | 'safe' | 'detail';
 
 interface DropdownAction {
   label: string;
   icon?: LucideIcon;
   onClick: () => void;
-  danger?: boolean; 
+  type?: ActionType;
   disabled?: boolean;
 }
 
 interface ActionDropdownProps {
   actions: DropdownAction[];
 }
+
+const actionStyleMap: Record<ActionType, string> = {
+  danger: 'text-red-600 hover:bg-red-50 active:bg-red-100',
+  safe: 'text-green-600 hover:bg-green-50 active:bg-green-100',
+  detail: 'text-blue-600 hover:bg-blue-50 active:bg-blue-100',
+};
+
+const iconStyleMap: Record<ActionType, string> = {
+  danger: 'text-red-500',
+  safe: 'text-green-500',
+  detail: 'text-blue-500',
+};
 
 const ActionDropdown = ({ actions }: ActionDropdownProps) => {
   const [open, setOpen] = useState(false);
@@ -47,6 +60,7 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
     }
   }, [open]);
 
+
   return (
     <div ref={ref} className="relative inline-block">
       {/* 3 dots */}
@@ -78,15 +92,15 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
                   setOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150
-                  ${index === 0 ? 'rounded-t-lg' : ''}
-                  ${index === actions.length - 1 ? 'rounded-b-lg' : ''}
-                  ${action.danger 
-                    ? 'text-red-600 hover:bg-red-50 active:bg-red-100' 
-                    : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                  }
+                  ${index === 0 ? "rounded-t-lg" : ""}
+                  ${index === actions.length - 1 ? "rounded-b-lg" : ""}
+                   ${actionStyleMap[action.type]}
                 `}
               >
-                {Icon && <Icon size={16} className={action.danger ? 'text-red-500' : 'text-gray-500'} />}
+                {Icon && (
+                  <Icon size={16} className={iconStyleMap[action.type]} />
+                )}
+
                 <span className="font-medium">{action.label}</span>
               </button>
             );

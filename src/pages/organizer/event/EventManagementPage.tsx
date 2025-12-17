@@ -737,9 +737,9 @@ const EventManagementPage = () => {
                   setEvents((prev) =>
                     prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
                   );
-                  toast.success('Cập nhật sự kiện thành công!');
+                  // toast.success('Cập nhật sự kiện thành công!');
                 } else {
-                  toast.success('Tạo sự kiện thành công!');
+                  // toast.success('Tạo sự kiện thành công!');
                 }
                 
                 setIsModalOpen(false);

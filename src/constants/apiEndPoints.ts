@@ -11,3 +11,4 @@ export const TICKET_URL = "/tickets/";
 export const FEEDBACK_URL = "/feedback/";
 export const SPEAKER_URL = "/speakers/";
 export const INCIDENT_URL = "/incidents";
+export const SEAT_URL = "/seat/";

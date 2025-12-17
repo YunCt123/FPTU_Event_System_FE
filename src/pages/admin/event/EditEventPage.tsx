@@ -73,7 +73,7 @@ export default function EditEventPage() {
     setSubmitting(true);
     await new Promise((r) => setTimeout(r, 500));
     console.log("Updated event:", formData);
-    alert("Cập nhật sự kiện thành công!");
+    // alert("Cập nhật sự kiện thành công!");
     navigate("/admin/list-events");
   };
 

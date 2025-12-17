@@ -23,6 +23,7 @@ import {
   venueService,
   eventService,
 } from "../../../services";
+import { uploadImageToCloudinary } from "../../../utils/uploadImg";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
@@ -49,6 +50,8 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [venueList, setVenueList] = useState<Venue[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
   const [isLoadingOrganizer, setIsLoadingOrganizer] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [bannerPreview, setBannerPreview] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -196,6 +199,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           );
 
           setFormData(formattedData);
+          // Set banner preview when editing
+          if (formattedData.bannerUrl) {
+            setBannerPreview(formattedData.bannerUrl);
+          }
           setOriginalData({
             title: fullEvent.title,
             description: fullEvent.description,
@@ -264,6 +271,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         });
         setSelectedStaffIds([]);
         setOriginalData(null);
+        setBannerPreview('');
       }
     };
 
@@ -433,6 +441,49 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         ? prev.filter((id) => id !== staffId)
         : [...prev, staffId]
     );
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      return;
+    }
+
+    // Preview
+    const objectUrl = URL.createObjectURL(file);
+    setBannerPreview(objectUrl);
+
+    setIsUploadingBanner(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      setFormData(prev => ({ ...prev, bannerUrl: imageUrl }));
+      toast.success('Tải ảnh lên thành công!');
+      if (errors.bannerUrl) {
+        setErrors(prev => ({ ...prev, bannerUrl: '' }));
+      }
+    } catch (err: any) {
+      toast.error('Có lỗi xảy ra khi tải ảnh lên');
+      console.error('Error uploading banner:', err);
+      setBannerPreview('');
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  const handleRemoveBanner = () => {
+    if (bannerPreview) {
+      URL.revokeObjectURL(bannerPreview);
+    }
+    setBannerPreview('');
+    setFormData(prev => ({ ...prev, bannerUrl: '' }));
   };
 
   const handleChange = (
@@ -987,27 +1038,33 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                   <Tag size={16} className="text-orange-500" />
                   Loại sự kiện <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   id="eventType"
                   name="eventType"
                   value={formData.eventType}
                   onChange={handleChange}
-                  placeholder="VD: Workshop, Seminar, Conference, Hackathon..."
                   className={`w-full px-4 py-3 border ${
                     errors.eventType ? "border-red-500" : "border-gray-300"
                   } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
                   disabled={isSubmitting}
-                />
+                >
+                  <option value="">Chọn loại sự kiện</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Career">Career</option>
+                  <option value="Startup">Startup</option>
+                  <option value="Community">Community</option>
+                  <option value="Education">Education</option>
+                  <option value="Networking">Networking</option>
+                  <option value="Competition">Competition</option>
+                  <option value="Data">Data</option>
+                  <option value="Workshop">Workshop</option>
+                  <option value="Seminar">Seminar</option>
+                </select>
                 {errors.eventType && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.eventType}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Nhập loại sự kiện theo ý bạn (VD: Workshop, Seminar,
-                  Conference, Hackathon, Training, Webinar...)
-                </p>
               </div>
 
               {/* Mô tả */}
@@ -1393,25 +1450,67 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                 )}
               </div>
 
-              {/* Banner URL */}
+              {/* Banner Upload */}
               <div>
                 <label
-                  htmlFor="bannerUrl"
+                  htmlFor="banner"
                   className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2"
                 >
                   <ImageIcon size={16} className="text-orange-500" />
-                  Banner URL (tùy chọn)
+                  Banner sự kiện (tùy chọn)
                 </label>
-                <input
-                  type="url"
-                  id="bannerUrl"
-                  name="bannerUrl"
-                  value={formData.bannerUrl}
-                  onChange={handleChange}
-                  placeholder="https://example.com/banner.jpg"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  disabled={isSubmitting}
-                />
+                
+                {/* Preview */}
+                {bannerPreview && (
+                  <div className="mb-3 relative">
+                    <img
+                      src={bannerPreview}
+                      alt="Banner preview"
+                      className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveBanner}
+                      disabled={isUploadingBanner}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload input */}
+                <div className="flex items-center gap-3">
+                  <label
+                    htmlFor="banner"
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed ${
+                      errors.bannerUrl ? 'border-red-500' : 'border-gray-300'
+                    } rounded-lg cursor-pointer hover:border-orange-500 transition-all ${
+                      isUploadingBanner || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <ImageIcon size={20} className="text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {isUploadingBanner ? 'Đang tải lên...' : bannerPreview ? 'Thay đổi ảnh' : 'Chọn ảnh banner'}
+                    </span>
+                    <input
+                      type="file"
+                      id="banner"
+                      accept="image/*"
+                      onChange={handleBannerUpload}
+                      disabled={isUploadingBanner || isSubmitting}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                
+                {errors.bannerUrl && (
+                  <p className="text-red-500 text-xs mt-1">{errors.bannerUrl}</p>
+                )}
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Kích thước tối đa: 5MB. Định dạng: JPG, PNG, GIF
+                </p>
               </div>
             </div>
           </div>
