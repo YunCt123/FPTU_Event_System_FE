@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, Users, Loader } from "lucide-react";
+import { X, Users, Loader, Map } from "lucide-react";
 import { toast } from "react-toastify";
 import type { Venue } from "../../../types/Venue";
 import { uploadImageToCloudinary } from "../../../utils/uploadImg";
+import SeatMapModal from "./SeatMapModal";
 
 interface VenueFormModalProps {
   venue: Venue | null;
@@ -42,6 +43,7 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [showSeatMapModal, setShowSeatMapModal] = useState(false);
 
   // Auto-calculate capacity when hasSeats is true
   const calculatedCapacity = useMemo(() => {
@@ -200,7 +202,7 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
         column: formData.column,
         hasSeats: formData.hasSeats,
         mapImageUrl: formData.mapImageUrl || null,
-        status: venue?.status || "Active",
+        status: venue?.status || "ACTIVE",
         campusId: venue?.campusId || 0,
         capacity: formData.hasSeats ? calculatedCapacity : formData.capacity,
       };
@@ -310,6 +312,16 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
                 </span>
                 <span className="text-sm text-gray-500">người</span>
               </div>
+              {formData.hasSeats && (
+                <button
+                  type="button"
+                  onClick={() => setShowSeatMapModal(true)}
+                  className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <Map size={16} />
+                  <span className="font-medium">Xem & cấu hình sơ đồ ghế</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -360,7 +372,7 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
 
               {/* Auto-calculated Capacity Display */}
               {formData.row > 0 && formData.column > 0 && (
-                <div className="bg-gradient-to-r from-[#F27125]/10 to-orange-50 border border-[#F27125]/20 rounded-lg p-4">
+                <div className="bg-linear-to-r from-[#F27125]/10 to-orange-50 border border-[#F27125]/20 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 bg-[#F27125] rounded-full">
                       <Users size={20} className="text-white" />
@@ -490,6 +502,14 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
           </div>
         </form>
       </div>
+
+      {/* Seat Map Modal */}
+      {showSeatMapModal && venue && (
+        <SeatMapModal
+          venue={venue}
+          onClose={() => setShowSeatMapModal(false)}
+        />
+      )}
     </div>
   );
 };
