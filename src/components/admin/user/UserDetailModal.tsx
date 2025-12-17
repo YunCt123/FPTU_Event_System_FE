@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   X,
   Mail,
@@ -10,6 +10,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import type { User } from "../../../types/User";
+import { userService } from "../../../services";
 
 interface UserDetailModalProps {
   isOpen: boolean;
@@ -21,9 +22,13 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   isOpen,
   onClose,
   user,
+
+
 }) => {
   console.log(isOpen);
   if (!isOpen ) return null;
+
+  
 
   // const getCampusName = (campusId: number) => {
   //   const campuses: { [key: number]: string } = {
@@ -35,6 +40,28 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   //   };
   //   return campuses[campusId] || 'N/A';
   // };
+
+  console.log(user);
+  const [userDetail, setUserDetail] = useState<User | null>(null);
+
+  const fetchUser = async(userId: number) => {
+    try {
+      const response = await userService.getUserById(userId);
+      console.log("user", response.data);
+      console.log(user);
+      if(response.status === 200){
+        setUserDetail(response.data);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
+  useEffect(() => {
+    if (user?.id) {
+      fetchUser(user.id);
+    }
+  }, [user]);
 
   const getRoleLabel = (role: string) => {
     const roles: { [key: string]: string } = {
@@ -63,6 +90,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
     );
   };
 
+  
+
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4 animate-fadeIn"
@@ -77,24 +106,24 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
         <div className="relative bg-linear-to-r from-[#F27125] to-[#d95c0b] px-5 py-3 shrink-0 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {user?.avatar ? (
+              {userDetail?.avatar ? (
                 <img
-                  src={user?.avatar}
-                  alt={user?.userName}
+                  src={userDetail?.avatar}
+                  alt={userDetail?.userName}
                   className="w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-[#F27125] font-bold text-lg shadow-lg">
-                  {user?.firstName.charAt(0)}
-                  {user?.lastName.charAt(0)}
+                  {userDetail?.firstName.charAt(0)}
+                  {userDetail?.lastName.charAt(0)}
                 </div>
               )}
               <div className="text-white">
                 <h2 className="text-lg font-bold drop-shadow-sm">
-                  {user?.firstName} {user?.lastName}
+                  {userDetail?.firstName} {userDetail?.lastName}
                 </h2>
                 <p className="text-white/90 text-xs">
-                  @{user?.userName} • ID: {user?.id}
+                  @{userDetail?.userName} • ID: {userDetail?.id}
                 </p>
               </div>
             </div>
@@ -113,7 +142,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             {/* Left Column */}
             <div className="flex flex-col gap-2 h-full overflow-hidden">
               {/* Student Card - Takes up 2/3 of the space */}
-              {user?.studentCardImage ? (
+              {userDetail?.studentCardImage ? (
                 <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-[2] min-h-0 flex flex-col">
                   <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
                     <div className="p-0.5 bg-indigo-50 rounded">
@@ -123,7 +152,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   </h3>
                   <div className="flex-1 min-h-0 flex items-center justify-center bg-gray-50 rounded-lg p-2 overflow-hidden">
                     <img
-                      src={user?.studentCardImage}
+                      src={userDetail?.studentCardImage}
                       alt="Student Card"
                       className="max-w-full max-h-full rounded object-contain shadow-lg border border-white"
                     />
@@ -154,7 +183,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Username
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user?.userName}
+                      {userDetail?.userName}
                     </p>
                   </div>
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -162,7 +191,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Họ tên
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user?.firstName} {user?.lastName}
+                      {userDetail?.firstName} {userDetail?.lastName}
                     </p>
                   </div>
                   <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
@@ -170,11 +199,19 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Giới tính
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.gender === true
+                      {userDetail?.gender === true
                         ? "Nam"
-                        : user.gender === false
+                        : userDetail?.gender === false
                         ? "Nữ"
                         : "N/A"}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
+                    <label className="font-medium text-gray-500 flex items-center gap-0.5 uppercase text-[10px]">
+                      Mã SV
+                    </label>
+                    <p className="text-gray-900 font-mono font-bold text-xs">
+                      {userDetail?.studentCode || "Không có"}
                     </p>
                   </div>
                 </div>
@@ -198,25 +235,25 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       <span className="uppercase text-[10px]">Email</span>
                     </label>
                     <a
-                      href={`mailto:${user.email}`}
+                      href={`mailto:${userDetail?.email}`}
                       className="text-[#F27125] hover:text-[#d95c0b] font-semibold block truncate text-xs"
-                      title={user.email}
+                      title={userDetail?.email}
                     >
-                      {user.email}
+                      {userDetail?.email}
                     </a>
                   </div>
-                  {user.phoneNumber && (
+                  {userDetail?.phoneNumber && (
                     <div className="p-1.5 bg-linear-to-r from-green-50 to-white rounded border border-green-100">
                       <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                         <Phone size={10} className="text-green-500" />
                         <span className="uppercase text-[10px]">SĐT</span>
                       </label>
                       <p className="text-gray-900 font-semibold text-xs">
-                        {user.phoneNumber}
+                        {userDetail?.phoneNumber}
                       </p>
                     </div>
                   )}
-                  {user.address && (
+                  {userDetail?.address && (
                     <div className="p-1.5 bg-linear-to-r from-purple-50 to-white rounded border border-purple-100">
                       <label className="font-medium text-gray-500 flex items-center gap-1 mb-0.5">
                         <MapPin size={10} className="text-purple-500" />
@@ -224,9 +261,9 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       </label>
                       <p
                         className="text-gray-900 font-medium line-clamp-2 text-xs"
-                        title={user.address}
+                        title={userDetail.address}
                       >
-                        {user.address}
+                        {userDetail.address}
                       </p>
                     </div>
                   )}
@@ -247,26 +284,16 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Campus
                     </label>
                     <p className="text-gray-900 font-semibold text-xs">
-                      {user.campus?.name || user.campusId}
+                      {userDetail?.campus?.name || userDetail?.campusId}
                     </p>
                   </div>
-                  {user.studentCode && (
-                    <div className="flex justify-between items-center p-1 bg-gray-50 rounded">
-                      <label className="font-medium text-gray-500 flex items-center gap-0.5 uppercase text-[10px]">
-                        <CreditCard size={10} />
-                        Mã SV
-                      </label>
-                      <p className="text-gray-900 font-mono font-bold text-xs">
-                        {user.studentCode}
-                      </p>
-                    </div>
-                  )}
+
                   <div className="p-1.5 bg-linear-to-r from-purple-50 to-pink-50 rounded border border-purple-200">
                     <label className="font-medium text-gray-500 uppercase text-[10px] mb-0.5 block">
                       Vai trò
                     </label>
                     <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-linear-to-r from-purple-600 to-pink-600 text-white">
-                      {getRoleLabel(user.roleName)}
+                      {getRoleLabel(userDetail?.roleName)}
                     </p>
                   </div>
                 </div>
@@ -281,17 +308,17 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   <span>Trạng thái</span>
                 </h3>
                 <div className="space-y-1.5 text-xs">
-                  {user.status && (
+                  {user?.status && (
                     <div className="p-1.5 bg-gradient-to-br from-yellow-50 to-orange-50 rounded border border-yellow-200">
                       <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">
                         Duyệt
                       </label>
                       <p
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                          getStatusBadge(user.status).className
+                          getStatusBadge(user?.status).className
                         }`}
                       >
-                        {getStatusBadge(user.status).label}
+                        {getStatusBadge(user?.status).label}
                       </p>
                     </div>
                   )}
@@ -301,12 +328,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </label>
                     <p
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                        user.isActive
+                        userDetail?.isActive
                           ? "bg-green-600 text-white"
                           : "bg-red-600 text-white"
                       }`}
                     >
-                      {user.isActive ? "Hoạt động" : "Vô hiệu"}
+                      {userDetail?.isActive ? "Hoạt động" : "Vô hiệu"}
                     </p>
                   </div>
                   {/* <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded border border-blue-200">
