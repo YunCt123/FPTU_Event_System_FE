@@ -397,7 +397,7 @@ const EventManagementPage = () => {
     
     console.log('✅ Event validation passed');
     
-    // ✅ Xác định loại sự kiện (online/offline) dựa vào venueId
+   
     const eventType = event.venueId ? "offline" : "online";
     console.log('Event type detected:', eventType);
     
