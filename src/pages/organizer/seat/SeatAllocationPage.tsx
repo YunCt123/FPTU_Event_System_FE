@@ -3,7 +3,7 @@ import { ArrowLeft, Plus, Minus } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { seatService } from "../../../services";
-import type { SeatMapData, Seat } from "../../../types/Venue";
+// import type { SeatMapData, Seat } from "../../../types/Venue";
 
 interface ApiSeat {
   id: number;
@@ -28,6 +28,14 @@ interface SelectedSeat {
   seatType: string;
   rowIndex: number;
   colIndex: number;
+}
+
+interface SeatMapData {
+  seats: any[][];
+  rowLabels: string[];
+  colLabels: string[];
+  rows: number;
+  cols: number;
 }
 
 const SeatAllocationPage = () => {
@@ -104,8 +112,8 @@ const SeatAllocationPage = () => {
           const seats = rowLabels.map((rowLabel) => {
             const rowSeats = seatsByRow[rowLabel];
             return rowSeats
-              .sort((a, b) => a.colLabel - b.colLabel)
-              .map((seat) => ({
+              .sort((a: any, b: any) => a.colLabel - b.colLabel)
+              .map((seat: any) => ({
                 id: seat.id,
                 row: rowLabels.indexOf(rowLabel),
                 col: seat.colLabel - 1,
@@ -122,6 +130,7 @@ const SeatAllocationPage = () => {
             rows: rowLabels.length,
             cols: cols,
             rowLabels: rowLabels,
+            colLabels: [],
             seats: seats as any,
           };
 
@@ -293,7 +302,7 @@ const SeatAllocationPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-white">
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-200 flex-shrink-0">
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-200 shrink-0">
         <button
           onClick={() => navigate(-1)}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -311,7 +320,7 @@ const SeatAllocationPage = () => {
       <div className="flex-1 flex flex-col p-6 overflow-hidden">
         <div className="flex justify-between items-center mb-4">
           <div className="flex justify-center flex-1"></div>
-          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2 flex-shrink-0">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2 shrink-0">
             <button
               onClick={() => setZoom(Math.max(0.5, zoom - 0.2))}
               className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -360,13 +369,13 @@ const SeatAllocationPage = () => {
                   SÂN KHẤU
                 </div>
               </div>
-              {seatMap?.seats.map((row, rowIndex) => (
+              {seatMap?.seats.map((row: any, rowIndex: number) => (
                 <div key={rowIndex} className="flex items-start gap-2 mb-2">
-                  <div className="w-8 text-center font-bold text-gray-700 flex-shrink-0 pt-0.5 text-sm">
+                  <div className="w-8 text-center font-bold text-gray-700 shrink-0 pt-0.5 text-sm">
                     {seatMap.rowLabels[rowIndex]}
                   </div>
                   <div className="flex gap-1">
-                    {row.map((seat, colIndex) => {
+                    {row.map((seat: any, colIndex: number) => {
                       const reserved = isSeatReserved(rowIndex, colIndex);
                       const isDisabled = seat.type === "disabled";
                       const isEmpty = seat.type === "empty";
@@ -427,7 +436,7 @@ const SeatAllocationPage = () => {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-4 text-sm flex-shrink-0">
+        <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-4 text-sm shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-[#F27125] rounded"></div>
             <span>Tiêu chuẩn</span>

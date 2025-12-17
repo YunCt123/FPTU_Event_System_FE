@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import OrganizerModal from "./OrganizerModal";
 import OrganizerDetailModal from "./OrganizerDetailModal";
 import AddOrganizerModal from "./AddOrganizerModal";
-import { Search, Plus, Trash2, Edit, Eye } from "lucide-react";
+import { Search, Trash2, Edit, Eye } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
 import organizerService from "../../../services/organizerService";
 import { toast } from "react-toastify";
@@ -32,7 +32,8 @@ const OrganizerListGrid = () => {
     try {
       const response = await organizerService.getAllOrganizers();
       if (response) {
-        setOrganizers(response.data);
+        const data = (response.data as any).data || response.data;
+        setOrganizers(data);
         console.log("Organizers loaded:", response.data);
       }
     } catch (error: any) {

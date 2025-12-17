@@ -159,13 +159,13 @@ const UserListTable = () => {
       console.log("user", response);
       if (response.status === 200) {
         // Filter out users with PENDING status and inactive users
-        const approvedUsers = response.data.data.filter(
+        const approvedUsers = response.data.data.data.filter(
           (user: User) => user.status !== "REJECTED"
         );
-        const pendingUsers = response.data.data.filter(
+        const pendingUsers = response.data.data.data.filter(
           (user: User) => user.status === "PENDING"
         );
-        setPagination(response.data.meta);
+        setPagination(response.data.data.meta);
         setPendingUsers(pendingUsers);
         setUsers(approvedUsers);
         setCurrentPage(page);
@@ -315,7 +315,7 @@ const UserListTable = () => {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-semibold">
                       {user.firstName.charAt(0)}
                       {user.lastName.charAt(0)}
                     </div>
@@ -417,7 +417,7 @@ const UserListTable = () => {
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
                           {user.firstName.charAt(0)}
                           {user.lastName.charAt(0)}
                         </div>

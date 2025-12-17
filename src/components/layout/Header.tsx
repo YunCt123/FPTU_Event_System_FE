@@ -33,7 +33,7 @@ const Header = () => {
     try {
       const response = await userService.getUserInUse();
       if (response.status === 200) {
-        setUserLoggedIn(response.data);
+        setUserLoggedIn(response.data.data);
         console.log("User in use:", response.data);
       } else {
         console.log("Not user or Api");

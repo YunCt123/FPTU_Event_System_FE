@@ -72,8 +72,8 @@ const OrganizerDashboardPage = () => {
       console.log('📊 Events response:', eventsResponse);
 
       if (eventsResponse && eventsResponse.data) {
-        const eventsData = eventsResponse.data.data || [];
-        const meta = eventsResponse.data.meta;
+        const eventsData = (eventsResponse.data as any).data?.data || [];
+        const meta = (eventsResponse.data as any).data?.meta;
 
         // ✅ LOG TẤT CẢ STATUS ĐỂ DEBUG
         console.log('📊 All event statuses:', eventsData.map((e: any) => ({
@@ -132,7 +132,7 @@ const OrganizerDashboardPage = () => {
           );
 
           if (attendeesResponse && attendeesResponse.data) {
-            const attendeesTotal = attendeesResponse.data.meta?.total || 0;
+            const attendeesTotal = attendeesResponse.data.data.meta?.total || 0;
             totalRegistrations += attendeesTotal;
           }
         } catch (error) {
@@ -191,7 +191,7 @@ const OrganizerDashboardPage = () => {
               { page: 1, limit: 1 }
             );
             if (attendeesResponse && attendeesResponse.data) {
-              registrations = attendeesResponse.data.meta?.total || registrations;
+              registrations = attendeesResponse.data.data.meta?.total || registrations;
             }
           } catch (error) {
             console.warn(`Cannot fetch attendees for event ${event.id}`);
@@ -209,7 +209,7 @@ const OrganizerDashboardPage = () => {
         const resolvedChartData = await Promise.all(chartDataPromises);
         
         resolvedChartData.sort(
-          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
 
         setChartData(resolvedChartData);
@@ -242,7 +242,7 @@ const OrganizerDashboardPage = () => {
       title: 'Tổng số sự kiện',
       value: stats.totalEvents,
       icon: Calendar,
-      bgGradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
+      bgGradient: 'bg-linear-to-br from-blue-500 to-blue-600',
       textColor: 'text-blue-600',
       bgLight: 'bg-blue-50',
       borderColor: 'border-blue-200',
@@ -252,7 +252,7 @@ const OrganizerDashboardPage = () => {
       title: 'Được duyệt',
       value: stats.activeEvents,
       icon: CheckCircle,
-      bgGradient: 'bg-gradient-to-br from-green-500 to-green-600',
+      bgGradient: 'bg-linear-to-br from-green-500 to-green-600',
       textColor: 'text-green-600',
       bgLight: 'bg-green-50',
       borderColor: 'border-green-200',
@@ -262,7 +262,7 @@ const OrganizerDashboardPage = () => {
       title: 'Chờ phê duyệt',
       value: stats.pendingEvents,
       icon: Clock,
-      bgGradient: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
+      bgGradient: 'bg-linear-to-br from-yellow-500 to-yellow-600',
       textColor: 'text-yellow-600',
       bgLight: 'bg-yellow-50',
       borderColor: 'border-yellow-200',
@@ -272,7 +272,7 @@ const OrganizerDashboardPage = () => {
       title: 'Bị từ chối',
       value: stats.rejectedEvents || 0,
       icon: AlertCircle,
-      bgGradient: 'bg-gradient-to-br from-red-500 to-red-600',
+      bgGradient: 'bg-linear-to-br from-red-500 to-red-600',
       textColor: 'text-red-600',
       bgLight: 'bg-red-50',
       borderColor: 'border-red-200',
@@ -282,7 +282,7 @@ const OrganizerDashboardPage = () => {
       title: 'Đã hoàn thành',
       value: stats.completedEvents,
       icon: TrendingUp,
-      bgGradient: 'bg-gradient-to-br from-purple-500 to-purple-600',
+      bgGradient: 'bg-linear-to-br from-purple-500 to-purple-600',
       textColor: 'text-purple-600',
       bgLight: 'bg-purple-50',
       borderColor: 'border-purple-200',

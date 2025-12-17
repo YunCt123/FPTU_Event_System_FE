@@ -1,5 +1,10 @@
 import React from "react";
-class ErrorBoundary extends React.Component {
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
   state = { hasError: false };
   static getDerivedStateFromError() { return { hasError: true }; }
   render() {

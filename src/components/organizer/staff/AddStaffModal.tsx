@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import type { eventStaff, User } from "../../../types/Event";
+import type { eventStaff } from "../../../types/Event";
+import type { User } from "../../../types/User";
 import { organizerService, userService } from "../../../services";
 import { toast } from "react-toastify";
 import { X, Search, UserPlus, Users } from "lucide-react";
@@ -98,7 +99,7 @@ const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onS
 
         setIsLoading(true);
         try {
-            const response = await organizerService.postEventStaff(eventId, { userId: selectedStaffId });
+            const response = await organizerService.postEventStaff(Number(eventId), { userId: selectedStaffId });
             if (response.status === 201) {
                 toast.success("Đã thêm staff thành công");
                 onStaffAdded();
@@ -176,7 +177,7 @@ const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onS
                                         }
                                     `}
                                 >
-                                    <div className="flex-shrink-0">
+                                    <div className="shrink-0">
                                         {staff.avatar ? (
                                             <img
                                                 src={staff.avatar}
@@ -184,7 +185,7 @@ const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onS
                                                 className="w-12 h-12 rounded-full object-cover"
                                             />
                                         ) : (
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
+                                            <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
                                                 {staff.firstName.charAt(0)}{staff.lastName.charAt(0)}
                                             </div>
                                         )}
@@ -196,7 +197,7 @@ const AddStaffModal = ({ staffList, eventId, eventCampusId, isOpen, onClose, onS
                                         <p className="text-sm text-gray-600">@{staff.userName}</p>
                                         <p className="text-sm text-gray-500 truncate">{staff.email}</p>
                                     </div>
-                                    <div className="flex-shrink-0">
+                                    <div className="shrink-0">
                                         <div className={`
                                             w-5 h-5 rounded-full border-2 flex items-center justify-center
                                             ${selectedStaffId === staff.id

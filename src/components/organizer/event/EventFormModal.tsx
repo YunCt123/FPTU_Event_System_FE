@@ -80,7 +80,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   //FETCH ORGANIZER INFO VÀ STAFF KHI MOUNT
   useEffect(() => {
     fetchOrganizerInfo();
-    fetchStaffList();
+    // fetchStaffList();
   }, []);
 
   //FETCH VENUES KHI CÓ ORGANIZER INFO
@@ -974,7 +974,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="shrink-0 from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-lg">
               <Calendar className="text-white" size={24} />
@@ -1525,8 +1525,8 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             </div>
           </div>
 
-          {/* Footer - ✅ THÊM FLEX-SHRINK-0 */}
-          <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 flex-shrink-0">
+          {/* Footer - ✅ THÊM shrink-0 */}
+          <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 shrink-0">
             <button
               type="button"
               onClick={onClose}

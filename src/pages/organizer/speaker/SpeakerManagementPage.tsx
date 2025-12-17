@@ -10,9 +10,9 @@ import AssignSpeakerModal from "../../../components/organizer/speaker/AssignSpea
 const SpeakerManagementPage = () => {
       const [events, setEvents] = useState<GetEventResponse[]>([]);
       const [selectedEventId, setSelectedEventId] = useState<string>("");
-      const [selectedEvent, setSelectedEvent] = useState<GetEventResponse>();
+      // const [selectedEvent, setSelectedEvent] = useState<GetEventResponse>();
       const [searchQuery, setSearchQuery] = useState("");
-      const [selectedType, setSelectedType] = useState<string>("");
+      // const [selectedType, setSelectedType] = useState<string>("");
       const [isAddModalOpen, setIsAddModalOpen] = useState(false);
       const [filteredSpeakers, setFilteredSpeakers] = useState<eventSpeaker[]>([]);
       const [speakers, setSpeakers] = useState<eventSpeaker[]>([]);
@@ -31,17 +31,15 @@ const SpeakerManagementPage = () => {
             });
 
             const payload: any = response.data;
+            // response.data.data là mảng GetEventResponse[]
             const pageEvents: GetEventResponse[] =
-              Array.isArray(payload?.data?.data) ? payload.data.data :
               Array.isArray(payload?.data) ? payload.data :
               Array.isArray(payload) ? payload :
               [];
 
             allEvents = [...allEvents, ...pageEvents];
 
-            totalPages = payload?.meta?.totalPages
-              ?? payload?.data?.meta?.totalPages
-              ?? totalPages;
+            totalPages = payload?.meta?.totalPages ?? totalPages;
 
             page += 1;
           } while (page <= totalPages);
@@ -66,9 +64,8 @@ const SpeakerManagementPage = () => {
         try {
           const response = await eventService.getEventById(eventId);
           if (response) {
-            console.log("response2", response.data.eventSpeakers);
-            setSpeakers(response.data.eventSpeakers);
-            setSelectedEvent(response.data);
+          console.log("response2", response.data.data.eventSpeakers);
+          setSpeakers(response.data.data.eventSpeakers || []);
           }
         } catch (error) {
           console.log("Error fetching staff data:", error);
@@ -86,11 +83,11 @@ const SpeakerManagementPage = () => {
       useEffect(() => {
         let filtered = speakers;
 
-        if (selectedType) {
-          filtered = filtered.filter((eventSpeaker) =>
-            eventSpeaker.speaker?.type === selectedType
-          );
-        }
+        // if (selectedType) {
+        //   filtered = filtered.filter((eventSpeaker) =>
+        //     eventSpeaker.speaker?.type === selectedType
+        //   );
+        // }
 
         
         if (searchQuery) {
@@ -106,7 +103,7 @@ const SpeakerManagementPage = () => {
         }
 
         setFilteredSpeakers(filtered);
-      }, [speakers, searchQuery, selectedType]);
+      }, [speakers, searchQuery]);
 
      
       const getSpeakerTypes = () => {

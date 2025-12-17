@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   X,
   Mail,
@@ -23,7 +23,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
   user,
 }) => {
   console.log(isOpen);
-  if (!isOpen ) return null;
+  if (!isOpen || !user) return null;
 
   // const getCampusName = (campusId: number) => {
   //   const campuses: { [key: number]: string } = {
@@ -114,7 +114,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
             <div className="flex flex-col gap-2 h-full overflow-hidden">
               {/* Student Card - Takes up 2/3 of the space */}
               {user?.studentCardImage ? (
-                <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-[2] min-h-0 flex flex-col">
+                <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 flex-2 min-h-0 flex flex-col">
                   <h3 className="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1.5 pb-1.5 border-b border-gray-200">
                     <div className="p-0.5 bg-indigo-50 rounded">
                       <CreditCard size={12} className="text-indigo-600" />
@@ -130,7 +130,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg p-2 shadow-sm border border-dashed border-gray-300 flex-[2] min-h-0 flex items-center justify-center">
+                <div className="bg-white rounded-lg p-2 shadow-sm border border-dashed border-gray-300 flex-2 min-h-0 flex items-center justify-center">
                   <div className="text-center text-gray-400">
                     <div className="w-12 h-12 mx-auto mb-1.5 bg-gray-100 rounded-full flex items-center justify-center">
                       <CreditCard size={24} />
@@ -282,7 +282,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </h3>
                 <div className="space-y-1.5 text-xs">
                   {user.status && (
-                    <div className="p-1.5 bg-gradient-to-br from-yellow-50 to-orange-50 rounded border border-yellow-200">
+                    <div className="p-1.5 bg-linear-to-br from-yellow-50 to-orange-50 rounded border border-yellow-200">
                       <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">
                         Duyệt
                       </label>
@@ -295,7 +295,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       </p>
                     </div>
                   )}
-                  <div className="p-1.5 bg-gradient-to-br from-green-50 to-emerald-50 rounded border border-green-200">
+                  <div className="p-1.5 bg-linear-to-br from-green-50 to-emerald-50 rounded border border-green-200">
                     <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">
                       Hoạt động
                     </label>
@@ -309,7 +309,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       {user.isActive ? "Hoạt động" : "Vô hiệu"}
                     </p>
                   </div>
-                  {/* <div className="p-1.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded border border-blue-200">
+                  {/* <div className="p-1.5 bg-linear-to-br from-blue-50 to-indigo-50 rounded border border-blue-200">
                     <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">📅 Ngày tạo</label>
                     <p className="text-gray-900 font-bold text-xs">
                       {new Date(user.createdAt).toLocaleDateString('vi-VN')}
@@ -319,7 +319,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                     </p>
                   </div> */}
                   {/* {user.googleId && (
-                    <div className="p-1.5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded border border-indigo-200">
+                    <div className="p-1.5 bg-linear-to-br from-indigo-50 to-purple-50 rounded border border-indigo-200">
                       <label className="font-medium text-gray-500 uppercase text-[10px] mb-1 block">🔗 Google ID</label>
                       <p className="text-gray-900 font-mono text-[10px] break-all">{user.googleId}</p>
                     </div>

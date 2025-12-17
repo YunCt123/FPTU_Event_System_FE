@@ -34,11 +34,11 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ onClose, onSucces
     const fetchCurrentUser = async () => {
       try {
         const response = await userService.getUserInUse();
-        const currentUser = response.data;
+        const currentUser = response.data.data;
         console.log("object", currentUser);
         
         // Extract role from user object
-        const role = currentUser.role || currentUser.roleName;
+        const role = currentUser.roleName;
         setCurrentUserRole(role);
         
         // If user is event_organizer, auto-fill ownerId and campusId
@@ -101,7 +101,7 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ onClose, onSucces
       });
      
       if (response) {
-        setEventOrganizers(response.data.data);
+        setEventOrganizers(response.data.data.data);
       }else{
         console.log("no data");
       }
@@ -252,7 +252,7 @@ const AddOrganizerModal: React.FC<AddOrganizerModalProps> = ({ onClose, onSucces
         onClick={(e) => e.stopPropagation()} 
       >
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
+        <div className="flex items-center justify-between p-6 shrink-0 from-[#F27125] to-[#d95c0b] rounded-t-xl">
           <div>
             <h2 className="text-xl font-bold text-white">Thêm nhà tổ chức mới</h2>
             <p className="text-sm text-white/90">Điền thông tin để tạo nhà tổ chức</p>

@@ -65,7 +65,7 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
         roleName: 'event_organizer'
       });
       if (response) {
-        setEventOrganizers(response.data.data);
+        setEventOrganizers(response.data.data.data);
       }
     } catch (error: any) {
       console.error('Error fetching event organizers:', error);
@@ -182,7 +182,7 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
         onClick={(e) => e.stopPropagation()} 
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
+        <div className="flex items-center justify-between p-5 bg-linear-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
           <div>
             <h2 className="text-xl font-bold text-white">Cập nhật nhà tổ chức</h2>
             <p className="text-sm text-white/90">Chỉnh sửa thông tin nhà tổ chức</p>

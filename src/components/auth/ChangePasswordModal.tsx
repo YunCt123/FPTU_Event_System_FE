@@ -70,7 +70,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
                 toast.success(response.data.message);
                 handleClose();
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error changing password:', error);
             const errorMessage = error.response?.data?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại!';
             toast.error(errorMessage);

@@ -78,12 +78,13 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
       {open && (
         <div 
           ref={dropdownRef}
-          className={`absolute right-0 z-[9999] w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown
+          className={`absolute right-0 z-9999 w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown
             ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'}
           `}
         >
           {actions.map((action, index) => {
             const Icon = action.icon;
+            const actionType = action.type || 'detail';
             return (
               <button
                 key={index}
@@ -94,11 +95,11 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150
                   ${index === 0 ? "rounded-t-lg" : ""}
                   ${index === actions.length - 1 ? "rounded-b-lg" : ""}
-                   ${actionStyleMap[action.type]}
+                   ${actionStyleMap[actionType]}
                 `}
               >
                 {Icon && (
-                  <Icon size={16} className={iconStyleMap[action.type]} />
+                  <Icon size={16} className={iconStyleMap[actionType]} />
                 )}
 
                 <span className="font-medium">{action.label}</span>

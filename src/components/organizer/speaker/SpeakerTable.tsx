@@ -138,7 +138,7 @@ const SpeakerTable = ({ speakers, onDelete, eventId }: SpeakerTableProps) => {
                                 label: "Xóa",
                                 icon: Trash2,
                                 onClick: () => handleDeleteClick(eventSpeaker.speaker.id),
-                                danger: true,
+                                type: 'danger',
                             }
                         ]}
                       />

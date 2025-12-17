@@ -36,8 +36,8 @@ const AttendeesManagementPage = () => {
   const fetchEvent = async () => {
     try {
       const response = await organizerService.getOrganizerEvents();
-      if (response.status === 200 && response.data.data) {
-        setEvents(response.data.data);
+      if (response.status === 200 && (response.data as any).data?.data) {
+        setEvents((response.data as any).data.data);
       } else {
         console.log("No event Data or Api");
       }
@@ -104,9 +104,9 @@ const AttendeesManagementPage = () => {
       const response = await userService.getAttendUser(eventId, {page: page});
       if(response){
         console.log("response stats", response.data);
-        setAttendee(response.data);
-        setAttendees(response.data.data);
-        setPagination(response.data.meta);
+        setAttendee(response.data.data);
+        setAttendees(response.data.data.data);
+        setPagination(response.data.data.meta);
         
       }else{
         console.log("No attendees data or Api");
@@ -391,7 +391,7 @@ const AttendeesManagementPage = () => {
               value={statusFilter}
               onChange={(e) =>
                 setStatusFilter(
-                  e.target.value as 'ALL' | 'VALID' | 'USED' | 'CANCELLED' | 'EXPIRED'
+                  e.target.value as CheckInStatus | 'ALL'
                 )
               }
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
@@ -561,7 +561,7 @@ const AttendeesManagementPage = () => {
         {pagination && pagination.totalPages >= 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
             <div className="text-sm text-gray-600">
-              Trang {pagination.currentPage} / {pagination.totalPages} (Tổng: {pagination.totalItems} người tham dự)
+              Trang {pagination.page} / {pagination.totalPages} (Tổng: {pagination.total} người tham dự)
             </div>
             <div className="flex items-center gap-2">
               <button

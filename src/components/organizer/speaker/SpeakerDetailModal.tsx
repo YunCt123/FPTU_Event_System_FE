@@ -19,7 +19,7 @@ const SpeakerDetailModal = ({ speakerId, onClose }: SpeakerDetailModalProps) => 
       const response = await speakerService.getSpeakerById(speakerId);
       if (response.status === 200) {
         console.log("object", response);
-        setSpeaker(response.data);
+        setSpeaker(response.data.data);
       }
     } catch (error) {
       toast.error("Không thể tải thông tin speaker");

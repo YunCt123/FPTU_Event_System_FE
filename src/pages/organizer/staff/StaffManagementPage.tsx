@@ -42,18 +42,15 @@ const fetchEvent = async () => {
 
       const payload: any = response.data;
 
-      // try to extract data from common API shapes
+      // response.data.data là mảng GetEventResponse[]
       const pageEvents: GetEventResponse[] =
-        Array.isArray(payload?.data?.data) ? payload.data.data :
         Array.isArray(payload?.data) ? payload.data :
         Array.isArray(payload) ? payload :
         [];
 
       allEvents = [...allEvents, ...pageEvents];
 
-      totalPages = payload?.meta?.totalPages
-        ?? payload?.data?.meta?.totalPages
-        ?? totalPages;
+      totalPages = payload?.meta?.totalPages ?? totalPages;
 
       page += 1;
     } while (page <= totalPages);
@@ -82,8 +79,7 @@ const fetchEvent = async () => {
       const response = await eventService.getEventById(eventId);
       if (response) {
         console.log("response2", response);
-        setStaffList(response.data.eventStaffs);
-        setSelectedEvent(response.data);
+        setStaffList(response.data.data.eventStaffs || []);
       }
     } catch (error) {
       console.log("Error fetching staff data:", error);

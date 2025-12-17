@@ -69,17 +69,17 @@ const AccountPage = () => {
     try {
       const res = await userService.getUserInUse();
       if (res.status === 200) {
-        setUser(res.data);
+        setUser(res.data.data);
         setFormData({
-          userName: res.data.userName,
-          firstName: res.data.firstName,
-          lastName: res.data.lastName,
-          phoneNumber: res.data.phoneNumber || "",
-          gender: res.data.gender,
-          address: res.data.address || "",
-          avatar: res.data.avatar || "",
+          userName: res.data.data.userName,
+          firstName: res.data.data.firstName,
+          lastName: res.data.data.lastName,
+          phoneNumber: res.data.data.phoneNumber || "",
+          gender: res.data.data.gender ?? false,
+          address: res.data.data.address || "",
+          avatar: res.data.data.avatar || "",
         });
-        setAvatarPreview(res.data.avatar || "");
+        setAvatarPreview(res.data.data.avatar || "");
       }
     } catch {
       setError("Không thể tải thông tin người dùng");
@@ -124,7 +124,7 @@ const AccountPage = () => {
         firstName: user.firstName,
         lastName: user.lastName,
         phoneNumber: user.phoneNumber || "",
-        gender: user.gender,
+        gender: user.gender ?? false,
         address: user.address || "",
         avatar: user.avatar || "",
       });
@@ -204,7 +204,7 @@ const AccountPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div className="bg-gradient-to-br from-[#F27125] to-[#d95c0b] rounded-2xl shadow-lg p-8">
+      <div className="bg-linear-to-br from-[#F27125] to-[#d95c0b] rounded-2xl shadow-lg p-8">
         <div className="flex flex-col md:flex-row gap-6 items-center">
           {/* Avatar */}
           <div className="relative shrink-0">

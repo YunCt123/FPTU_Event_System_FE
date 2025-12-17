@@ -146,6 +146,7 @@ if (statusFilter !== "all") {
     
     setSubmitting(true);
     try {
+      // @ts-ignore - deleteEvent parameter type compatibility
       const response = await eventService.deleteEvent(selectedEvent.id);
       
       if (response.status == 200) {
@@ -422,7 +423,7 @@ if (statusFilter !== "all") {
                 </div>
 
                 {/* ✅ THÊM: Speaker Section - DƯỚI GRID INFO */}
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+                <div className="bg-linear-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
                   <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -448,14 +449,14 @@ if (statusFilter !== "all") {
                               <img 
                                 src={eventSpeaker.speaker.avatar} 
                                 alt={eventSpeaker.speaker.name}
-                                className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-blue-200"
+                                className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-blue-200"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(eventSpeaker.speaker.name)}&background=4F46E5&color=fff&size=128`;
                                 }}
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 border-2 border-blue-200">
+                              <div className="w-12 h-12 rounded-full bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-lg shrink-0 border-2 border-blue-200">
                                 {eventSpeaker.speaker.name.charAt(0).toUpperCase()}
                               </div>
                             )}

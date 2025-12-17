@@ -33,7 +33,7 @@ const EventModal: React.FC<EventModalProps> = ({ title, children, onClose }) => 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0 bg-white">
           <h2 className="text-xl font-semibold text-gray-900">
             {title}
           </h2>

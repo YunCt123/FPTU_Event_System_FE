@@ -7,7 +7,7 @@ interface OrganizerDetailModalProps {
   onClose: () => void;
 }
 
-const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, isOpen, onClose }) => {
+const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, onClose }) => {
   if (!organizer) return null;
 
   const ownerName = organizer.owner 
@@ -21,7 +21,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
         onClick={(e) => e.stopPropagation()} 
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-2xl">
+        <div className="flex items-center justify-between px-6 py-4 shrink-0 from-[#F27125] to-[#d95c0b] rounded-t-2xl">
           <h2 className="text-xl font-bold text-white">Chi tiết nhà tổ chức</h2>
           <button 
             onClick={onClose} 
@@ -36,7 +36,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
         <div className="p-6">
           <div className="flex gap-6">
             {/* Left - Logo */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {organizer.logoUrl ? (
                 <div className="relative">
                   <img
@@ -49,7 +49,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
                   </div>
                 </div>
               ) : (
-                <div className="w-48 h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-48 h-48 bg-linear-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center shadow-lg">
                   <div className="text-center">
                     <Building2 size={48} className="text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-500 text-sm">Chưa có logo</p>
@@ -84,7 +84,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
               <div className="grid grid-cols-2 gap-3">
                 {/* Email */}
                 <div className="flex items-center gap-3 bg-orange-50 px-4 py-3 rounded-lg">
-                  <div className="w-9 h-9 bg-[#F27125] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 bg-[#F27125] rounded-lg flex items-center justify-center shrink-0">
                     <Mail size={18} className="text-white" />
                   </div>
                   <div className="min-w-0">
@@ -97,7 +97,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
 
                 {/* Owner */}
                 <div className="flex items-center gap-3 bg-blue-50 px-4 py-3 rounded-lg">
-                  <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
                     <User size={18} className="text-white" />
                   </div>
                   <div className="min-w-0">
@@ -108,7 +108,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
 
                 {/* Created At */}
                 <div className="flex items-center gap-3 bg-green-50 px-4 py-3 rounded-lg">
-                  <div className="w-9 h-9 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
                     <Calendar size={18} className="text-white" />
                   </div>
                   <div className="min-w-0">
@@ -121,7 +121,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
 
                 {/* Updated At */}
                 <div className="flex items-center gap-3 bg-purple-50 px-4 py-3 rounded-lg">
-                  <div className="w-9 h-9 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 bg-purple-600 rounded-lg flex items-center justify-center shrink-0">
                     <RefreshCw size={18} className="text-white" />
                   </div>
                   <div className="min-w-0">
@@ -141,7 +141,7 @@ const OrganizerDetailModal: React.FC<OrganizerDetailModalProps> = ({ organizer, 
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 bg-gradient-to-r from-[#F27125] to-[#d95c0b] text-white rounded-lg hover:shadow-lg transition-all font-medium"
+            className="px-6 py-2.5 shrink-0 from-[#F27125] to-[#d95c0b] text-white rounded-lg hover:shadow-lg transition-all font-medium"
           >
             Đóng
           </button>

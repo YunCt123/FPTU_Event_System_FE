@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import StatsCard from "../../../components/admin/dashboard/StatsCard";
 import BarChartBox from "../../../components/admin/dashboard/BarChartBox";
 import PieChartBox from "../../../components/admin/dashboard/PieChartBox";
@@ -17,7 +17,7 @@ const DashboardPage = () => {
 
   // Generate list of years (từ 2020 đến năm hiện tại + 2)
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2020 + 3 }, (_, i) => 2020 + i);
+  // const years = Array.from({ length: currentYear - 2020 + 3 }, (_, i) => 2020 + i);
 
   useEffect(() => {
     fetchData();
@@ -110,7 +110,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6">
       {/* Header with Gradient */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -166,7 +166,7 @@ const DashboardPage = () => {
       {/* Stats Cards - Giống OrganizerDashboardPage */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Card 1: Tổng số sự kiện - Màu xanh dương */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+        <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-white/90 mb-2">Tổng số sự kiện</p>
@@ -179,7 +179,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Card 2: Đang xử lý - Màu vàng */}
-        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+        <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-white/90 mb-2">Đang xử lý</p>
@@ -194,7 +194,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Card 3: Đã duyệt - Màu xanh lá */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+        <div className="bg-linear-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-white/90 mb-2">Đã duyệt</p>
@@ -214,7 +214,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Card 4: Đã từ chối - Màu đỏ */}
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
+        <div className="bg-linear-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-white/90 mb-2">Đã từ chối</p>

@@ -7,7 +7,6 @@ import {
   Award,
   Calendar,
   Filter,
-  StarHalf,
   User,
 } from 'lucide-react';
 import type { GetEventResponse } from '../../../types/Event';
@@ -37,17 +36,15 @@ const EventReportsPage = () => {
         });
 
         const payload: any = response.data;
+        // response.data.data là mảng GetEventResponse[]
         const pageEvents: GetEventResponse[] =
-          Array.isArray(payload?.data?.data) ? payload.data.data :
           Array.isArray(payload?.data) ? payload.data :
           Array.isArray(payload) ? payload :
           [];
 
         allEvents = [...allEvents, ...pageEvents];
 
-        totalPages = payload?.meta?.totalPages
-          ?? payload?.data?.meta?.totalPages
-          ?? totalPages;
+        totalPages = payload?.meta?.totalPages ?? totalPages;
 
         page += 1;
       } while (page <= totalPages);
@@ -76,8 +73,8 @@ const EventReportsPage = () => {
       const response = await feedbackService.getFeedbacksByEventId(eventId);
       if (response) {
         console.log("feedbackResponse", response.data);
-        setFeedbackData(response.data);
-        setFilteredFeedbacks(response.data?.feedbacks || []);
+        setFeedbackData(response.data.data);
+        setFilteredFeedbacks(response.data.data?.feedbacks || []);
       } else {
         console.log("No feedback data or API");
         setFeedbackData(null);
@@ -304,7 +301,7 @@ const EventReportsPage = () => {
                 >
                   <div className="flex items-start gap-4">
                     {/* User Avatar */}
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       {feedback.user.avatar ? (
                         <img
                           src={feedback.user.avatar}

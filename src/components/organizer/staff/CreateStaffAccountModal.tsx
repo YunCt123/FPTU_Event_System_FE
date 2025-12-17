@@ -172,7 +172,7 @@ const CreateStaffAccountModal = ({
         style={{ maxHeight: "90vh" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
+        <div className="flex items-center justify-between p-6 shrink-0 from-[#F27125] to-[#d95c0b] rounded-t-xl">
           <div className="flex items-center gap-3">
             <UserPlus className="text-white" size={24} />
             <div>

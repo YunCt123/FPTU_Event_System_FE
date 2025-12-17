@@ -44,8 +44,8 @@ const AssignSpeakerModal = ({ selectedEventId, onClose, onSuccess }: AssignSpeak
       const response = await speakerService.getAllSpeaker(params);
       
       if (response.status === 200) {
-        const newSpeakers = response.data.data;
-        const meta = response.data.meta;
+        const newSpeakers = response.data.data.data;
+        const meta = response.data.data.meta;
         
         if (append) {
           setSpeakers(prev => [...prev, ...newSpeakers]);

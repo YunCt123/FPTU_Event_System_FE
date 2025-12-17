@@ -200,7 +200,7 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
         column: formData.column,
         hasSeats: formData.hasSeats,
         mapImageUrl: formData.mapImageUrl || null,
-        status: venue?.status || "Active",
+        status: venue?.status || "ACTIVE",
         campusId: venue?.campusId || 0,
         capacity: formData.hasSeats ? calculatedCapacity : formData.capacity,
       };
@@ -360,7 +360,7 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
 
               {/* Auto-calculated Capacity Display */}
               {formData.row > 0 && formData.column > 0 && (
-                <div className="bg-gradient-to-r from-[#F27125]/10 to-orange-50 border border-[#F27125]/20 rounded-lg p-4">
+                <div className="bg-linear-to-r from-[#F27125]/10 to-orange-50 border border-[#F27125]/20 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 bg-[#F27125] rounded-full">
                       <Users size={20} className="text-white" />

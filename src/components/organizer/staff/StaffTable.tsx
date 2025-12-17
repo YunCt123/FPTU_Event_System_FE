@@ -53,7 +53,7 @@ const handleViewDetail = async(id: number) => {
     try {
         const response = await userService.getUserById(id);
         if(response.status === 200){
-           setSelectedUser(response.data);
+           setSelectedUser(response.data.data);
            console.log(response.data);
            setIsDetailModalOpen(true);
         }
@@ -152,7 +152,7 @@ const cancelDelete = () => {
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
                           {staff.user.firstName.charAt(0)}{staff.user.lastName.charAt(0)}
                         </div>
                       )}
@@ -200,7 +200,7 @@ const cancelDelete = () => {
                             label: 'Xóa',
                             onClick: () => handleDeleteClick(staff.user.id),
                             icon: Trash2,
-                            danger: true,
+                            type: 'danger',
                           }
                         ]}
                       />
