@@ -198,9 +198,9 @@ const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) =>
       const response = await speakerService.getAllSpeaker(params);
       console.log("object", response);
       if (response.status === 200) {
-        const getAllSpeakerData = response.data.data; 
-        const newSpeakers = getAllSpeakerData; 
-        const meta = response.data.meta;
+        const getAllSpeakerData = response.data.data; // ApiResponse<GetAllSpeaker>
+        const newSpeakers = getAllSpeakerData.data; // GetAllSpeaker.data = SpeakerResponse[]
+        const meta = getAllSpeakerData.meta;
         
         if (append) {
           setSpeakers(prev => [...prev, ...newSpeakers]);
@@ -734,7 +734,7 @@ const EventFormModalOnline: React.FC<Props> = ({ event, onClose, onSuccess }) =>
                               if (value === "load_more") {
                                 handleLoadMoreSpeakers();
                               } else {
-                                updateSpeaker(idx, "speakerId", value);
+                                updateSpeaker(idx, "speakerId" as keyof eventSpeaker, value);
                               }
                             }}
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"

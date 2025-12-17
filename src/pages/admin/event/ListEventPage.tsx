@@ -509,13 +509,13 @@ if (statusFilter !== "all") {
                     <p className="text-sm font-semibold text-cyan-700">Mở đăng ký</p>
                   </div>
                   <p className="text-base font-bold text-cyan-900">
-                    {new Date(selectedEvent.startTimeRegister).toLocaleString('vi-VN', {
+                    {selectedEvent.startTimeRegister ? new Date(selectedEvent.startTimeRegister).toLocaleString('vi-VN', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit'
-                    })}
+                    }) : 'N/A'}
                   </p>
                 </div>
 
@@ -528,13 +528,13 @@ if (statusFilter !== "all") {
                     <p className="text-sm font-semibold text-pink-700">Đóng đăng ký</p>
                   </div>
                   <p className="text-base font-bold text-pink-900">
-                    {new Date(selectedEvent.endTimeRegister).toLocaleString('vi-VN', {
+                    {selectedEvent.endTimeRegister ? new Date(selectedEvent.endTimeRegister).toLocaleString('vi-VN', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit'
-                    })}
+                    }) : 'N/A'}
                   </p>
                 </div>
               </div>
