@@ -5,6 +5,13 @@ export interface Campus {
   address: string;
 }
 
+export interface Meta{
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface User {
   id: number;
   userName: string;
@@ -26,6 +33,11 @@ export interface User {
   studentCardImage?: string;
 }
 
+export interface UserResponse {
+  data: User[];
+  meta: Meta;
+}
+
 export interface GetPendingUsersResponse {
   id: number;
   userName: string;
@@ -41,7 +53,7 @@ export interface GetPendingUsersResponse {
   status: "PENDING" | "APPROVED" | "REJECTED";
   roleName: "staff" | "student" | "admin";
   isActive: boolean;
-  createdAt: string; // hoặc Date
+  createdAt: string; 
   campus: Campus;
 }
 
@@ -77,18 +89,18 @@ export interface PatchUserResponse {
   googleId: string | null;
   avatar: string;
   phoneNumber: string;
-  gender: boolean; // false = female, true = male (tùy bạn định nghĩa)
+  gender: boolean; 
   address: string;
   firstName: string;
   lastName: string;
   studentCode: string | null;
   email: string;
   studentCardImage: string | null;
-  status: "APPROVED" | "PENDING" | "REJECTED"; // nếu có thêm trạng thái khác thì bổ sung
+  status: "APPROVED" | "PENDING" | "REJECTED"; 
   refreshTokenHash: string | null;
-  createdAt: string; // hoặc Date nếu bạn convert
+  createdAt: string; 
   isActive: boolean;
-  roleName: "student" | "admin" | "event_organizer"; // thêm role nếu có
+  roleName: "student" | "admin" | "event_organizer"; 
   campusId: number;
 }
 
