@@ -19,6 +19,7 @@ import { toast } from 'react-toastify';
 import eventService from '../../../services/eventService';
 import type { DeleteRequestItem } from '../../../types/Event';
 import ActionDropdown from '../../../components/ActionDropdown';
+import ConfirmModal from '../../../components/common/ConfirmModal';
 
 const DeleteResponsePage = () => {
   const [deleteRequests, setDeleteRequests] = useState<DeleteRequestItem[]>([]);
@@ -28,6 +29,11 @@ const DeleteResponsePage = () => {
   const [selectedRequest, setSelectedRequest] = useState<DeleteRequestItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Modal confirm states
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [pendingRequestId, setPendingRequestId] = useState<number | null>(null);
 
   // ✅ THÊM: Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,10 +117,6 @@ const DeleteResponsePage = () => {
   };
 
   const handleApprove = async (requestId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xóa sự kiện này?\n\nSự kiện sẽ được đổi status sang "CANCELED".')) {
-      return;
-    }
-
     setIsProcessing(true);
     try {
       console.log('✅ Approving delete request:', requestId);
@@ -132,6 +134,8 @@ const DeleteResponsePage = () => {
       
       await fetchDeleteRequests();
       setIsDetailModalOpen(false);
+      setShowApproveConfirm(false);
+      setPendingRequestId(null);
       
     } catch (error: any) {
       console.error('Error approving delete request:', error);
@@ -155,10 +159,6 @@ const DeleteResponsePage = () => {
 
   // ✅ HÀM TỪ CHỐI - SỬA PARAMS
   const handleReject = async (requestId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn TỪ CHỐI yêu cầu xóa sự kiện này?')) {
-      return;
-    }
-
     setIsProcessing(true);
     try {
       console.log('Rejecting delete request:', requestId);
@@ -174,6 +174,8 @@ const DeleteResponsePage = () => {
       
       await fetchDeleteRequests();
       setIsDetailModalOpen(false);
+      setShowRejectConfirm(false);
+      setPendingRequestId(null);
       
     } catch (error: any) {
       console.error('Error rejecting delete request:', error);
@@ -414,8 +416,8 @@ const DeleteResponsePage = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
+              <table className="w-full" style={{ overflow: 'visible' }}>
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -509,14 +511,16 @@ const DeleteResponsePage = () => {
                                   label: 'Phê duyệt',
                                   icon: CheckCircle,
                                   onClick: () => {
-                                    handleApprove(request.id);
+                                    setPendingRequestId(request.id);
+                                    setShowApproveConfirm(true);
                                   },
                                 },
                                 {
                                   label: 'Từ chối',
                                   icon: XCircle,
                                   onClick: () => {
-                                    handleReject(request.id);
+                                    setPendingRequestId(request.id);
+                                    setShowRejectConfirm(true);
                                   },
                                   danger: true,
                                 },
@@ -696,7 +700,10 @@ const DeleteResponsePage = () => {
                   </button>
                   
                   <button
-                    onClick={() => handleReject(selectedRequest.id)}
+                    onClick={() => {
+                      setPendingRequestId(selectedRequest.id);
+                      setShowRejectConfirm(true);
+                    }}
                     disabled={isProcessing}
                     className="px-6 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
                   >
@@ -705,7 +712,10 @@ const DeleteResponsePage = () => {
                   </button>
                   
                   <button
-                    onClick={() => handleApprove(selectedRequest.id)}
+                    onClick={() => {
+                      setPendingRequestId(selectedRequest.id);
+                      setShowApproveConfirm(true);
+                    }}
                     disabled={isProcessing}
                     className="px-6 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
                   >
@@ -718,6 +728,44 @@ const DeleteResponsePage = () => {
           </div>
         </div>
       )}
+
+      {/* Approve Confirm Modal */}
+      <ConfirmModal
+        isOpen={showApproveConfirm}
+        title="Xác nhận phê duyệt"
+        message="Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xóa sự kiện này? Sự kiện sẽ được đổi status sang CANCELED."
+        confirmText="Phê duyệt"
+        cancelText="Hủy"
+        onConfirm={() => {
+          if (pendingRequestId) {
+            handleApprove(pendingRequestId);
+          }
+        }}
+        onCancel={() => {
+          setShowApproveConfirm(false);
+          setPendingRequestId(null);
+        }}
+        type="success"
+      />
+
+      {/* Reject Confirm Modal */}
+      <ConfirmModal
+        isOpen={showRejectConfirm}
+        title="Xác nhận từ chối"
+        message="Bạn có chắc chắn muốn TỪ CHỐI yêu cầu xóa sự kiện này?"
+        confirmText="Từ chối"
+        cancelText="Hủy"
+        onConfirm={() => {
+          if (pendingRequestId) {
+            handleReject(pendingRequestId);
+          }
+        }}
+        onCancel={() => {
+          setShowRejectConfirm(false);
+          setPendingRequestId(null);
+        }}
+        type="danger"
+      />
     </div>
   );
 };

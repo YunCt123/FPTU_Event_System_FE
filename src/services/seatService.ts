@@ -23,13 +23,23 @@ const seatService = {
    * Cập nhật loại ghế (standard, vip, etc.)
    * @param seatId - Seat ID (required)
    * @param seatType - Loại ghế: "standard" hoặc "vip"
+   * @param eventId - Event ID (required)
    */
   async updateSeatType(
     seatId: number,
-    seatType: string
+    seatType: string,
+    eventId: string
   ): Promise<AxiosResponse<ApiResponse<any>>> {
     const url = `${SEAT_URL}${seatId}/type`;
-    return await apiUtils.patch<ApiResponse<any>>(url, { seatType });
+    return await apiUtils.patch<ApiResponse<any>>(url, { seatType, eventId });
+  },
+
+  async updateSeatStatus(
+    seatId: number,
+    status: boolean
+  ): Promise<AxiosResponse<ApiResponse<any>>> {
+    const url = `${SEAT_URL}${seatId}/status`;
+    return await apiUtils.patch<ApiResponse<any>>(url, { isActive: status });
   },
 };
 

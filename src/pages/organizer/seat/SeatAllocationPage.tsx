@@ -109,9 +109,11 @@ const SeatAllocationPage = () => {
                 id: seat.id,
                 row: rowLabels.indexOf(rowLabel),
                 col: seat.colLabel - 1,
-                type: seat.isActive ? seat.seatType.toLowerCase() : "disabled",
+                type: seat.isActive
+                  ? seat.seatType?.toLowerCase() || "standard"
+                  : "disabled",
                 label: `${rowLabel}${seat.colLabel}`,
-                seatType: seat.seatType,
+                seatType: seat.seatType || "STANDARD",
                 isBooked: seat.isBooked,
               }));
           });
@@ -131,7 +133,7 @@ const SeatAllocationPage = () => {
             .map((seat: ApiSeat) => ({
               rowIndex: rowLabels.indexOf(seat.rowLabel),
               colIndex: seat.colLabel - 1,
-              reservedFor: (seat.seatType.toUpperCase() as any) || "GUEST",
+              reservedFor: (seat.seatType?.toUpperCase() as any) || "GUEST",
               guestName: "",
               note: "",
             }));
@@ -182,16 +184,17 @@ const SeatAllocationPage = () => {
   };
 
   const handleUpdateSeatType = async (newSeatType: string) => {
-    if (!selectedSeat) return;
+    if (!selectedSeat || !eventId) return;
 
     try {
       setIsUpdating(true);
       console.log("Updating seat type:", {
         seatId: selectedSeat.id,
         newType: newSeatType,
+        eventId,
       });
 
-      await seatService.updateSeatType(selectedSeat.id, newSeatType);
+      await seatService.updateSeatType(selectedSeat.id, newSeatType, eventId);
 
       toast.success(`Cập nhật ghế ${selectedSeat.label} thành công`);
 

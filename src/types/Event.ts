@@ -133,6 +133,8 @@ export interface GetEventResponse {
   eventSpeakers?: eventSpeaker[];
   eventStaffs?: eventStaff[];
   checkinCount: number; 
+  endTimeRegister?: string;
+  startTimeRegister?: string;
 }
 
 export interface GetTotalEventsResponse {
