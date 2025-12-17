@@ -11,7 +11,9 @@ import type {
     GetTotalEventsResponse, 
     UpdateEventRequest, 
     UpdateEventResponse,
-    GetDeleteRequestsResponse
+    GetDeleteRequestsResponse,
+    BookingWeeklyResponse,
+    BookingWeeklyRequest
 } from "../types/Event";
 import type { ApiResponse } from "../types/ApiResponse";
 import type { BookingOnlineRequest, BookingOnlineResponse } from "../types/Event";
@@ -127,7 +129,10 @@ const eventService = {
         );
     },
 
-    
+async bookingWeekly(data: BookingWeeklyRequest): Promise<AxiosResponse<BookingWeeklyResponse>> {
+    return await apiUtils.post<BookingWeeklyResponse>(
+            `${EVENT_URL}`, data);
+    },
     
 };
 

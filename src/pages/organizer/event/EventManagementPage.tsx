@@ -10,6 +10,7 @@ import {
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
 import EventFormModalOnline from '../../../components/organizer/event/EventFormModalOnline'; // ✅ IMPORT MODAL ONLINE
+import EventFormModalWeekly from '../../../components/organizer/event/EventFormModalWeekly'; // ✅ IMPORT MODAL WEEKLY
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
@@ -41,7 +42,7 @@ const EventManagementPage = () => {
 
   // ✅ THÊM STATE CHO MODAL LOẠI SỰ KIỆN
   const [showTypeModal, setShowTypeModal] = useState(false);
-  const [eventTypeToCreate, setEventTypeToCreate] = useState<"offline" | "online" | null>(null);
+  const [eventTypeToCreate, setEventTypeToCreate] = useState<"offline" | "online" | "weekly" | null>(null);
 
   useEffect(() => {
     fetchEventsByOrganizer();
@@ -519,6 +520,12 @@ const EventManagementPage = () => {
               Sự kiện Online
             </button>
             <button
+              className="w-full px-4 py-3 bg-teal-500 text-white rounded-lg font-semibold hover:bg-teal-600"
+              onClick={() => handleSelectType("weekly")}
+            >
+              Sự kiện Định kì
+            </button>
+            <button
               className="w-full px-4 py-2 mt-2 text-gray-600 hover:bg-gray-100 rounded-lg"
               onClick={() => setShowTypeModal(false)}
             >
@@ -681,12 +688,17 @@ const EventManagementPage = () => {
                                 icon: Edit,
                                 onClick: () => handleEditEvent(event),
                               },
-                              {
-                                label: 'Xóa',
-                                icon: Trash2,
-                                onClick: () => handleDeleteEvent(event),
-                                danger: true,
-                              },
+                              // chỉ hiển thị nút Xóa khi status khác 'CANCELED'
+                              ...(event.status !== 'CANCELED'
+                                ? [
+                                    {
+                                      label: 'Xóa',
+                                      icon: Trash2,
+                                      onClick: () => handleDeleteEvent(event),
+                                      danger: true,
+                                    },
+                                  ]
+                                : []),
                             ]}
                           />
                         </div>
@@ -802,15 +814,36 @@ const EventManagementPage = () => {
                 setEvents((prev) =>
                   prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
                 );
-                toast.success('Cập nhật sự kiện thành công!');
+                // toast.success('Cập nhật sự kiện thành công!');
               } else {
-                toast.success('Tạo sự kiện thành công!');
+                // toast.success('Tạo sự kiện thành công!');
               }
               setIsModalOpen(false);
               setSelectedEvent(null);
               await fetchEventsByOrganizer();
             } catch (error) {
               console.error('Error in onSuccess:', error);
+            }
+          }}
+        />
+      )}
+      {isModalOpen && eventTypeToCreate === "weekly" && (
+        <EventFormModalWeekly
+          event={selectedEvent}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedEvent(null);
+            setEventTypeToCreate(null);
+          }}
+          onSuccess={async (savedEvent) => {
+            try {
+              // cập nhật list sau khi tạo/chỉnh sửa
+              await fetchEventsByOrganizer();
+              setIsModalOpen(false);
+              setSelectedEvent(null);
+              setEventTypeToCreate(null);
+            } catch (error) {
+              console.error('Error in onSuccess weekly:', error);
             }
           }}
         />
