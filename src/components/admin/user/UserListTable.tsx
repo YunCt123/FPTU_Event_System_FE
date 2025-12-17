@@ -1,25 +1,44 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { useSearchParams } from 'react-router-dom';
-import userService from '../../../services/userService';
-import type { User } from '../../../types/User';
-import { UserStar, UserCog, User as UserIcon, Search, Loader, Trash2, Edit, Eye, X, Check, UserPlus } from 'lucide-react';
-import UserDetailModal from './UserDetailModal';
-import ConfirmModal from '../../common/ConfirmModal';
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
+import userService from "../../../services/userService";
+import type { User } from "../../../types/User";
+import {
+  UserStar,
+  UserCog,
+  User as UserIcon,
+  Search,
+  Loader,
+  Eye,
+  X,
+  Check,
+  UserPlus,
+  Ban,
+} from "lucide-react";
+import UserDetailModal from "./UserDetailModal";
+import ConfirmModal from "../../common/ConfirmModal";
 
 const UserListTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const roleFromUrl = searchParams.get('role') as 'event_organizer' | 'staff' | 'student' | null;
+  const roleFromUrl = searchParams.get("role") as
+    | "event_organizer"
+    | "staff"
+    | "student"
+    | null;
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'event_organizer' | 'staff' | 'student'>(roleFromUrl || 'event_organizer');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [activeTab, setActiveTab] = useState<
+    "event_organizer" | "staff" | "student"
+  >(roleFromUrl || "event_organizer");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-   const [confirmModal, setConfirmModal] = useState<{
+  const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     userId: number | null;
     isDeactivate: boolean;
@@ -28,12 +47,12 @@ const UserListTable = () => {
     isOpen: boolean;
     userId: number | null;
     reason: string;
-  }>({ isOpen: false, userId: null, reason: '' });
+  }>({ isOpen: false, userId: null, reason: "" });
 
   const roleLabels = {
-    event_organizer: 'Event Organizer',
-    staff: 'Staff',
-    student: 'Student'
+    event_organizer: "Event Organizer",
+    staff: "Staff",
+    student: "Student",
   };
 
   const handleDelete = (id: number) => {
@@ -51,7 +70,7 @@ const UserListTable = () => {
   const roleIcons = {
     event_organizer: <UserStar size={20} className="text-purple-600" />,
     staff: <UserCog size={20} className="text-blue-600" />,
-    student: <UserIcon size={20} className="text-green-600" />
+    student: <UserIcon size={20} className="text-green-600" />,
   };
 
   const handleStatusUser = async (id: number, status: string) => {
@@ -59,53 +78,53 @@ const UserListTable = () => {
     try {
       const response = await userService.patchUserStatus(id, { status });
       if (response.data) {
-        toast.success('Cập nhật trạng thái người dùng thành công');
+        toast.success("Cập nhật trạng thái người dùng thành công");
         fetchUsers();
       } else {
-        toast.error('Cập nhật trạng thái người dùng thất bại');
+        toast.error("Cập nhật trạng thái người dùng thất bại");
       }
     } catch (error: any) {
-      console.error('Error updating user status:', error);
-      toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+      console.error("Error updating user status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái người dùng");
     } finally {
       setLoading(false);
     }
   };
 
   const handleReject = (id: number) => {
-    setRejectModal({ isOpen: true, userId: id, reason: '' });
+    setRejectModal({ isOpen: true, userId: id, reason: "" });
   };
 
   const confirmReject = async () => {
     if (!rejectModal.userId) return;
     if (!rejectModal.reason.trim()) {
-      toast.warning('Vui lòng nhập lý do từ chối');
+      toast.warning("Vui lòng nhập lý do từ chối");
       return;
     }
-    
+
     setLoading(true);
     try {
-      const response = await userService.patchUserStatus(rejectModal.userId, { 
-        status: 'REJECTED',
-        reason: rejectModal.reason 
+      const response = await userService.patchUserStatus(rejectModal.userId, {
+        status: "REJECTED",
+        reason: rejectModal.reason,
       });
       if (response.data) {
-        toast.success('Từ chối người dùng thành công');
-        setRejectModal({ isOpen: false, userId: null, reason: '' });
+        toast.success("Từ chối người dùng thành công");
+        setRejectModal({ isOpen: false, userId: null, reason: "" });
         fetchUsers();
       } else {
-        toast.error('Từ chối người dùng thất bại');
+        toast.error("Từ chối người dùng thất bại");
       }
     } catch (error: any) {
-      console.error('Error rejecting user:', error);
-      toast.error('Có lỗi xảy ra khi từ chối người dùng');
+      console.error("Error rejecting user:", error);
+      toast.error("Có lỗi xảy ra khi từ chối người dùng");
     } finally {
       setLoading(false);
     }
   };
 
   const cancelReject = () => {
-    setRejectModal({ isOpen: false, userId: null, reason: '' });
+    setRejectModal({ isOpen: false, userId: null, reason: "" });
   };
 
   useEffect(() => {
@@ -129,16 +148,18 @@ const UserListTable = () => {
       const response = await userService.getUsers({ roleName: activeTab });
       if (response.data.data) {
         // Filter out users with PENDING status and inactive users
-        const approvedUsers = response.data.data.filter((user: User) => 
-          user.status !== 'REJECTED'
+        const approvedUsers = response.data.data.filter(
+          (user: User) => user.status !== "REJECTED"
         );
-        const pendingUsers = response.data.data.filter((user: User) => user.status === 'PENDING');
+        const pendingUsers = response.data.data.filter(
+          (user: User) => user.status === "PENDING"
+        );
         setPendingUsers(pendingUsers);
         setUsers(approvedUsers);
       }
     } catch (error: any) {
-      console.error('Error fetching users:', error);
-      toast.error('Không thể tải danh sách người dùng');
+      console.error("Error fetching users:", error);
+      toast.error("Không thể tải danh sách người dùng");
     } finally {
       setLoading(false);
     }
@@ -149,28 +170,28 @@ const UserListTable = () => {
     if (!userIdConfirm) return;
     setLoading(true);
     try {
-        if (confirmModal.isDeactivate) {
-            const response = await userService.patchUserDeactivate(userIdConfirm);
-            if(response.data){
-                toast.success('Vô hiệu người dùng thành công');
-            }else{
-                toast.error('Vô hiệu người dùng thất bại');
-            }
+      if (confirmModal.isDeactivate) {
+        const response = await userService.patchUserDeactivate(userIdConfirm);
+        if (response.data) {
+          toast.success("Vô hiệu người dùng thành công");
         } else {
-            const response = await userService.patchUserActivate(userIdConfirm);
-            if(response.data){
-                toast.success('Kích hoạt người dùng thành công');
-            }else{
-                toast.error('Kích hoạt người dùng thất bại');
-            }
+          toast.error("Vô hiệu người dùng thất bại");
         }
-        fetchUsers();
+      } else {
+        const response = await userService.patchUserActivate(userIdConfirm);
+        if (response.data) {
+          toast.success("Kích hoạt người dùng thành công");
+        } else {
+          toast.error("Kích hoạt người dùng thất bại");
+        }
+      }
+      fetchUsers();
     } catch (error: any) {
-        console.error('Error updating user status:', error);
-        toast.error('Có lỗi xảy ra khi cập nhật trạng thái người dùng');
+      console.error("Error updating user status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái người dùng");
     } finally {
-        setLoading(false);
-        setConfirmModal({ isOpen: false, userId: null, isDeactivate: true });
+      setLoading(false);
+      setConfirmModal({ isOpen: false, userId: null, isDeactivate: true });
     }
   };
 
@@ -190,20 +211,21 @@ const UserListTable = () => {
     // Filter by search term
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(user => 
-        user.userName.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term) ||
-        user.firstName.toLowerCase().includes(term) ||
-        user.lastName.toLowerCase().includes(term) ||
-        user.studentCode?.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        (user) =>
+          user.userName.toLowerCase().includes(term) ||
+          user.email.toLowerCase().includes(term) ||
+          user.firstName.toLowerCase().includes(term) ||
+          user.lastName.toLowerCase().includes(term) ||
+          user.studentCode?.toLowerCase().includes(term)
       );
     }
 
     // Filter by status
-    if (statusFilter === 'active') {
-      filtered = filtered.filter(user => user.isActive);
-    } else if (statusFilter === 'inactive') {
-      filtered = filtered.filter(user => !user.isActive);
+    if (statusFilter === "active") {
+      filtered = filtered.filter((user) => user.isActive);
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter((user) => !user.isActive);
     }
 
     setFilteredUsers(filtered);
@@ -211,13 +233,13 @@ const UserListTable = () => {
 
   const getCampusName = (campusId: number) => {
     const campuses: { [key: number]: string } = {
-      1: 'FU - Hòa Lạc',
-      2: 'FU - Hồ Chí Minh',
-      3: 'FU - Đà Nẵng',
-      4: 'FU - Cần Thơ',
-      5: 'FU - Quy Nhơn'
+      1: "FU - Hòa Lạc",
+      2: "FU - Hồ Chí Minh",
+      3: "FU - Đà Nẵng",
+      4: "FU - Cần Thơ",
+      5: "FU - Quy Nhơn",
     };
-    return campuses[campusId] || 'N/A';
+    return campuses[campusId] || "N/A";
   };
 
   return (
@@ -226,7 +248,10 @@ const UserListTable = () => {
       <div className="p-4 border-b border-gray-200">
         <div className="flex gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Tìm kiếm theo tên, email, mã sinh viên..."
@@ -237,7 +262,9 @@ const UserListTable = () => {
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as "all" | "active" | "inactive")
+            }
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none bg-white"
           >
             <option value="all">Tất cả trạng thái</option>
@@ -255,22 +282,25 @@ const UserListTable = () => {
               <h3 className="text-sm font-semibold text-gray-900">
                 Người dùng chờ duyệt ({pendingUsers.length})
               </h3>
-          
             </div>
           </div>
           <div className="space-y-3">
             {pendingUsers.map((user) => (
-              <div key={user.id} className="bg-white p-3 rounded-lg border border-yellow-200 flex items-center justify-between">
+              <div
+                key={user.id}
+                className="bg-white p-3 rounded-lg border border-yellow-200 flex items-center justify-between"
+              >
                 <div className="flex items-center gap-3">
                   {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
+                    <img
+                      src={user.avatar}
                       alt={user.userName}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white font-semibold">
-                      {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                      {user.firstName.charAt(0)}
+                      {user.lastName.charAt(0)}
                     </div>
                   )}
                   <div>
@@ -284,7 +314,7 @@ const UserListTable = () => {
                   <button
                     className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                     title="Chấp nhận"
-                    onClick={() => handleStatusUser(user.id, 'APPROVED')}
+                    onClick={() => handleStatusUser(user.id, "APPROVED")}
                   >
                     <Check size={16} />
                     <span>Chấp nhận</span>
@@ -324,21 +354,25 @@ const UserListTable = () => {
               {roleIcons[activeTab]}
             </div>
             <p className="text-gray-500">
-              {searchTerm ? 'Không tìm thấy người dùng phù hợp' : `Chưa có ${roleLabels[activeTab]} nào`}
+              {searchTerm
+                ? "Không tìm thấy người dùng phù hợp"
+                : `Chưa có ${roleLabels[activeTab]} nào`}
             </p>
           </div>
         ) : (
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  ID
+                </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Người dùng
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Campus
                 </th>
-                
+
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Email
                 </th>
@@ -352,26 +386,32 @@ const UserListTable = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4 text-sm text-gray-700">{user.id}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {user.avatar ? (
-                        <img 
-                          src={user.avatar} 
+                        <img
+                          src={user.avatar}
                           alt={user.userName}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F27125] to-[#d95c0b] flex items-center justify-center text-white font-semibold">
-                          {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                          {user.firstName.charAt(0)}
+                          {user.lastName.charAt(0)}
                         </div>
                       )}
                       <div>
                         <p className="font-semibold text-gray-900">
                           {user.firstName} {user.lastName}
                         </p>
-                        <p className="text-sm text-gray-500">@{user.userName}</p>
+                        <p className="text-sm text-gray-500">
+                          @{user.userName}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -379,51 +419,56 @@ const UserListTable = () => {
                     <span className="text-sm text-gray-700">
                       {getCampusName(user.campus?.id)}
                     </span>
-                  </td>                
-                  <td className="px-6 py-4">   
-                    <a
-                        href={`mailto:${user.email}`}
-                        className="text-sm text-[#F27125] hover:text-[#d95c0b] hover:underline"
-                      >{user.email}</a>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`
+                    <a
+                      href={`mailto:${user.email}`}
+                      className="text-sm text-[#F27125] hover:text-[#d95c0b] hover:underline"
+                    >
+                      {user.email}
+                    </a>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`
                       inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                      ${user.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                      ${
+                        user.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                       }
-                    `}>
-                      {user.isActive ? 'Hoạt động' : 'Vô hiệu hóa'}
+                    `}
+                    >
+                      {user.isActive ? "Hoạt động" : "Vô hiệu hóa"}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleViewDetail(user)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Xem chi tiết"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      {user.isActive ? (
                         <button
-                          onClick={() => handleViewDetail(user)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Xem chi tiết"
+                          onClick={() => handleDelete(user.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Vô hiệu hóa"
                         >
-                          <Eye size={18} />
+                          <Ban size={18} />
                         </button>
-                        {user.isActive ? (
-                          <button
-                            onClick={() => handleDelete(user.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="V\u00f4 hi\u1ec7u h\u00f3a"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleActivate(user.id)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="K\u00edch ho\u1ea1t"
-                          >
-                            <UserPlus size={18} />
-                          </button>
-                        )}
-                      </div>
+                      ) : (
+                        <button
+                          onClick={() => handleActivate(user.id)}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="K\u00edch ho\u1ea1t"
+                        >
+                          <UserPlus size={18} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -436,7 +481,9 @@ const UserListTable = () => {
       {!loading && filteredUsers.length > 0 && (
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <p className="text-sm text-gray-600">
-            Tổng số: <span className="font-semibold">{filteredUsers.length}</span> {roleLabels[activeTab]}
+            Tổng số:{" "}
+            <span className="font-semibold">{filteredUsers.length}</span>{" "}
+            {roleLabels[activeTab]}
           </p>
         </div>
       )}
@@ -450,10 +497,16 @@ const UserListTable = () => {
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title={confirmModal.isDeactivate ? "Xác nhận dừng hoạt động" : "Xác nhận kích hoạt"}
-        message={confirmModal.isDeactivate 
-          ? "Bạn có chắc chắn muốn dừng hoạt động người dùng này?" 
-          : "Bạn có chắc chắn muốn kích hoạt lại người dùng này?"}
+        title={
+          confirmModal.isDeactivate
+            ? "Xác nhận dừng hoạt động"
+            : "Xác nhận kích hoạt"
+        }
+        message={
+          confirmModal.isDeactivate
+            ? "Bạn có chắc chắn muốn dừng hoạt động người dùng này?"
+            : "Bạn có chắc chắn muốn kích hoạt lại người dùng này?"
+        }
         confirmText={loading ? "Đang xử lý..." : "Xác nhận"}
         cancelText="Hủy"
         type={confirmModal.isDeactivate ? "danger" : "info"}
@@ -466,13 +519,19 @@ const UserListTable = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">Từ chối người dùng</h3>
-              <p className="text-sm text-gray-600 mt-1">Vui lòng nhập lý do từ chối</p>
+              <h3 className="text-lg font-bold text-gray-900">
+                Từ chối người dùng
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Vui lòng nhập lý do từ chối
+              </p>
             </div>
             <div className="p-6">
               <textarea
                 value={rejectModal.reason}
-                onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                onChange={(e) =>
+                  setRejectModal({ ...rejectModal, reason: e.target.value })
+                }
                 placeholder="Nhập lý do từ chối..."
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none resize-none"
@@ -491,7 +550,7 @@ const UserListTable = () => {
                 disabled={loading || !rejectModal.reason.trim()}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Đang xử lý...' : 'Từ chối'}
+                {loading ? "Đang xử lý..." : "Từ chối"}
               </button>
             </div>
           </div>
