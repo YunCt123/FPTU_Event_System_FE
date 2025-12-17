@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, Users } from "lucide-react";
+import { X, Users, Loader } from "lucide-react";
+import { toast } from "react-toastify";
 import type { Venue } from "../../../types/Venue";
+import { uploadImageToCloudinary } from "../../../utils/uploadImg";
 
 interface VenueFormModalProps {
   venue: Venue | null;
@@ -38,6 +40,8 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
 
   // Auto-calculate capacity when hasSeats is true
   const calculatedCapacity = useMemo(() => {
@@ -58,8 +62,20 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
         mapImageUrl: venue.mapImageUrl || "",
         capacity: venue.capacity || 0,
       });
+      setPreviewUrl(venue.mapImageUrl || "");
+    } else {
+      setPreviewUrl("");
     }
   }, [venue]);
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -105,6 +121,65 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file ảnh");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Kích thước ảnh không được vượt quá 5MB");
+      return;
+    }
+
+    // Cleanup previous preview URL if it's a blob URL
+    if (previewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    // Create preview URL
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    // Upload to Cloudinary
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file);
+      setFormData((prev) => ({ ...prev, mapImageUrl: imageUrl }));
+      toast.success("Tải ảnh lên thành công!");
+      // Update preview to show Cloudinary URL
+      setPreviewUrl(imageUrl);
+    } catch (err: any) {
+      toast.error("Có lỗi xảy ra khi tải ảnh lên");
+      console.error("Error uploading image:", err);
+      // Revert to previous URL or clear
+      if (venue?.mapImageUrl) {
+        setPreviewUrl(venue.mapImageUrl);
+      } else {
+        setPreviewUrl("");
+        if (previewUrl && previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(previewUrl);
+        }
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    // Cleanup blob URL if exists
+    if (previewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl("");
+    setFormData((prev) => ({ ...prev, mapImageUrl: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -331,31 +406,67 @@ const VenueFormModal = ({ venue, onClose, onSuccess }: VenueFormModalProps) => {
             </div>
           )}
 
-          {/* Map Image URL */}
+          {/* Map Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              URL Hình ảnh sơ đồ
+              Hình ảnh sơ đồ
             </label>
-            <input
-              type="text"
-              name="mapImageUrl"
-              value={formData.mapImageUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/map.jpg"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            {formData.mapImageUrl && (
-              <div className="mt-2">
-                <img
-                  src={formData.mapImageUrl}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
+            <div className="space-y-3">
+              {/* Preview */}
+              {previewUrl ? (
+                <div className="relative">
+                  <img
+                    src={previewUrl}
+                    alt="Preview sơ đồ"
+                    className="w-full h-48 object-contain bg-gray-50 border border-gray-200 rounded-lg p-2"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                  {!isUploading && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 transition-colors"
+                      title="Xóa ảnh"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-2">
+                      Chưa có hình ảnh
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Chọn file để tải lên
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* File Input */}
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                  className="w-full text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#F27125] file:text-white hover:file:bg-[#d65c00] disabled:opacity-50 disabled:cursor-not-allowed"
                 />
+                {isUploading && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-[#F27125]">
+                    <Loader className="animate-spin" size={16} />
+                    <span>Đang tải ảnh lên...</span>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Chọn file ảnh từ máy tính (tối đa 5MB)
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Action Buttons */}
