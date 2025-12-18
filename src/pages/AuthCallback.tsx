@@ -32,12 +32,12 @@ const AuthCallback = () => {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
-      // Dang ky subscription v?i backend
-      console.log("?? Dang ky subscription v?i backend...");
+      // Đăng ký subscription với backend
+      console.log("🔔 Đăng ký subscription với backend...");
       const result = await registerSubscriptionWithBackend();
-      console.log("?? K?t qu? dang ky:", result);
+      console.log("🔔 Kết quả đăng ký:", result);
     } catch (error) {
-      console.error("? Failed to handle notification subscription:", error);
+      console.error("❌ Failed to handle notification subscription:", error);
     }
   };
 
@@ -58,7 +58,7 @@ const AuthCallback = () => {
       const exchangeCodeForToken = async (): Promise<string | null> => {
         if (!authCode) return null;
         try {
-          // G?i backend ? exchange code -> accessToken
+          // Gọi backend để exchange code -> accessToken
           const response = await apiUtils.get<
             ApiResponse<{ accessToken?: string; token?: string }>
           >(`${AUTH_URL}google/callback`, { code: authCode });
