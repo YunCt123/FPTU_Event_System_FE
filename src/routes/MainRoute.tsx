@@ -71,19 +71,40 @@ const MainRoute: React.FC = () => {
           <Route element={<AdminRoute />}>
             <Route path="/admin/dashboard" element={<DashboardPage />} />
             <Route path="/admin/venues" element={<AdminVenuePage />} />
-            <Route path="/admin/venues/seat-config"element={<div>Seat Config</div>}/>
+            <Route
+              path="/admin/venues/seat-config"
+              element={<div>Seat Config</div>}
+            />
             <Route path="/admin/campuses" element={<CampusPage />} />
-            <Route path="/admin/categories" element={<div>Categories Management</div>}/>
-            <Route path="/admin/banners" element={<div>Banners Management</div>} />
-            <Route path="/admin/settings" element={<div>System Settings</div>} />
-            <Route path="/admin/detail-events/:id" element={<DetailEventPage />}/>
+            <Route
+              path="/admin/categories"
+              element={<div>Categories Management</div>}
+            />
+            <Route
+              path="/admin/banners"
+              element={<div>Banners Management</div>}
+            />
+            <Route
+              path="/admin/settings"
+              element={<div>System Settings</div>}
+            />
+            <Route
+              path="/admin/detail-events/:id"
+              element={<DetailEventPage />}
+            />
             <Route path="/admin/list-events" element={<ListEventPage />} />
-            <Route path="/admin/list-delete-events" element={<DeleteResponsePage />} />
+            <Route
+              path="/admin/list-delete-events"
+              element={<DeleteResponsePage />}
+            />
             <Route path="/admin/dashboard-events" element={<DashboardPage />} />
             <Route path="/admin/events" element={<EditEventPage />} />
             <Route path="/admin/organizers" element={<OrganizerList />} />
             <Route path="/admin/users" element={<UserList />} />
-            <Route path="/admin/users/pending" element={<div>User Detail Page</div>} />
+            <Route
+              path="/admin/users/pending"
+              element={<div>User Detail Page</div>}
+            />
             <Route path="/admin/incidents" element={<AdminIncidentsPage />} />
           </Route>
         </Route>
@@ -91,17 +112,38 @@ const MainRoute: React.FC = () => {
         {/* Organizer routes */}
         <Route element={<ProtectedRoute role={["event_organizer"]} />}>
           <Route element={<OrganizerRoute />}>
-            <Route path="/organizer/dashboard" element={<OrganizerDashboardPage />}/>
+            <Route
+              path="/organizer/dashboard"
+              element={<OrganizerDashboardPage />}
+            />
             <Route path="/organizer/events" element={<EventManagementPage />} />
-            <Route path="/organizer/events/create" element={<EventManagementPage />} />
-            <Route path="/organizer/events/:id" element={<OrganizerEventPage />} />
-            <Route path="/organizer/events/:eventId/seats/:venueId" element={<SeatAllocationPage />} />
-            <Route path="/organizer/attendees" element={<AttendeesManagementPage />}/>
+            <Route
+              path="/organizer/events/create"
+              element={<EventManagementPage />}
+            />
+            <Route
+              path="/organizer/events/:id"
+              element={<OrganizerEventPage />}
+            />
+            <Route
+              path="/organizer/events/:eventId/seats/:venueId"
+              element={<SeatAllocationPage />}
+            />
+            <Route
+              path="/organizer/attendees"
+              element={<AttendeesManagementPage />}
+            />
             <Route path="/organizer/staff" element={<StaffManagementPage />} />
             <Route path="/organizer/reports" element={<EventReportsPage />} />
-            <Route path="/organizer/speakers" element={<SpeakerManagementPage />} />
+            <Route
+              path="/organizer/speakers"
+              element={<SpeakerManagementPage />}
+            />
             <Route path="/organizer/organizers" element={<OrganizerList />} />
-            <Route path="/organizer/incidents" element={<OrganizerIncidentsPage />} />
+            <Route
+              path="/organizer/incidents"
+              element={<OrganizerIncidentsPage />}
+            />
           </Route>
         </Route>
 
