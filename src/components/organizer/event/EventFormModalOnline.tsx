@@ -10,6 +10,8 @@ import {
   UserPlus,
   Upload,
   Repeat,
+  Video,
+  Sparkles,
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -308,6 +310,33 @@ const EventFormModalOnline: React.FC<Props> = ({
     }
     setBannerPreview("");
     setForm((prev) => ({ ...prev, bannerUrl: "" }));
+  };
+
+  // ✅ Function để mở Google Meet để tạo link
+  const openGoogleMeetToCreateLink = () => {
+    // Mở Google Meet trong tab mới để người dùng tạo link thực sự
+    const meetWindow = window.open(
+      "https://meet.google.com/new",
+      "_blank",
+      "width=1200,height=800"
+    );
+    
+    if (meetWindow) {
+      toast.info(
+        "Đã mở Google Meet. Vui lòng tạo meeting và copy link vào ô bên dưới.",
+        { autoClose: 5000 }
+      );
+      
+      // Hướng dẫn người dùng
+      setTimeout(() => {
+        toast.info(
+          "Sau khi tạo meeting trên Google Meet, hãy copy link và paste vào ô 'Link họp online'",
+          { autoClose: 8000 }
+        );
+      }, 2000);
+    } else {
+      toast.error("Không thể mở Google Meet. Vui lòng kiểm tra popup blocker.");
+    }
   };
 
   const handleChange = (
@@ -864,22 +893,46 @@ const EventFormModalOnline: React.FC<Props> = ({
                     <LinkIcon size={16} className="text-orange-500" />
                     Link họp online <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    name="onlineMeetingUrl"
-                    value={form.onlineMeetingUrl}
-                    onChange={handleChange}
-                    placeholder="https://meet.google.com/..."
-                    className={`w-full px-4 py-3 border ${
-                      errors.onlineMeetingUrl
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
-                    disabled={isSubmitting}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      name="onlineMeetingUrl"
+                      value={form.onlineMeetingUrl}
+                      onChange={handleChange}
+                      placeholder="https://meet.google.com/..."
+                      className={`flex-1 px-4 py-3 border ${
+                        errors.onlineMeetingUrl
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all`}
+                      disabled={isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={openGoogleMeetToCreateLink}
+                      disabled={isSubmitting}
+                      className="px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium whitespace-nowrap"
+                      title="Mở Google Meet để tạo link"
+                    >
+                      <Video size={18} />
+                      <span className="hidden sm:inline">Tạo link Meet</span>
+                    </button>
+                  </div>
                   {errors.onlineMeetingUrl && (
                     <p className="text-xs text-red-500 mt-1">
                       {errors.onlineMeetingUrl}
                     </p>
+                  )}
+                  {form.onlineMeetingUrl && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-gray-600 bg-blue-50 p-2 rounded">
+                      <Video size={14} className="text-blue-500" />
+                      <span>Link Google Meet đã được nhập. Bạn có thể click vào nút "Tạo link Meet" để mở Google Meet và tạo link mới.</span>
+                    </div>
+                  )}
+                  {!form.onlineMeetingUrl && (
+                    <div className="mt-2 flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                      <Sparkles size={14} className="text-orange-500 mt-0.5" />
+                      <span>Click vào nút "Tạo link Meet" để mở Google Meet và tạo link meeting. Sau đó copy link và paste vào ô trên.</span>
+                    </div>
                   )}
                 </div>
 
