@@ -855,11 +855,14 @@ const EventManagementPage = () => {
                                 icon: Edit,
                                 onClick: () => handleEditEvent(event),
                               },
-                              // chỉ hiển thị nút Xóa khi status khác 'CANCELED'
+                              // ✅ Hiển thị "Xóa" cho PENDING, "Yêu cầu hủy" cho PUBLISHED/APPROVED, không hiển thị cho CANCELED
                               ...(event.status !== 'CANCELED'
                                 ? [
                                     {
-                                      label: 'Xóa',
+                                      label:
+                                        event.status === "PENDING"
+                                          ? "Xóa"
+                                          : "Yêu cầu hủy",
                                       icon: Trash2,
                                       onClick: () => handleDeleteEvent(event),
                                       danger: true,
