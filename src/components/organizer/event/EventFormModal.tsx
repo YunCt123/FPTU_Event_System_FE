@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Tag,
   UserPlus,
+  Repeat,
 } from "lucide-react";
 import type {
   Event,
@@ -35,10 +36,9 @@ interface EventFormModalProps {
   event: Event | null;
   onClose: () => void;
   onSuccess: (event: Event) => void;
-  onOpenOther?: (type: "offline" | "weekly" | "online") => void;
 }
 
-const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormModalProps) => {
+const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [staffList, setStaffList] = useState<User[]>([]);
   const [selectedStaffIds, setSelectedStaffIds] = useState<number[]>([]);
@@ -53,15 +53,6 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
   const [isLoadingOrganizer, setIsLoadingOrganizer] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string>("");
-  const EVENT_TYPE_OPTIONS = [
-    { value: 'CONFERENCE', label: 'Hội nghị (Conference)' },
-    { value: 'WORKSHOP', label: 'Workshop' },
-    { value: 'SEMINAR', label: 'Hội thảo (Seminar)' },
-    { value: 'COMPETITION', label: 'Cuộc thi (Competition)' },
-    { value: 'CULTURAL', label: 'Văn hóa (Cultural)' },
-    { value: 'SPORTS', label: 'Thể thao (Sports)' },
-    { value: 'OTHER', label: 'Khác (Other)' },
-  ];
 
   const [formData, setFormData] = useState({
     title: "",
@@ -75,13 +66,15 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
     venueId: "",
     bannerUrl: "",
     imageUrl: "",
+    recurrenceType: "NONE",
+    recurrenceInterval: 1,
+    recurrenceCount: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  //FETCH ORGANIZER INFO VÀ STAFF KHI MOUNT
+  //FETCH ORGANIZER INFO KHI MOUNT
   useEffect(() => {
     fetchOrganizerInfo();
-    fetchStaffList();
   }, []);
 
   //FETCH VENUES KHI CÓ ORGANIZER INFO
@@ -98,12 +91,14 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
     }
   }, [organizerInfo]);
 
-  const [originalData, setOriginalData] = useState<CreateEventRequest | null>(null);
+  const [originalData, setOriginalData] = useState<CreateEventRequest | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchInitialData = async () => {
       if (event) {
-        console.log('Editing event:', event);
+        console.log("Editing event:", event);
 
         const formatToDatetimeLocal = (isoString: string): string => {
           if (!isoString) return "";
@@ -201,6 +196,11 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
               fullEvent.maxCapacity || event.maxParticipants || 0,
             venueId: String(fullEvent.venueId || event.venueId || ""),
             imageUrl: "",
+            recurrenceType: fullEvent.recurrenceType || "NONE",
+            recurrenceInterval: fullEvent.recurrenceInterval || 1,
+            recurrenceCount: fullEvent.recurrenceCount
+              ? String(fullEvent.recurrenceCount)
+              : "",
           };
 
           console.log("Formatted form data:", formattedData);
@@ -255,6 +255,9 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
             maxParticipants: event.maxParticipants || 0,
             venueId: String(event.venueId || ""),
             imageUrl: "",
+            recurrenceType: "NONE",
+            recurrenceInterval: 1,
+            recurrenceCount: "",
           };
 
           console.log(
@@ -279,10 +282,13 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
           maxParticipants: 100,
           venueId: "",
           imageUrl: "",
+          recurrenceType: "NONE",
+          recurrenceInterval: 1,
+          recurrenceCount: "",
         });
         setSelectedStaffIds([]);
         setOriginalData(null);
-        setBannerPreview('');
+        setBannerPreview("");
       }
     };
 
@@ -418,7 +424,7 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
   const fetchStaffList = async (campusId: number) => {
     setIsLoadingStaff(true);
     try {
-      console.log('Fetching staff list for campus:', campusId);
+      console.log("Fetching staff list for campus:", campusId);
 
       // Truyền campusId vào params
       const response = await organizerService.getStaffEvent({
@@ -429,7 +435,11 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
       const responseData = response.data as any;
       let staffData: User[] = [];
 
-      if (responseData?.success && responseData?.data && Array.isArray(responseData.data)) {
+      if (
+        responseData?.success &&
+        responseData?.data &&
+        Array.isArray(responseData.data)
+      ) {
         staffData = responseData.data;
       } else if (Array.isArray(responseData)) {
         staffData = responseData;
@@ -458,13 +468,13 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn file ảnh');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file ảnh");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      toast.error("Kích thước ảnh không được vượt quá 5MB");
       return;
     }
 
@@ -475,15 +485,15 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
     setIsUploadingBanner(true);
     try {
       const imageUrl = await uploadImageToCloudinary(file);
-      setFormData(prev => ({ ...prev, bannerUrl: imageUrl }));
-      toast.success('Tải ảnh lên thành công!');
+      setFormData((prev) => ({ ...prev, bannerUrl: imageUrl }));
+      toast.success("Tải ảnh lên thành công!");
       if (errors.bannerUrl) {
-        setErrors(prev => ({ ...prev, bannerUrl: '' }));
+        setErrors((prev) => ({ ...prev, bannerUrl: "" }));
       }
     } catch (err: any) {
-      toast.error('Có lỗi xảy ra khi tải ảnh lên');
-      console.error('Error uploading banner:', err);
-      setBannerPreview('');
+      toast.error("Có lỗi xảy ra khi tải ảnh lên");
+      console.error("Error uploading banner:", err);
+      setBannerPreview("");
     } finally {
       setIsUploadingBanner(false);
     }
@@ -493,8 +503,8 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
     if (bannerPreview) {
       URL.revokeObjectURL(bannerPreview);
     }
-    setBannerPreview('');
-    setFormData(prev => ({ ...prev, bannerUrl: '' }));
+    setBannerPreview("");
+    setFormData((prev) => ({ ...prev, bannerUrl: "" }));
   };
 
   const handleChange = (
@@ -673,6 +683,10 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
         return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMinutes}`;
       };
 
+      // Check if recurrence is enabled
+      const isRecurring =
+        formData.recurrenceType && formData.recurrenceType !== "NONE";
+
       let response;
 
       if (event) {
@@ -780,33 +794,61 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
         });
       } else {
         // CREATE MODE
-        const requestData: CreateEventRequest = {
-          title: formData.title.trim(),
-          description: formData.description.trim(),
-          category: formData.eventType,
-          bannerUrl: formData.bannerUrl?.trim() || undefined,
-          startTime: formatDateTime(formData.startDate),
-          endTime: formatDateTime(formData.endDate),
-          startTimeRegister: formatDateTime(formData.registrationDeadline),
-          endTimeRegister: formatDateTime(formData.endTimeRegister),
-          maxCapacity: Number(formData.maxParticipants),
-          isGlobal: true,
-          organizerId: organizerInfo.id,
-          venueId: Number(formData.venueId),
-          hostId: 1,
-          staffIds: selectedStaffIds,
-          speakers: [],
-        };
+        if (isRecurring) {
+          // Use bookingWeekly for recurring events
+          const weeklyData = {
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            category: formData.eventType,
+            bannerUrl: formData.bannerUrl?.trim() || undefined, // ✅ Thêm bannerUrl
+            startTime: formatDateTime(formData.startDate),
+            endTime: formatDateTime(formData.endDate),
+            startTimeRegister: formatDateTime(formData.registrationDeadline),
+            endTimeRegister: formatDateTime(formData.endTimeRegister),
+            maxCapacity: Number(formData.maxParticipants),
+            organizerId: organizerInfo.id,
+            hostId: 1, // ✅ Thêm hostId
+            venueId: formData.venueId ? Number(formData.venueId) : undefined,
+            recurrenceType: formData.recurrenceType,
+            recurrenceInterval: Number(formData.recurrenceInterval) || 1,
+            recurrenceCount: formData.recurrenceCount || undefined,
+            staffIds: selectedStaffIds || [], // ✅ Thêm staffIds
+            speakers: [], // ✅ Thêm speakers (offline events có thể không có speakers, nhưng vẫn gửi array rỗng)
+          };
 
-        console.log("Sending CREATE data:", requestData);
-        console.log("Formatted times:", {
-          startTime: requestData.startTime,
-          endTime: requestData.endTime,
-          startTimeRegister: requestData.startTimeRegister,
-          endTimeRegister: requestData.endTimeRegister,
-        });
+          console.log("Sending RECURRING CREATE data:", weeklyData);
+          // Cast để bypass type check vì BookingWeeklyRequest không có các trường này
+          response = await eventService.bookingWeekly(weeklyData as any);
+        } else {
+          // Use normal postEvent for non-recurring events
+          const requestData: CreateEventRequest = {
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            category: formData.eventType,
+            bannerUrl: formData.bannerUrl?.trim() || undefined,
+            startTime: formatDateTime(formData.startDate),
+            endTime: formatDateTime(formData.endDate),
+            startTimeRegister: formatDateTime(formData.registrationDeadline),
+            endTimeRegister: formatDateTime(formData.endTimeRegister),
+            maxCapacity: Number(formData.maxParticipants),
+            isGlobal: true,
+            organizerId: organizerInfo.id,
+            venueId: Number(formData.venueId),
+            hostId: 1,
+            staffIds: selectedStaffIds,
+            speakers: [],
+          };
 
-        response = await eventService.postEvent(requestData);
+          console.log("Sending CREATE data:", requestData);
+          console.log("Formatted times:", {
+            startTime: requestData.startTime,
+            endTime: requestData.endTime,
+            startTimeRegister: requestData.startTimeRegister,
+            endTimeRegister: requestData.endTimeRegister,
+          });
+
+          response = await eventService.postEvent(requestData);
+        }
       }
 
       // XỬ LÝ SUCCESS RESPONSE
@@ -814,11 +856,15 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
         let apiEvent: any = null;
 
         const responseData = response.data as any;
-        
+
         console.log("Full response data:", responseData);
 
         // Thử các cách lấy event data khác nhau từ response
-        if (responseData?.events && Array.isArray(responseData.events) && responseData.events.length > 0) {
+        if (
+          responseData?.events &&
+          Array.isArray(responseData.events) &&
+          responseData.events.length > 0
+        ) {
           // Response mới: { events: [...], totalOccurrences: 1 }
           apiEvent = responseData.events[0];
           console.log("Found event in responseData.events[0]:", apiEvent);
@@ -1461,6 +1507,91 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
                 )}
               </div>
 
+              {/* Recurrence Settings - Chỉ hiển thị khi tạo mới, không hiển thị khi chỉnh sửa */}
+              {!event && (
+                <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
+                    <Repeat size={16} className="text-orange-500" />
+                    Lặp lại sự kiện (Tùy chọn)
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-3 items-end">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 mb-1 block">
+                          Loại lặp lại
+                        </label>
+                        <select
+                          name="recurrenceType"
+                          value={formData.recurrenceType}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                          disabled={isSubmitting}
+                        >
+                          <option value="NONE">Không lặp</option>
+                          <option value="DAILY">Hàng ngày</option>
+                          <option value="WEEKLY">Hàng tuần</option>
+                          <option value="MONTHLY">Hàng tháng</option>
+                        </select>
+                      </div>
+                      {formData.recurrenceType !== "NONE" && (
+                        <>
+                          <div className="w-24">
+                            <label className="text-xs text-gray-600 mb-1 block">
+                              Khoảng cách
+                            </label>
+                            <input
+                              type="number"
+                              name="recurrenceInterval"
+                              value={formData.recurrenceInterval}
+                              onChange={handleChange}
+                              min="1"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                              disabled={isSubmitting}
+                              placeholder="1"
+                            />
+                          </div>
+                          <div className="w-32">
+                            <label className="text-xs text-gray-600 mb-1 block">
+                              Số lần (tùy chọn)
+                            </label>
+                            <input
+                              type="number"
+                              name="recurrenceCount"
+                              value={formData.recurrenceCount}
+                              onChange={handleChange}
+                              min="1"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                              disabled={isSubmitting}
+                              placeholder="Không giới hạn"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {formData.recurrenceType !== "NONE" && (
+                      <p className="text-xs text-gray-600">
+                        Sự kiện sẽ lặp lại{" "}
+                        {formData.recurrenceType === "DAILY"
+                          ? "hàng ngày"
+                          : formData.recurrenceType === "WEEKLY"
+                          ? "hàng tuần"
+                          : "hàng tháng"}
+                        {formData.recurrenceInterval > 1 &&
+                          ` (mỗi ${formData.recurrenceInterval} ${
+                            formData.recurrenceType === "DAILY"
+                              ? "ngày"
+                              : formData.recurrenceType === "WEEKLY"
+                              ? "tuần"
+                              : "tháng"
+                          })`}
+                        {formData.recurrenceCount &&
+                          `, tổng cộng ${formData.recurrenceCount} lần`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Banner Upload */}
               <div>
                 <label
@@ -1470,7 +1601,7 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
                   <ImageIcon size={16} className="text-orange-500" />
                   Banner sự kiện (tùy chọn)
                 </label>
-                
+
                 {/* Preview */}
                 {bannerPreview && (
                   <div className="mb-3 relative">
@@ -1495,14 +1626,20 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
                   <label
                     htmlFor="banner"
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed ${
-                      errors.bannerUrl ? 'border-red-500' : 'border-gray-300'
+                      errors.bannerUrl ? "border-red-500" : "border-gray-300"
                     } rounded-lg cursor-pointer hover:border-orange-500 transition-all ${
-                      isUploadingBanner || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      isUploadingBanner || isSubmitting
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
                     }`}
                   >
                     <ImageIcon size={20} className="text-gray-400" />
                     <span className="text-sm text-gray-600">
-                      {isUploadingBanner ? 'Đang tải lên...' : bannerPreview ? 'Thay đổi ảnh' : 'Chọn ảnh banner'}
+                      {isUploadingBanner
+                        ? "Đang tải lên..."
+                        : bannerPreview
+                        ? "Thay đổi ảnh"
+                        : "Chọn ảnh banner"}
                     </span>
                     <input
                       type="file"
@@ -1514,11 +1651,13 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
                     />
                   </label>
                 </div>
-                
+
                 {errors.bannerUrl && (
-                  <p className="text-red-500 text-xs mt-1">{errors.bannerUrl}</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.bannerUrl}
+                  </p>
                 )}
-                
+
                 <p className="text-xs text-gray-500 mt-1">
                   Kích thước tối đa: 5MB. Định dạng: JPG, PNG, GIF
                 </p>
@@ -1536,20 +1675,12 @@ const EventFormModal = ({ event, onClose, onSuccess, onOpenOther }: EventFormMod
             >
               Hủy
             </button>
-            {/* Lựa chọn khác - nằm ngay cạnh nút tạo */}
-            <button
-              type="button"
-              onClick={() => onOpenOther?.("weekly")}
-              className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Lựa chọn khác
-            </button>
             <button
               type="submit"
               disabled={
                 isSubmitting || !organizerInfo || venueList.length === 0
               }
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>

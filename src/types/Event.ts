@@ -407,23 +407,8 @@ export interface BookingWeeklyRequest {
   category?: string;
   startTime: string;
   endTime: string;
-  StartTimeRegistration: string;
-  EndTimeRegistration: string;
-  maxCapacity: number;
-  organizerId: number;
-  venueId?: number;
-  recurrenceType: string;
-  recurrenceInterval: number;
-  recurrenceCount?: string;
-}
-
-export interface BookingWeeklyRequest {
-  title: string;
-  description: string;
-  startTime: string;
-  endTime: string;
-  StartTimeRegistration: string;
-  EndTimeRegistration: string;
+  startTimeRegister: string;
+  endTimeRegister: string;
   maxCapacity: number;
   organizerId: number;
   venueId?: number;

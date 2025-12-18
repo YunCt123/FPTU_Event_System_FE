@@ -12,7 +12,6 @@ import {
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
 import EventFormModalOnline from '../../../components/organizer/event/EventFormModalOnline'; // ✅ IMPORT MODAL ONLINE
-import EventFormModalWeekly from '../../../components/organizer/event/EventFormModalWeekly'; // ✅ IMPORT MODAL WEEKLY
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
@@ -39,16 +38,6 @@ const EventManagementPage = () => {
     setIsModalOpen(true);
   };
 
-  // open other modal from inside a modal (close current then open target)
-  const openOtherModal = useCallback((type: "offline" | "online" | "weekly") => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-    setEventTypeToCreate(null);
-    setTimeout(() => {
-      setEventTypeToCreate(type);
-      setIsModalOpen(true);
-    }, 150);
-  }, []);
 
   // ✅ THÊM STATE PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
@@ -359,7 +348,7 @@ const EventManagementPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleEditEvent = (event: Event) => {
+  const handleEditEvent = async (event: Event) => {
     console.log('📝 Editing event:', event);
     console.log('Event ID:', event.id);
     console.log('Event ID type:', typeof event.id);
@@ -372,8 +361,30 @@ const EventManagementPage = () => {
     }
     
     console.log('✅ Event validation passed');
-    setSelectedEvent(event);
-    setIsModalOpen(true);
+    
+    try {
+      // Fetch event details để xác định loại event (online hay offline)
+      const response = await eventService.getEventById(event.id);
+      const fullEvent = response.data?.data || response.data;
+      
+      console.log('Full event details for edit:', fullEvent);
+      
+      // Xác định loại event: online nếu có onlineMeetingUrl hoặc isOnline = true
+      const isOnlineEvent = fullEvent?.isOnline === true || 
+                           fullEvent?.onlineMeetingUrl || 
+                           (fullEvent?.venueId === null || fullEvent?.venueId === undefined || fullEvent?.venueId === 0);
+      
+      setSelectedEvent(event);
+      setEventTypeToCreate(isOnlineEvent ? "online" : "offline");
+      setIsModalOpen(true);
+    } catch (error: any) {
+      console.error('Error fetching event details:', error);
+      // Fallback: dựa vào venueId để xác định
+      const isOnlineEvent = !event.venueId || event.venueId === 0;
+      setSelectedEvent(event);
+      setEventTypeToCreate(isOnlineEvent ? "online" : "offline");
+      setIsModalOpen(true);
+    }
   };
 
   const handleDeleteEvent = (event: Event) => {
@@ -385,13 +396,14 @@ const EventManagementPage = () => {
       return;
     }
 
-    // ✅ Check nếu event đang PENDING thì hiện modal xác nhận đơn giản
+    // ✅ Check nếu event đang PENDING thì hiện modal xác nhận xóa đơn giản
     const isPending = event.status === "PENDING";
 
     setDeleteModalState({
       isOpen: true,
       eventId: event.id, 
       eventTitle: event.title,
+      isPending: isPending,
     });
   };
 
@@ -855,7 +867,6 @@ const EventManagementPage = () => {
       {isModalOpen && eventTypeToCreate === "offline" && (
         <EventFormModal
           event={selectedEvent}
-          onOpenOther={openOtherModal}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedEvent(null);
@@ -883,35 +894,6 @@ const EventManagementPage = () => {
       {isModalOpen && eventTypeToCreate === "online" && (
         <EventFormModalOnline
           event={selectedEvent}
-          onOpenOther={openOtherModal}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedEvent(null);
-            setEventTypeToCreate(null);
-          }}
-          onSuccess={async (savedEvent) => {
-            try {
-              if (selectedEvent) {
-                setEvents((prev) =>
-                  prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
-                );
-                // toast.success('Cập nhật sự kiện thành công!');
-              } else {
-                // toast.success('Tạo sự kiện thành công!');
-              }
-              setIsModalOpen(false);
-              setSelectedEvent(null);
-              await fetchEventsByOrganizer();
-            } catch (error) {
-              console.error('Error in onSuccess:', error);
-            }
-          }}
-        />
-      )}
-      {isModalOpen && eventTypeToCreate === "weekly" && (
-        <EventFormModalWeekly
-          event={selectedEvent}
-          onOpenOther={openOtherModal}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedEvent(null);
