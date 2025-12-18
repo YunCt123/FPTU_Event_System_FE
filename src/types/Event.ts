@@ -45,6 +45,8 @@ export interface organizer{
   description: string;
   contactEmail: string;
   logoUrl?: string;
+  campusId?: number;
+  campus?: campus;
 }
 
 export interface campus{
@@ -135,6 +137,9 @@ export interface GetEventResponse {
   checkinCount: number; 
   endTimeRegister?: string;
   startTimeRegister?: string;
+  isOnline?: boolean;
+  onlineMeetingUrl?: string;
+  isPublished?: boolean;
 }
 
 export interface GetTotalEventsResponse {

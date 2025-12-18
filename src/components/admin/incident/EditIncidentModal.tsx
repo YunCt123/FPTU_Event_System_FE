@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { IssueResponse } from "../../../types/Incident";
+import type { IssueResponse, IssueStatus } from "../../../types/Incident";
 import { X, Save } from "lucide-react";
 import { incidentService } from "../../../services";
 import { toast } from "react-toastify";
@@ -113,7 +113,7 @@ const EditIncidentModal: React.FC<EditIncidentModalProps> = ({
               <select
                 value={formData.status}
                 onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
+                  setFormData({ ...formData, status: e.target.value as IssueStatus })
                 }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required

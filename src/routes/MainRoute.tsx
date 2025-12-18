@@ -63,6 +63,7 @@ const MainRoute: React.FC = () => {
         <Route element={<AuthRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/auth/google/callback" element={<AuthCallback />} />
         </Route>
 
         {/* Admin routes */}

@@ -1,10 +1,20 @@
 import React from "react";
-class ErrorBoundary extends React.Component {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
   render() {
-    if (this.state.hasError) return <div>Đã có lỗi xảy ra.</div>;
+    if (this.state.hasError) return <div>Da c¢ l?i x?y ra.</div>;
     return this.props.children;
   }
 }
+
 export default ErrorBoundary;

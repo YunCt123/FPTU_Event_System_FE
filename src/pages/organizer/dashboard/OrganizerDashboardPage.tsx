@@ -64,16 +64,16 @@ const OrganizerDashboardPage = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const eventsResponse = await organizerService.getOrganizerEvents({
+      const eventsResponse: any = await organizerService.getOrganizerEvents({
         page: 1,
         limit: 100,
       });
 
       console.log('📊 Events response:', eventsResponse);
 
-      if (eventsResponse && eventsResponse.data) {
-        const eventsData = eventsResponse.data.data || [];
-        const meta = eventsResponse.data.meta;
+      if (eventsResponse) {
+        const eventsData = eventsResponse.data?.data || eventsResponse.data || [];
+        const meta = eventsResponse.data?.meta || eventsResponse.meta;
 
         // ✅ LOG TẤT CẢ STATUS ĐỂ DEBUG
         console.log('📊 All event statuses:', eventsData.map((e: any) => ({
@@ -209,7 +209,7 @@ const OrganizerDashboardPage = () => {
         const resolvedChartData = await Promise.all(chartDataPromises);
         
         resolvedChartData.sort(
-          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          (a: EventChartData, b: EventChartData) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
 
         setChartData(resolvedChartData);

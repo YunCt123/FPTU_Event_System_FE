@@ -13,6 +13,23 @@ export interface Seat {
   isActive?: boolean;
 }
 
+export interface SeatMapSeat {
+  id: number;
+  row: number;
+  col: number;
+  type: string;
+  label: string;
+  seatType?: string;
+  isBooked?: boolean;
+}
+
+export interface SeatMapData {
+  rows: number;
+  cols: number;
+  rowLabels: string[];
+  seats: SeatMapSeat[][];
+}
+
 export interface Venue {
   id: number;
   name: string;

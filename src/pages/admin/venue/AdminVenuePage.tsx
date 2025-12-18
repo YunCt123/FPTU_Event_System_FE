@@ -62,11 +62,12 @@ const AdminVenuePage = () => {
     try {
       setIsLoading(true);
       const response = await venueService.getAllVenues();
+      const payload: any = response.data;
 
       // Handle both array and ApiResponse wrapper
-      const venueData = Array.isArray(response.data)
-        ? response.data
-        : response.data.data || [];
+      const venueData = Array.isArray(payload)
+        ? payload
+        : payload?.data || [];
 
       // Filter venues by selected campus
       const filteredVenues = venueData.filter(

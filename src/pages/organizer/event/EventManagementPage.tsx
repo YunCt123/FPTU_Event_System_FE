@@ -47,10 +47,12 @@ const EventManagementPage = () => {
     isOpen: boolean;
     eventId: string | null;
     eventTitle: string;
+    isPending?: boolean;
   }>({
     isOpen: false,
     eventId: null,
     eventTitle: '',
+    isPending: false,
   });
 
   // ✅ THÊM STATE CHO MODAL LOẠI SỰ KIỆN
@@ -80,6 +82,42 @@ const EventManagementPage = () => {
     console.log(`Mapping status: "${status}" -> "${normalizedStatus}" -> "${mappedStatus}"`);
     
     return mappedStatus || 'PENDING';
+  };
+
+  const mapApiEventToEvent = (apiEvent: any): Event | null => {
+    const source = apiEvent?.event || apiEvent;
+    if (source === null || source === undefined) {
+      return null;
+    }
+
+    const rawId = source.id ?? source.eventId;
+    const eventId = rawId !== null && rawId !== undefined ? String(rawId).trim() : "";
+    if (!eventId) {
+      return null;
+    }
+
+    const mappedStatus = normalizeStatus(source.status || 'PENDING');
+
+    return {
+      id: eventId,
+      title: source.title || '',
+      description: source.description || '',
+      eventType: source.category || source.eventType || 'OTHER',
+      status: mappedStatus,
+      startDate: source.startTime || source.startDate || '',
+      endDate: source.endTime || source.endDate || '',
+      registrationDeadline: source.startTimeRegister || source.startTimeRegistration || source.registrationDeadline || '',
+      maxParticipants: source.maxCapacity || source.maxParticipants || 0,
+      currentParticipants: source.registeredCount || source.currentParticipants || 0,
+      venueId: source.venueId || source.venue?.id || 0,
+      venueName: source.venue?.name || source.venueName || 'Chua x c d?nh',
+      campusId: source.venue?.campusId || source.campusId || 0,
+      campusName: source.venue?.campus?.name || source.campusName || '',
+      organizerId: source.organizerId || source.organizer?.id || 0,
+      organizerName: source.organizer?.name || source.organizerName || '',
+      requiresApproval: source.requiresApproval ?? true,
+      isPublished: source.isPublished ?? (source.status === 'PUBLISHED'),
+    };
   };
 
   const fetchEventsByOrganizer = async () => {
@@ -158,7 +196,7 @@ const EventManagementPage = () => {
       }
 
       // MAP DỮ LIỆU
-      const mappedEvents: Event[] = allEvents.map((apiEvent: any, index: number) => {
+      const mappedEvents = allEvents.map<Event | null>((apiEvent: any, index: number) => {
         console.log(`\n=== Mapping event ${index + 1} ===`);
         console.log('Raw apiEvent:', apiEvent);
         console.log('apiEvent.id:', apiEvent.id, 'type:', typeof apiEvent.id);
@@ -325,7 +363,8 @@ const EventManagementPage = () => {
     const statusConfig = {
       PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Đang xử lý' },
       APPROVED: { bg: 'bg-green-100', text: 'text-green-800', label: 'Đã duyệt' },
-      CANCELED: { bg: 'bg-red-100', text: 'text-red-800', label: 'Bị từ chối' },
+      CANCELED: { bg: 'bg-red-100', text: 'text-red-800', label: 'B? t? ch?i' },
+      PENDING_DELETE: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Ch? xoa' },
       COMPLETED: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Hoàn thành' },
     };
 
@@ -901,13 +940,16 @@ const EventManagementPage = () => {
           }}
           onSuccess={async (savedEvent) => {
             try {
+              const mappedEvent = mapApiEventToEvent(savedEvent);
+              if (!mappedEvent) {
+                return;
+              }
               if (selectedEvent) {
                 setEvents((prev) =>
-                  prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
+                  prev.map((e) => (e.id === mappedEvent.id ? mappedEvent : e))
                 );
-                // toast.success('Cập nhật sự kiện thành công!');
               } else {
-                // toast.success('Tạo sự kiện thành công!');
+                setEvents((prev) => [mappedEvent, ...prev]);
               }
               setIsModalOpen(false);
               setSelectedEvent(null);
@@ -935,4 +977,11 @@ const EventManagementPage = () => {
 };
 
 export default EventManagementPage;
+
+
+
+
+
+
+
 

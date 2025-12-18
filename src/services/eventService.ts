@@ -51,12 +51,13 @@ const eventService = {
     return response;
   },
 
-  async deleteEvent(params?: {
-    id: string;
-    userId: number;
-  }): Promise<AxiosResponse<ApiResponse<EventDeleteResponse>>> {
+  async deleteEvent(
+    params: { id: string; userId?: number } | string
+  ): Promise<AxiosResponse<ApiResponse<EventDeleteResponse>>> {
+    const payload = typeof params === "string" ? { id: params } : params;
+    const query = payload.userId ? `?userId=${payload.userId}` : "";
     return await apiUtils.delete<ApiResponse<EventDeleteResponse>>(
-      `${EVENT_URL}${params?.id}?userId=${params?.userId}`
+      `${EVENT_URL}${payload.id}${query}`
     );
   },
 

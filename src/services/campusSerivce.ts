@@ -17,7 +17,7 @@ const campusService = {
     return await apiUtils.post<Campus>(`${CAMPUS_URL}`, data);
   },
 
-  async updateCampus(id: number, data: UpdateCampusRequest): Promise<Campus> {
+  async updateCampus(id: number, data: UpdateCampusRequest): Promise<AxiosResponse<Campus>> {
     return await apiUtils.patch<Campus>(`${CAMPUS_URL}/${id}`, data);
   },
 
