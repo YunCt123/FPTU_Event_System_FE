@@ -40,19 +40,31 @@ const OrganizerEventPage = () => {
         
         const response = await eventService.getEventById(id);
         
-        console.log('3. ✅ API Response:', response);
+        console.log('3. API Response:', response);
         
         const eventData = response.data?.data || response.data;
         
-        console.log('4. ✅ Extracted event data:', eventData);
+        console.log('4. Extracted event data:', eventData);
         
         if (!eventData || !eventData.id) {
-          console.error('❌ Invalid event data structure');
+          console.error('Invalid event data structure');
           toast.error('Dữ liệu sự kiện không hợp lệ');
           return;
         }
+
+        // Normalise speakers (API may return speakers / speaker / eventSpeakers as string | object | array)
+        const rawSpeakers = eventData.speakers ?? eventData.speaker ?? eventData.eventSpeakers ?? eventData.event_speakers ?? [];
+
+        const speakers = (Array.isArray(rawSpeakers) ? rawSpeakers : [rawSpeakers])
+          .map((s: any) => {
+            if (!s) return null;
+            if (typeof s === 'string') return s;
+            // common possible keys returned by API
+            return s.name || s.fullName || s.speakerName || s.speaker?.name || s.topic || s.title || String(s);
+          })
+          .filter(Boolean);
         
-        setEvent(eventData);
+        setEvent({ ...eventData, speakers });
         
       } catch (error: any) {
         console.error('❌ Error fetching event detail:', error);
@@ -220,7 +232,6 @@ const OrganizerEventPage = () => {
                 </p>
               </div>
             </div>
-
             
           </div>
 
@@ -303,6 +314,101 @@ const OrganizerEventPage = () => {
 
             
           </div>
+          {/* Diễn giả - Styled cards similar to ListEventPage (span full width of info card) */}
+            <div className="md:col-span-2 w-full">
+               <p className="text-sm text-gray-500 mb-3">Diễn giả</p>
+               {(() => {
+                 // normalize to array of { id?, speaker: { name, avatar, company, bio }, topic? }
+                 const raw = event.eventSpeakers ?? event.event_speakers ?? event.speakers ?? [];
+                 const list = Array.isArray(raw)
+                   ? raw.map((it: any) => {
+                       if (it && it.speaker) return it;
+                       if (typeof it === 'string') return { speaker: { name: it } };
+                       if (it && it.name) return { speaker: it };
+                       return { speaker: it };
+                     })
+                   : [];
+
+                 if (list.length === 0) {
+                   return (
+                     <div className="flex items-center gap-3">
+                       <div className="p-2 bg-indigo-100 rounded-lg">
+                         <Users size={20} className="text-indigo-600" />
+                       </div>
+                       <p className="text-gray-500">Chưa có thông tin diễn giả</p>
+                     </div>
+                   );
+                 }
+
+                 return (
+                   <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl p-4 border border-indigo-200 shadow-sm">
+                     <div className="flex items-center justify-between mb-4">
+                       <div className="flex items-center gap-2">
+                         <div className="p-2 bg-indigo-500 rounded-lg">
+                           <Users size={16} className="text-white" />
+                         </div>
+                         <h3 className="text-base font-bold text-indigo-900">Diễn giả</h3>
+                       </div>
+                       <span className="px-3 py-1 bg-indigo-500 text-white text-xs font-bold rounded-full">
+                         {list.length}
+                       </span>
+                     </div>
+
+                     {/* responsive grid: always max 3 columns on md+; ensure equal heights */}
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-stretch auto-rows-fr">
+                       {list.map((es: any, idx: number) => {
+                         const sp = es.speaker || {};
+                         const name = sp.name || sp.fullName || 'Không tên';
+                         const avatar = sp.avatar || sp.image || null;
+                         const company = sp.company || sp.org || '';
+                         const topic = es.topic || es.topicName || sp.topic || null;
+                         const bio = sp.bio || sp.description || '';
+
+                         return (
+                           <div
+                             key={es.id ?? idx}
+                             className="bg-white rounded-xl p-4 border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all flex flex-col h-full min-h-[160px]"
+                           >
+                             <div className="flex items-start gap-4">
+                               {avatar ? (
+                                 <img
+                                   src={avatar}
+                                   alt={name}
+                                   className="w-14 h-14 rounded-full object-cover flex-shrink-0 border-2 border-indigo-100 shadow-sm"
+                                   onError={(e) => {
+                                     const t = e.target as HTMLImageElement;
+                                     t.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366F1&color=fff&size=128`;
+                                   }}
+                                 />
+                               ) : (
+                                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 border-2 border-indigo-100 shadow-sm">
+                                   {name.charAt(0).toUpperCase()}
+                                 </div>
+                               )}
+
+                               <div className="flex-1 min-w-0 flex flex-col">
+                                 <div>
+                                   <p className="font-bold text-base text-gray-900 mb-1">{name}</p>
+                                   {company && <p className="text-sm text-gray-600 mb-2">{company}</p>}
+                                   {topic && (
+                                     <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-2 inline-block">
+                                       <p className="text-xs text-indigo-700 font-semibold">📚 {topic}</p>
+                                     </div>
+                                   )}
+                                 </div>
+
+                                 {/* push bio to bottom so cards align visually */}
+                                 {bio && <p className="text-xs text-gray-600 leading-relaxed mt-auto line-clamp-3">{bio}</p>}
+                               </div>
+                             </div>
+                           </div>
+                         );
+                       })}
+                     </div>
+                   </div>
+                 );
+               })()}
+             </div>
         </div>
       </div>
 
@@ -376,7 +482,7 @@ const OrganizerEventPage = () => {
               <UserCheck size={24} className="text-green-600" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Staff</h3>
+              <h3 className="font-semibold text-gray-900 mb-1">Nhân viên sự kiện</h3>
               <p className="text-sm text-gray-500">Quản lý nhân sự</p>
             </div>
           </div>

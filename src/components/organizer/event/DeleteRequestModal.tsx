@@ -10,14 +10,14 @@ interface DeleteRequestModalProps {
   onDeletePending?: () => Promise<void>; // ✅ Callback xóa trực tiếp cho PENDING event
 }
 
-const DeleteRequestModal = ({
-  eventTitle,
-  eventId,
-  onClose,
-  onSubmit,
-  isPending = false,
-  onDeletePending,
-}: DeleteRequestModalProps) => {
+const DeleteRequestModal = (props: DeleteRequestModalProps) => {
+  const {
+    eventTitle,
+    onClose,
+    onSubmit,
+    isPending = false,
+    onDeletePending,
+  } = props;
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -113,14 +113,13 @@ const DeleteRequestModal = ({
         {/* Body */}
         <div className="p-6">
           {isPending ? (
-            // ✅ UI cho PENDING event - Xóa trực tiếp
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <p className="text-sm text-orange-800 font-medium mb-2">
-                Bạn có chắc chắn muốn xóa sự kiện này?
+            // ✅ UI cho PENDING event - Xóa trực tiếp (chỉ hiển thị câu hỏi xác nhận)
+            <div className="text-center py-4">
+              <p className="text-base text-gray-900 font-medium mb-2">
+                Bạn có muốn xóa sự kiện này không?
               </p>
-              <p className="text-sm text-orange-700">
-                Sự kiện đang chờ duyệt có thể được xóa trực tiếp. Hành động này
-                không thể hoàn tác.
+              <p className="text-sm text-gray-600">
+                Hành động này không thể hoàn tác.
               </p>
             </div>
           ) : (

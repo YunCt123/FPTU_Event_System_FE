@@ -12,7 +12,6 @@ import {
 import type { Event, EventStatus } from '../../../types/Event';
 import EventFormModal from '../../../components/organizer/event/EventFormModal';
 import EventFormModalOnline from '../../../components/organizer/event/EventFormModalOnline'; // ✅ IMPORT MODAL ONLINE
-import EventFormModalWeekly from '../../../components/organizer/event/EventFormModalWeekly'; // ✅ IMPORT MODAL WEEKLY
 import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
 import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
 import { toast } from 'react-toastify';
@@ -39,16 +38,6 @@ const EventManagementPage = () => {
     setIsModalOpen(true);
   };
 
-  // open other modal from inside a modal (close current then open target)
-  const openOtherModal = useCallback((type: "offline" | "online" | "weekly") => {
-    setIsModalOpen(false);
-    setSelectedEvent(null);
-    setEventTypeToCreate(null);
-    setTimeout(() => {
-      setEventTypeToCreate(type);
-      setIsModalOpen(true);
-    }, 150);
-  }, []);
 
   // ✅ THÊM STATE PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
@@ -359,7 +348,7 @@ const EventManagementPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleEditEvent = (event: Event) => {
+  const handleEditEvent = async (event: Event) => {
     console.log('📝 Editing event:', event);
     console.log('Event ID:', event.id);
     console.log('Event ID type:', typeof event.id);
@@ -372,8 +361,30 @@ const EventManagementPage = () => {
     }
     
     console.log('✅ Event validation passed');
-    setSelectedEvent(event);
-    setIsModalOpen(true);
+    
+    try {
+      // Fetch event details để xác định loại event (online hay offline)
+      const response = await eventService.getEventById(event.id);
+      const fullEvent = response.data?.data || response.data;
+      
+      console.log('Full event details for edit:', fullEvent);
+      
+      // Xác định loại event: online nếu có onlineMeetingUrl hoặc isOnline = true
+      const isOnlineEvent = fullEvent?.isOnline === true || 
+                           fullEvent?.onlineMeetingUrl || 
+                           (fullEvent?.venueId === null || fullEvent?.venueId === undefined || fullEvent?.venueId === 0);
+      
+      setSelectedEvent(event);
+      setEventTypeToCreate(isOnlineEvent ? "online" : "offline");
+      setIsModalOpen(true);
+    } catch (error: any) {
+      console.error('Error fetching event details:', error);
+      // Fallback: dựa vào venueId để xác định
+      const isOnlineEvent = !event.venueId || event.venueId === 0;
+      setSelectedEvent(event);
+      setEventTypeToCreate(isOnlineEvent ? "online" : "offline");
+      setIsModalOpen(true);
+    }
   };
 
   const handleDeleteEvent = (event: Event) => {
@@ -385,11 +396,63 @@ const EventManagementPage = () => {
       return;
     }
 
+    // ✅ Check nếu event đang PENDING thì hiện modal xác nhận xóa đơn giản
+    const isPending = event.status === "PENDING";
+
     setDeleteModalState({
       isOpen: true,
       eventId: event.id, 
       eventTitle: event.title,
+      isPending: isPending,
     });
+  };
+
+  // ✅ Hàm xử lý xóa trực tiếp event PENDING (sau khi user xác nhận trong modal)
+  const handleDeletePendingEvent = async () => {
+    if (!deleteModalState.eventId) {
+      toast.error("Không tìm thấy ID sự kiện");
+      return;
+    }
+
+    try {
+      console.log("🗑️ Deleting PENDING event:", deleteModalState.eventId);
+      const response = await eventService.deleteEventByOrganizer(
+        deleteModalState.eventId
+      );
+      console.log("✅ Event deleted:", response.data);
+      toast.success(
+        `Đã xóa sự kiện "${deleteModalState.eventTitle}" thành công!`,
+        {
+          autoClose: 3000,
+        }
+      );
+
+      // Đóng modal
+      setDeleteModalState({
+        isOpen: false,
+        eventId: null,
+        eventTitle: "",
+        isPending: false,
+      });
+
+      // Refresh danh sách
+      await fetchEventsByOrganizer();
+    } catch (error: any) {
+      console.error("❌ Error deleting event:", error);
+      let errorMessage = "Không thể xóa sự kiện";
+      if (error.response?.status === 400) {
+        errorMessage =
+          error.response.data?.message ||
+          "Chỉ có thể xóa sự kiện đang chờ duyệt (PENDING)";
+      } else if (error.response?.status === 403) {
+        errorMessage = "Bạn không có quyền xóa sự kiện này";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Không tìm thấy sự kiện";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage, { autoClose: 5000 });
+    }
   };
 
   const handleSubmitDeleteRequest = async (reason: string) => {
@@ -711,12 +774,20 @@ const EventManagementPage = () => {
                                 icon: Edit,
                                 onClick: () => handleEditEvent(event),
                               },
-                              {
-                                label: 'Xóa',
-                                icon: Trash2,
-                                onClick: () => handleDeleteEvent(event),
-                                danger: true,
-                              },
+                              // ✅ Hiển thị "Xóa" cho PENDING, "Yêu cầu hủy" cho PUBLISHED/APPROVED, không hiển thị cho CANCELED
+                              ...(event.status !== 'CANCELED'
+                                ? [
+                                    {
+                                      label:
+                                        event.status === "PENDING"
+                                          ? "Xóa"
+                                          : "Yêu cầu hủy",
+                                      icon: Trash2,
+                                      onClick: () => handleDeleteEvent(event),
+                                      danger: true,
+                                    },
+                                  ]
+                                : []),
                             ]}
                           />
                         </div>
@@ -772,7 +843,7 @@ const EventManagementPage = () => {
                       ))}
                     </div>
 
-                    <buttond
+                    <button
                       onClick={handleNextPage}
                       disabled={currentPage === totalPages}
                       aria-label="Trang sau"
@@ -796,7 +867,6 @@ const EventManagementPage = () => {
       {isModalOpen && eventTypeToCreate === "offline" && (
         <EventFormModal
           event={selectedEvent}
-          onOpenOther={openOtherModal}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedEvent(null);
@@ -824,35 +894,6 @@ const EventManagementPage = () => {
       {isModalOpen && eventTypeToCreate === "online" && (
         <EventFormModalOnline
           event={selectedEvent}
-          onOpenOther={openOtherModal}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedEvent(null);
-            setEventTypeToCreate(null);
-          }}
-          onSuccess={async (savedEvent) => {
-            try {
-              if (selectedEvent) {
-                setEvents((prev) =>
-                  prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
-                );
-                // toast.success('Cập nhật sự kiện thành công!');
-              } else {
-                // toast.success('Tạo sự kiện thành công!');
-              }
-              setIsModalOpen(false);
-              setSelectedEvent(null);
-              await fetchEventsByOrganizer();
-            } catch (error) {
-              console.error('Error in onSuccess:', error);
-            }
-          }}
-        />
-      )}
-      {isModalOpen && eventTypeToCreate === "weekly" && (
-        <EventFormModalWeekly
-          event={selectedEvent}
-          onOpenOther={openOtherModal}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedEvent(null);
@@ -878,12 +919,15 @@ const EventManagementPage = () => {
         />
       )}
 
-      {/* Delete Request Modal */}
+      {/* Delete Request Modal - HIỆN CHO CẢ PENDING VÀ PUBLISHED/APPROVED */}
       {deleteModalState.isOpen && (
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
-          onClose={() => setDeleteModalState({ isOpen: false, eventId: null, eventTitle: '' })}
+          eventId={deleteModalState.eventId || ""}
+          onClose={() => setDeleteModalState({ isOpen: false, eventId: null, eventTitle: '', isPending: false })}
           onSubmit={handleSubmitDeleteRequest}
+          isPending={deleteModalState.isPending}
+          onDeletePending={handleDeletePendingEvent}
         />
       )}
     </div>

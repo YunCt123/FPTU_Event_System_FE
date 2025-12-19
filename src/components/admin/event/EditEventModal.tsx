@@ -109,7 +109,7 @@ export default function EditEventModal({ initialData, onSubmit, submitting }: {
       </div>
 
       {/* Status */}
-      <div>
+      {/* <div>
         <label className="block text-sm font-medium mb-2">Trạng thái</label>
         <select
           name="status"
@@ -121,7 +121,7 @@ export default function EditEventModal({ initialData, onSubmit, submitting }: {
           <option value="approved">Đã duyệt</option>
           <option value="rejected">Đã từ chối</option>
         </select>
-      </div>
+      </div> */}
 
       {/* Description */}
       <div>

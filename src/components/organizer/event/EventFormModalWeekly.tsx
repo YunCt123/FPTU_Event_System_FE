@@ -41,8 +41,8 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
     description: "",
     startTime: "",
     endTime: "",
-    StartTimeRegistration: "",
-    EndTimeRegistration: "",
+    startTimeRegister: "",
+    endTimeRegister: "",
     maxCapacity: 0,
     organizerId: 0,
     venueId: undefined,
@@ -96,8 +96,8 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
         description: ev?.description ?? p.description,
         startTime: ev?.startTime ?? p.startTime,
         endTime: ev?.endTime ?? p.endTime,
-        StartTimeRegistration: ev?.startTimeRegistration ?? ev?.startTimeRegister ?? p.StartTimeRegistration,
-        EndTimeRegistration: ev?.endTimeRegistration ?? ev?.endTimeRegister ?? p.EndTimeRegistration,
+        startTimeRegister: ev?.startTimeRegistration ?? ev?.startTimeRegister ?? p.startTimeRegister,
+        endTimeRegister: ev?.endTimeRegistration ?? ev?.endTimeRegister ?? p.endTimeRegister,
         maxCapacity: ev?.maxCapacity ?? p.maxCapacity,
         organizerId: ev?.organizerId ?? p.organizerId,
         venueId: ev?.venueId ?? p.venueId,
@@ -131,8 +131,8 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
     if (!form.description?.trim()) e.description = "Vui lòng nhập mô tả";
     if (!form.startTime) e.startTime = "Chọn thời gian bắt đầu";
     if (!form.endTime) e.endTime = "Chọn thời gian kết thúc";
-    if (!form.StartTimeRegistration) e.StartTimeRegistration = "Chọn thời gian mở đăng ký";
-    if (!form.EndTimeRegistration) e.EndTimeRegistration = "Chọn thời gian đóng đăng ký";
+    if (!form.startTimeRegister) e.startTimeRegister = "Chọn thời gian mở đăng ký";
+    if (!form.endTimeRegister) e.endTimeRegister = "Chọn thời gian đóng đăng ký";
     if (!form.organizerId || form.organizerId <= 0) e.organizerId = "Chọn organizer";
     if (!form.recurrenceType) e.recurrenceType = "Chọn loại lặp";
     if (!form.recurrenceInterval || form.recurrenceInterval < 1) e.recurrenceInterval = "Khoảng lặp phải >= 1";
@@ -150,9 +150,8 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
         description: form.description,
         startTime: form.startTime,
         endTime: form.endTime,
-        // gửi theo key backend mong đợi:
-        startTimeRegister: form.StartTimeRegistration || form.startTimeRegister || "",
-        endTimeRegister: form.EndTimeRegistration || form.endTimeRegister || "",
+        startTimeRegister: form.startTimeRegister || "",
+        endTimeRegister: form.endTimeRegister || "",
         maxCapacity: Number(form.maxCapacity) || 0,
         organizerId: Number(form.organizerId),
         venueId: form.venueId ? Number(form.venueId) : undefined,
@@ -243,14 +242,14 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold">Mở đăng ký <span className="text-red-500">*</span></label>
-                <DatePicker selected={form.StartTimeRegistration ? new Date(form.StartTimeRegistration) : null} onChange={(d) => handleDateChange("StartTimeRegistration", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.StartTimeRegistration ? "border-red-500" : "border-gray-300"}`} />
-                {errors.StartTimeRegistration && <p className="text-xs text-red-500 mt-1">{errors.StartTimeRegistration}</p>}
+                <DatePicker selected={form.startTimeRegister ? new Date(form.startTimeRegister) : null} onChange={(d) => handleDateChange("startTimeRegister", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.startTimeRegister ? "border-red-500" : "border-gray-300"}`} />
+                {errors.startTimeRegister && <p className="text-xs text-red-500 mt-1">{errors.startTimeRegister}</p>}
               </div>
 
               <div>
                 <label className="text-sm font-semibold">Đóng đăng ký <span className="text-red-500">*</span></label>
-                <DatePicker selected={form.EndTimeRegistration ? new Date(form.EndTimeRegistration) : null} onChange={(d) => handleDateChange("EndTimeRegistration", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.EndTimeRegistration ? "border-red-500" : "border-gray-300"}`} />
-                {errors.EndTimeRegistration && <p className="text-xs text-red-500 mt-1">{errors.EndTimeRegistration}</p>}
+                <DatePicker selected={form.endTimeRegister ? new Date(form.endTimeRegister) : null} onChange={(d) => handleDateChange("endTimeRegister", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.endTimeRegister ? "border-red-500" : "border-gray-300"}`} />
+                {errors.endTimeRegister && <p className="text-xs text-red-500 mt-1">{errors.endTimeRegister}</p>}
               </div>
             </div>
 
