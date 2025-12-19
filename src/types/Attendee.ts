@@ -65,4 +65,6 @@ export interface meta{
     page: number;
     limit: number;
     totalPages: number;
+    currentPage?: number;
+    totalItems?: number;
 }

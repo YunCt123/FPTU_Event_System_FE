@@ -30,6 +30,10 @@ const venueService = {
   async deleteVenue(id: number): Promise<AxiosResponse<ApiResponse<{ message: string }>>> {
     return await apiUtils.delete<ApiResponse<{ message: string }>>(`${VENUE_URL}/${id}`);
   },
+
+  async activateVenue(id: number): Promise<AxiosResponse<ApiResponse<Venue>>> {
+    return await apiUtils.patch<ApiResponse<Venue>>(`${VENUE_URL}/${id}/activate`, {});
+  },
 };
 
 export default venueService;

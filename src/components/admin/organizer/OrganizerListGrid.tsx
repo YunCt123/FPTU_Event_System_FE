@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import OrganizerModal from "./OrganizerModal";
+import OrganizerDetailModal from "./OrganizerDetailModal";
 import AddOrganizerModal from "./AddOrganizerModal";
-import { Search, Plus, Trash2, Edit } from "lucide-react";
+import { Search, Plus, Trash2, Edit, Eye } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
 import organizerService from "../../../services/organizerService";
 import { toast } from "react-toastify";
 import type { OrganizerResponse } from "../../../types/Organizer";
+import ActionDropdown from "../../ActionDropdown";
 
 const OrganizerListGrid = () => {
   const [selectedOrganizer, setSelectedOrganizer] = useState<OrganizerResponse | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -50,8 +53,18 @@ const OrganizerListGrid = () => {
     setIsEditOpen(false);
   };
 
+  const handleViewDetails = (org: OrganizerResponse) => {
+    setSelectedOrganizer(org);
+    setIsDetailOpen(true);
+  };
+
+  const handleCloseViewDetails = () => {
+    setSelectedOrganizer(null);
+    setIsDetailOpen(false);
+  };
+
   const handleUpdateSuccess = () => {
-    fetchOrganizers(); // Refresh list after updating
+    fetchOrganizers(); 
   };
 
   const handleAddNew = () => {
@@ -63,7 +76,7 @@ const OrganizerListGrid = () => {
   };
 
   const handleAddSuccess = (_newOrganizer: OrganizerResponse) => {
-    fetchOrganizers(); // Refresh list after adding
+    fetchOrganizers(); 
     // toast.success("Thêm nhà tổ chức thành công!");
   };
 
@@ -80,7 +93,7 @@ const OrganizerListGrid = () => {
       
       if (response.status === 200 || response.data.success) {
         toast.success("Xóa nhà tổ chức thành công");
-        fetchOrganizers(); // Refresh list after deleting
+        fetchOrganizers(); 
         setConfirmModal({ isOpen: false, organizerId: null });
       }
     } catch (error: any) {
@@ -118,19 +131,19 @@ const OrganizerListGrid = () => {
             className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full placeholder-gray-400 text-gray-700"
           />
         </div>
-        <button 
+        {/* <button 
           onClick={handleAddNew}
           className="flex items-center gap-2 bg-[#F27125] text-white px-6 py-2.5 rounded-lg hover:bg-[#d95c0b] transition-colors font-medium shadow-md"
         >
           <Plus size={20} />
           <span>Thêm mới</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className="bg-white rounded-lg shadow-md">
+        <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
+          <table className="w-full" style={{ overflow: 'visible' }}>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
@@ -149,7 +162,7 @@ const OrganizerListGrid = () => {
                   Email liên hệ
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                  Thao tác
+                  
                 </th>
               </tr>
             </thead>
@@ -215,22 +228,30 @@ const OrganizerListGrid = () => {
                         {org.contactEmail}
                       </a>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 relative overflow-visible">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenDetails(org)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(org.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <ActionDropdown
+                          actions={[
+                            {
+                              label: "Chỉnh sửa",
+                              icon: Edit,
+                              onClick: () => handleOpenDetails(org),
+                              type: 'detail'
+                            },
+                            {
+                              label: "Xóa",
+                              icon: Trash2,
+                              onClick: () => handleDelete(org.id),
+                              type: 'danger'
+                            },
+                            {
+                              label: "Chi tiết",
+                              icon: Eye,
+                              onClick: () => handleViewDetails(org),
+                              
+                            }
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -250,6 +271,15 @@ const OrganizerListGrid = () => {
         </div>
       )}
 
+      {/* Detail Modal */}
+      {isDetailOpen && (
+        <OrganizerDetailModal
+          organizer={selectedOrganizer}
+          isOpen={isDetailOpen}
+          onClose={handleCloseViewDetails}
+        />
+      )}
+
       {/* Edit Modal */}
       {isEditOpen && (
         <OrganizerModal
@@ -261,11 +291,12 @@ const OrganizerListGrid = () => {
       )}
 
       {/* Add Modal */}
-      <AddOrganizerModal
-        isOpen={isAddOpen}
-        onClose={handleCloseAdd}
-        onSuccess={handleAddSuccess}
-      />
+      {isAddOpen && (
+        <AddOrganizerModal
+          onClose={handleCloseAdd}
+          onSuccess={handleAddSuccess}
+        />
+      )}
 
       
       <ConfirmModal

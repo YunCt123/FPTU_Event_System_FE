@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, CheckCircle, Ban } from "lucide-react";
 import { toast } from "react-toastify";
 import type {
   Venue,
@@ -20,6 +20,11 @@ const AdminVenuePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    venueId: number | null;
+  }>({ isOpen: false, venueId: null });
+
+  const [activateModal, setActivateModal] = useState<{
     isOpen: boolean;
     venueId: number | null;
   }>({ isOpen: false, venueId: null });
@@ -57,9 +62,15 @@ const AdminVenuePage = () => {
     try {
       setIsLoading(true);
       const response = await venueService.getAllVenues();
+      const payload: any = response.data;
+
+      // Handle both array and ApiResponse wrapper
+      const venueData = Array.isArray(payload)
+        ? payload
+        : payload?.data || [];
 
       // Filter venues by selected campus
-      const filteredVenues = response.data.filter(
+      const filteredVenues = venueData.filter(
         (venue: Venue) => venue.campusId === selectedCampusId
       );
 
@@ -87,6 +98,34 @@ const AdminVenuePage = () => {
 
   const handleDelete = (id: number) => {
     setConfirmModal({ isOpen: true, venueId: id });
+  };
+
+  const handleActivate = (id: number) => {
+    setActivateModal({ isOpen: true, venueId: id });
+  };
+
+  const confirmActivate = async () => {
+    const venueId = activateModal.venueId;
+    if (!venueId) return;
+
+    try {
+      await venueService.activateVenue(venueId);
+      toast.success("Kích hoạt venue thành công!");
+
+      // Refresh the venue list from API after activate
+      await fetchVenues();
+    } catch (error: any) {
+      console.error("Error activating venue:", error);
+      toast.error(
+        error?.response?.data?.message || "Không thể kích hoạt venue"
+      );
+    } finally {
+      setActivateModal({ isOpen: false, venueId: null });
+    }
+  };
+
+  const cancelActivate = () => {
+    setActivateModal({ isOpen: false, venueId: null });
   };
 
   const confirmDelete = async () => {
@@ -144,6 +183,9 @@ const AdminVenuePage = () => {
           hasSeats: newVenue.hasSeats,
           mapImageUrl: newVenue.mapImageUrl || undefined,
           campusId: selectedCampusId,
+          capacity:
+            newVenue.capacity ||
+            (newVenue.hasSeats ? newVenue.row * newVenue.column : 0),
         };
 
         await venueService.createVenue(createData);
@@ -247,6 +289,9 @@ const AdminVenuePage = () => {
                   Sơ đồ ghế
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Sức chứa
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Trạng thái
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
@@ -257,7 +302,7 @@ const AdminVenuePage = () => {
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F27125]"></div>
                       <span className="text-gray-500">Đang tải...</span>
@@ -267,7 +312,7 @@ const AdminVenuePage = () => {
               ) : !selectedCampusId ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     Vui lòng chọn campus để xem danh sách venues
@@ -276,7 +321,7 @@ const AdminVenuePage = () => {
               ) : venues.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     Campus này chưa có venue nào. Nhấn "Thêm Venue" để bắt đầu.
@@ -322,6 +367,13 @@ const AdminVenuePage = () => {
                         : "Không có ghế"}
                     </td>
                     <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 text-sm font-medium text-[#F27125]">
+                        {venue.capacity ||
+                          (venue.hasSeats ? venue.row * venue.column : 0)}
+                        <span className="text-gray-500 font-normal">người</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
                       {getStatusBadge(venue.status)}
                     </td>
                     <td className="px-6 py-4">
@@ -333,13 +385,23 @@ const AdminVenuePage = () => {
                         >
                           <Edit size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(venue.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {venue.status === "INACTIVE" ? (
+                          <button
+                            onClick={() => handleActivate(venue.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Kích hoạt lại"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(venue.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Vô hiệu hóa"
+                          >
+                            <Ban size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -366,16 +428,28 @@ const AdminVenuePage = () => {
         />
       )}
 
-      {/* Confirm Modal */}
+      {/* Delete Confirm Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa venue này? Venue sẽ chuyển sang trạng thái ngừng hoạt động."
-        confirmText="Xóa"
+        title="Xác nhận vô hiệu hóa"
+        message="Bạn có chắc chắn muốn vô hiệu hóa venue này? Venue sẽ chuyển sang trạng thái ngừng hoạt động."
+        confirmText="Vô hiệu hóa"
         cancelText="Hủy"
         type="danger"
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      {/* Activate Confirm Modal */}
+      <ConfirmModal
+        isOpen={activateModal.isOpen}
+        title="Xác nhận kích hoạt"
+        message="Bạn có chắc chắn muốn kích hoạt lại venue này? Venue sẽ chuyển sang trạng thái hoạt động."
+        confirmText="Kích hoạt"
+        cancelText="Hủy"
+        type="success"
+        onConfirm={confirmActivate}
+        onCancel={cancelActivate}
       />
     </div>
   );

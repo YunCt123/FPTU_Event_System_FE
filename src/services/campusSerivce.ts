@@ -17,12 +17,12 @@ const campusService = {
     return await apiUtils.post<Campus>(`${CAMPUS_URL}`, data);
   },
 
-  async updateCampus(id: number, data: UpdateCampusRequest): Promise<Campus> {
+  async updateCampus(id: number, data: UpdateCampusRequest): Promise<AxiosResponse<Campus>> {
     return await apiUtils.patch<Campus>(`${CAMPUS_URL}/${id}`, data);
   },
 
-  async deleteCampus(id: number): Promise<AxiosResponse<ApiResponse<{ message: string }>>> {
-    return await apiUtils.delete<ApiResponse<{ message: string }>>(`${CAMPUS_URL}/${id}`);
+  async updateCampusStatus(id: number, status: 'Active' | 'Inactive'): Promise<AxiosResponse<ApiResponse<Campus>>> {
+    return await apiUtils.patch<ApiResponse<Campus>>(`${CAMPUS_URL}/${id}/status`, { status });
   },
 
   async getCampusVenues(id: number): Promise<AxiosResponse<ApiResponse<Campus>>> {

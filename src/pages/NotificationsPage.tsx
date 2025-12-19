@@ -34,6 +34,7 @@ const NotificationsPage = () => {
   const notificationTypes: { value: NotificationType; label: string }[] = [
     { value: "staff_assigned", label: "Phân công Staff" },
     { value: "event_created", label: "Sự kiện được tạo" },
+    { value: "event_pending_approval", label: "Sự kiện chờ phê duyệt" },
     { value: "event_approved", label: "Sự kiện được duyệt" },
     { value: "event_rejected", label: "Sự kiện bị từ chối" },
     { value: "event_cancelled", label: "Sự kiện bị hủy" },
@@ -44,6 +45,19 @@ const NotificationsPage = () => {
     { value: "cancellation_request", label: "Yêu cầu hủy sự kiện" },
     { value: "cancellation_approved", label: "Yêu cầu hủy được duyệt" },
     { value: "cancellation_rejected", label: "Yêu cầu hủy bị từ chối" },
+    {
+      value: "organizer_request_submitted",
+      label: "Yêu cầu làm Organizer (Admin)",
+    },
+    { value: "organizer_request_received", label: "Đã nhận yêu cầu Organizer" },
+    {
+      value: "organizer_request_approved",
+      label: "Yêu cầu Organizer được duyệt",
+    },
+    {
+      value: "organizer_request_rejected",
+      label: "Yêu cầu Organizer bị từ chối",
+    },
   ];
 
   const fetchNotifications = useCallback(async () => {
@@ -55,7 +69,7 @@ const NotificationsPage = () => {
         isRead: filterIsRead,
         type: filterType,
       });
-      
+
       // Handle different response structures
       const responseData = response.data?.data || response.data;
       if (responseData) {
@@ -151,7 +165,9 @@ const NotificationsPage = () => {
                   <Bell className="w-6 h-6 text-[#F27125]" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Thông báo</h1>
+                  <h1 className="text-2xl font-bold text-gray-800">
+                    Thông báo
+                  </h1>
                   <p className="text-sm text-gray-500">
                     Quản lý tất cả thông báo của bạn
                   </p>
@@ -184,12 +200,12 @@ const NotificationsPage = () => {
 
               {/* Filter by read status */}
               <select
-                value={filterIsRead === undefined ? "" : filterIsRead.toString()}
+                value={
+                  filterIsRead === undefined ? "" : filterIsRead.toString()
+                }
                 onChange={(e) => {
                   const value = e.target.value;
-                  setFilterIsRead(
-                    value === "" ? undefined : value === "true"
-                  );
+                  setFilterIsRead(value === "" ? undefined : value === "true");
                   setCurrentPage(1);
                 }}
                 className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F27125]/50"

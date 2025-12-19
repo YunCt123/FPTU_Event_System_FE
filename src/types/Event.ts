@@ -45,6 +45,8 @@ export interface organizer{
   description: string;
   contactEmail: string;
   logoUrl?: string;
+  campusId?: number;
+  campus?: campus;
 }
 
 export interface campus{
@@ -98,6 +100,11 @@ export interface speaker{
   company: string;
 }
 
+// API th?c t? hi?n t?i tr? l?i d? li?u speaker kh„ng nh?t qu n
+// nˆn c?n type bao r?ng h?n (?y t?o union cho c? chu?i v… object)
+export type SpeakerPayload = eventSpeaker | speaker | string | Record<string, any>;
+export type SpeakerField = SpeakerPayload | SpeakerPayload[];
+
 
 
 export interface eventStaff{
@@ -131,8 +138,16 @@ export interface GetEventResponse {
   venue?: venue;
   host: host;
   eventSpeakers?: eventSpeaker[];
+  event_speakers?: SpeakerField;
+  speakers?: SpeakerField;
+  speaker?: SpeakerField;
   eventStaffs?: eventStaff[];
   checkinCount: number; 
+  endTimeRegister?: string;
+  startTimeRegister?: string;
+  isOnline?: boolean;
+  onlineMeetingUrl?: string;
+  isPublished?: boolean;
 }
 
 export interface GetTotalEventsResponse {
@@ -256,4 +271,197 @@ export interface DeleteRequest {
   createdAt: string;
   reviewedAt?: string;
 }
+
+export interface CancellationReason {
+  id: number;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  eventId: string;
+  requestedBy: number;
+  event?: {
+    id: string;
+    title: string;
+    status: string;
+    startTime: string;
+    endTime: string;
+  };
+  requester?: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  reviewer?: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+export interface DeleteEventByOrganizersRequest {
+  reason: string;
+}
+
+export interface DeleteEventByOrganizersResponse {
+  message: string;
+  cancellationReason: CancellationReason;
+}
+
+export interface GetDeleteRequestsResponse {
+  data: DeleteRequestItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface DeleteRequestItem {
+  id: number;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  eventId: string;
+  requestedBy: number;
+  event: {
+    id: string;
+    title: string;
+    status: string;
+    startTime: string;
+    endTime: string;
+    organizer: {
+      id: number;
+      name: string;
+    };
+  };
+  requester: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  reviewer: {
+    id: number;
+    userName: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+export interface BookingOnlineRequest {
+  title: string;
+  description: string;
+  category?: string;
+  bannerUrl?: string;
+  startTime: string;
+  endTime: string;
+  organizerId: number;
+  hostId: number;
+  staffIds?: number[];
+  speakers?: {
+    speakerId: number;
+    topic: string;
+  }[];
+  isOnline: boolean;
+  onlineMeetingUrl?: string;
+}
+
+export interface BookingOnlineResponse {
+  event:{
+    id: string;
+    title: string;
+    description: string;
+    category?: string;
+    bannerUrl?: string;
+    startTimeRegistration: string;
+    endTimeRegistration: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    maxCapacity: number;
+    registeredCount: number;
+    isOnline: boolean;
+    onlineMeetingUrl?: string;
+    recurrenceType?: string;
+    recurrenceInterval?: number;
+    recurrenceEndDate?: string;
+    recurrenceCount?: number;
+    isGlobal: boolean;
+    createdAt: string;
+    hostId: number;
+    organizerId: number;
+    venueId?: number;
+    organizer: organizer;
+    venue?: venue;
+    host: host;
+    eventSpeakers?: eventSpeaker[];
+    eventStaffs?: eventStaff[];
+    checkinCount: number;
+  }
+  totalOccurrences: number;
+}
+
+export interface BookingWeeklyRequest {
+  title: string;
+  description: string;
+  category?: string;
+  startTime: string;
+  endTime: string;
+  startTimeRegister: string;
+  endTimeRegister: string;
+  maxCapacity: number;
+  organizerId: number;
+  venueId?: number;
+  recurrenceType: string;
+  recurrenceInterval: number;
+  recurrenceCount?: string;
+}
+
+export interface BookingWeeklyResponse {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  bannerUrl: string | null;
+  startTimeRegister: string;
+  endTimeRegister: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  maxCapacity: number;
+  registeredCount: number;
+  isOnline: boolean;
+  onlineMeetingUrl: string;
+  recurrenceType: string;
+  recurrenceInterval: number;
+  recurrenceEndDate: string;
+  recurrenceCount: number;
+  isGlobal: boolean;
+  createdAt: string;
+  hostId: number;
+  organizerId: number;
+  venueId: number;
+  organizer: organizer;
+  venue:venue;
+  host: host;
+  eventSpeakers: any[];
+  eventStaffs: any[];
+  checkinCount: number;
+}
+
+
+
 

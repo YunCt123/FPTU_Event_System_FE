@@ -1,22 +1,33 @@
-import { useState, useEffect } from 'react';
-import {
-  ArrowLeft,
-  Users,
-  Lock,
-  Unlock,
-  Save,
-  Grid,
-  List,
-} from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
-import type { SeatMapData, Seat } from '../../../types/Venue';
+import { useState, useEffect } from "react";
+import { ArrowLeft, Plus, Minus } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { seatService } from "../../../services";
+import type { SeatMapData, Seat } from "../../../types/Venue";
+
+interface ApiSeat {
+  id: number;
+  rowLabel: string;
+  colLabel: number;
+  seatType: string;
+  isActive: boolean;
+  isBooked: boolean;
+}
 
 interface SeatReservation {
   rowIndex: number;
   colIndex: number;
-  reservedFor: 'VIP' | 'GUEST' | 'STAFF' | null;
+  reservedFor: "VIP" | "GUEST" | "STAFF" | null;
   guestName?: string;
   note?: string;
+}
+
+interface SelectedSeat {
+  id: number;
+  label: string;
+  seatType: string;
+  rowIndex: number;
+  colIndex: number;
 }
 
 const SeatAllocationPage = () => {
@@ -25,52 +36,129 @@ const SeatAllocationPage = () => {
 
   const [seatMap, setSeatMap] = useState<SeatMapData | null>(null);
   const [reservations, setReservations] = useState<SeatReservation[]>([]);
-  const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
-  const [reservationType, setReservationType] = useState<'VIP' | 'GUEST' | 'STAFF'>('VIP');
-  const [guestName, setGuestName] = useState('');
-  const [note, setNote] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<SelectedSeat | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    // Mock data - Replace with actual API call
-    const mockSeatMap: SeatMapData = {
-      rows: 10,
-      cols: 12,
-      rowLabels: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-      seats: Array.from({ length: 10 }, (_, rowIndex) =>
-        Array.from({ length: 12 }, (_, colIndex) => ({
-          row: rowIndex,
-          col: colIndex,
-          type: colIndex === 5 || colIndex === 6 ? 'empty' : 'regular',
-          label: `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`,
-        }))
-      ),
-    };
-    setSeatMap(mockSeatMap);
-
-    // Mock reservations
-    setReservations([
-      {
-        rowIndex: 0,
-        colIndex: 0,
-        reservedFor: 'VIP',
-        guestName: 'Nguyễn Văn A',
-        note: 'Ban tổ chức',
-      },
-      {
-        rowIndex: 0,
-        colIndex: 1,
-        reservedFor: 'VIP',
-        guestName: 'Trần Thị B',
-      },
-    ]);
-  }, [eventId, venueId]);
-
-  const getSeatKey = (rowIndex: number, colIndex: number) => {
-    return `${rowIndex}-${colIndex}`;
+  // mimic mobile seat color mapping
+  const getSeatColor = (seatType?: string) => {
+    switch ((seatType || "STANDARD").toUpperCase()) {
+      case "VIP":
+        return "bg-purple-500 text-white";
+      case "STANDARD":
+        return "bg-[#F27125] text-white";
+      case "STAFF":
+        return "bg-green-500 text-white";
+      case "RESERVED":
+        return "bg-gray-400 text-white";
+      default:
+        return "bg-[#5C6AC4] text-white";
+    }
   };
 
-  const isSeatReserved = (rowIndex: number, colIndex: number): SeatReservation | null => {
+  useEffect(() => {
+    const fetchSeats = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        if (!venueId) {
+          setError("Không tìm thấy ID địa điểm");
+          return;
+        }
+
+        console.log("Fetching seats:", { eventId, venueId });
+
+        const response = await seatService.getSeatsByVenue(venueId, eventId);
+
+        console.log("API Response:", response.data);
+
+        const apiSeats = response.data?.data || response.data;
+
+        // Transform flat API response to 2D grid structure
+        if (Array.isArray(apiSeats) && apiSeats.length > 0) {
+          // Group seats by row
+          const seatsByRow = apiSeats.reduce(
+            (acc: Record<string, ApiSeat[]>, seat: ApiSeat) => {
+              if (!acc[seat.rowLabel]) {
+                acc[seat.rowLabel] = [];
+              }
+              acc[seat.rowLabel].push(seat);
+              return acc;
+            },
+            {}
+          );
+
+          // Sort rows and get unique row labels
+          const rowLabels = Object.keys(seatsByRow).sort();
+          const cols =
+            rowLabels.length > 0 ? seatsByRow[rowLabels[0]].length : 0;
+
+          // Convert to 2D array structure
+          const seats = rowLabels.map((rowLabel) => {
+            const rowSeats = seatsByRow[rowLabel];
+            return rowSeats
+              .sort((a: ApiSeat, b: ApiSeat) => a.colLabel - b.colLabel)
+              .map((seat: ApiSeat) => ({
+                id: seat.id,
+                row: rowLabels.indexOf(rowLabel),
+                col: seat.colLabel - 1,
+                type: seat.isActive
+                  ? seat.seatType?.toLowerCase() || "standard"
+                  : "disabled",
+                label: `${rowLabel}${seat.colLabel}`,
+                seatType: seat.seatType || "STANDARD",
+                isBooked: seat.isBooked,
+              }));
+          });
+
+          const seatMapData: SeatMapData = {
+            rows: rowLabels.length,
+            cols: cols,
+            rowLabels: rowLabels,
+            seats: seats as any,
+          };
+
+          setSeatMap(seatMapData);
+
+          // Extract booked seats as reservations
+          const bookedSeats = apiSeats
+            .filter((seat: ApiSeat) => seat.isBooked)
+            .map((seat: ApiSeat) => ({
+              rowIndex: rowLabels.indexOf(seat.rowLabel),
+              colIndex: seat.colLabel - 1,
+              reservedFor: (seat.seatType?.toUpperCase() as any) || "GUEST",
+              guestName: "",
+              note: "",
+            }));
+          setReservations(bookedSeats);
+        } else {
+          setError("Không có dữ liệu ghế");
+        }
+      } catch (err: any) {
+        console.error("Error fetching seats:", err);
+        const errorMsg =
+          err.response?.data?.message || "Không thể tải thông tin ghế";
+        setError(errorMsg);
+        toast.error(errorMsg);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSeats();
+  }, [eventId, venueId]);
+
+  const isSeatReserved = (
+    rowIndex: number,
+    colIndex: number
+  ): SeatReservation | null => {
     return (
       reservations.find(
         (r) => r.rowIndex === rowIndex && r.colIndex === colIndex
@@ -78,386 +166,327 @@ const SeatAllocationPage = () => {
     );
   };
 
-  const toggleSeatSelection = (rowIndex: number, colIndex: number) => {
-    const seatKey = getSeatKey(rowIndex, colIndex);
-    const newSelected = new Set(selectedSeats);
+  const handleSeatClick = (seat: any, rowIndex: number, colIndex: number) => {
+    const isDisabled = seat.type === "disabled";
+    const isEmpty = seat.type === "empty";
 
-    if (newSelected.has(seatKey)) {
-      newSelected.delete(seatKey);
-    } else {
-      newSelected.add(seatKey);
-    }
-
-    setSelectedSeats(newSelected);
-  };
-
-  const handleReserveSeats = () => {
-    if (selectedSeats.size === 0) {
-      alert('Vui lòng chọn ít nhất một ghế');
+    if (isEmpty || isDisabled || seat.isBooked) {
       return;
     }
 
-    const newReservations: SeatReservation[] = [];
-
-    selectedSeats.forEach((seatKey) => {
-      const [rowIndex, colIndex] = seatKey.split('-').map(Number);
-      newReservations.push({
-        rowIndex,
-        colIndex,
-        reservedFor: reservationType,
-        guestName: reservationType === 'GUEST' ? guestName : undefined,
-        note: note || undefined,
-      });
+    setSelectedSeat({
+      id: seat.id,
+      label: seat.label,
+      seatType: seat.seatType,
+      rowIndex,
+      colIndex,
     });
-
-    setReservations([...reservations, ...newReservations]);
-    setSelectedSeats(new Set());
-    setGuestName('');
-    setNote('');
   };
 
-  const handleCancelReservation = (rowIndex: number, colIndex: number) => {
-    setReservations(
-      reservations.filter(
-        (r) => !(r.rowIndex === rowIndex && r.colIndex === colIndex)
-      )
+  const handleUpdateSeatType = async (newSeatType: string) => {
+    if (!selectedSeat || !eventId) return;
+
+    try {
+      setIsUpdating(true);
+      console.log("Updating seat type:", {
+        seatId: selectedSeat.id,
+        newType: newSeatType,
+        eventId,
+      });
+
+      await seatService.updateSeatType(selectedSeat.id, newSeatType, eventId);
+
+      toast.success(`Cập nhật ghế ${selectedSeat.label} thành công`);
+
+      // Update local seatMap state
+      if (seatMap) {
+        const newSeatMap = { ...seatMap };
+        const seat =
+          newSeatMap.seats[selectedSeat.rowIndex][selectedSeat.colIndex];
+        seat.seatType = newSeatType;
+
+        setSeatMap(newSeatMap);
+      }
+
+      setSelectedSeat(null);
+    } catch (err: any) {
+      console.error("Error updating seat type:", err);
+      const errorMsg =
+        err.response?.data?.message || "Không thể cập nhật loại ghế";
+      toast.error(errorMsg);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent dragging when clicking on a seat
+    if ((e.target as HTMLElement).closest("[data-seat]")) {
+      return;
+    }
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPanX(e.clientX - dragStart.x);
+    setPanY(e.clientY - dragStart.y);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const resetView = () => {
+    setPanX(0);
+    setPanY(0);
+    setZoom(1);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomSpeed = 0.1;
+    const newZoom =
+      e.deltaY > 0
+        ? Math.max(0.5, zoom - zoomSpeed)
+        : Math.min(2, zoom + zoomSpeed);
+    setZoom(newZoom);
+  };
+
+  // seat styling will be applied inline in JSX using getSeatColor and reserved state
+
+  // For organizer view we only show the seat map; stats removed to match mobile modal simplicity
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải sơ đồ ghế...</p>
+        </div>
+      </div>
     );
-  };
+  }
 
-  const getSeatStyle = (
-    seat: Seat,
-    reserved: SeatReservation | null,
-    isSelected: boolean
-  ) => {
-    if (seat.type === 'empty') {
-      return 'bg-transparent cursor-default';
-    }
-
-    if (reserved) {
-      const colors = {
-        VIP: 'bg-purple-500 text-white cursor-pointer hover:bg-purple-600',
-        GUEST: 'bg-blue-500 text-white cursor-pointer hover:bg-blue-600',
-        STAFF: 'bg-green-500 text-white cursor-pointer hover:bg-green-600',
-      };
-      return colors[reserved.reservedFor!];
-    }
-
-    if (isSelected) {
-      return 'bg-orange-500 text-white cursor-pointer hover:bg-orange-600';
-    }
-
-    return 'bg-gray-200 text-gray-700 cursor-pointer hover:bg-gray-300';
-  };
-
-  const stats = {
-    total: seatMap ? seatMap.rows * seatMap.cols : 0,
-    available:
-      seatMap
-        ? seatMap.seats.flat().filter((s) => s.type !== 'empty').length - reservations.length
-        : 0,
-    reserved: reservations.length,
-    vip: reservations.filter((r) => r.reservedFor === 'VIP').length,
-    guest: reservations.filter((r) => r.reservedFor === 'GUEST').length,
-    staff: reservations.filter((r) => r.reservedFor === 'STAFF').length,
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+  if (error || !seatMap) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {error || "Không thể tải sơ đồ ghế"}
+          </h3>
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
           >
-            <ArrowLeft size={24} />
+            Quay lại
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Phân bổ & Đặt trước ghế
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Đặt trước ghế cho VIP/Khách mời trước khi mở đăng ký
-            </p>
-          </div>
         </div>
+      </div>
+    );
+  }
+
+  // seat styling will be applied inline in JSX using getSeatColor and reserved state
+
+  // For organizer view we only show the seat map; stats removed to match mobile modal simplicity
+
+  return (
+    <div className="h-screen flex flex-col bg-white">
+      <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-200 flex-shrink-0">
         <button
-          onClick={() => console.log('Save reservations')}
-          className="flex items-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors"
+          onClick={() => navigate(-1)}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <Save size={20} />
-          Lưu thay đổi
+          <ArrowLeft size={24} />
         </button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Tổng ghế</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Còn trống</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">{stats.available}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">VIP</div>
-          <div className="text-2xl font-bold text-purple-600 mt-1">{stats.vip}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Khách mời</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.guest}</div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Staff</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">{stats.staff}</div>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Sơ đồ ghế</h1>
+          <p className="text-sm text-gray-600">
+            Chế độ: Organizer — cấu hình loại ghế
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Seat Map */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Sơ đồ ghế</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg ${
-                    viewMode === 'grid'
-                      ? 'bg-[#F27125] text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Grid size={20} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg ${
-                    viewMode === 'list'
-                      ? 'bg-[#F27125] text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <List size={20} />
-                </button>
-              </div>
-            </div>
+      <div className="flex-1 flex flex-col p-6 overflow-hidden">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-center flex-1"></div>
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2 flex-shrink-0">
+            <button
+              onClick={() => setZoom(Math.max(0.5, zoom - 0.2))}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              title="Thu nhỏ"
+            >
+              <Minus size={18} />
+            </button>
+            <span className="text-sm font-semibold w-12 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom(Math.min(2, zoom + 0.2))}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              title="Phóng to"
+            >
+              <Plus size={18} />
+            </button>
+            <button
+              onClick={resetView}
+              className="ml-2 px-3 py-2 text-xs font-semibold bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
 
-            {/* Stage */}
-            <div className="bg-gray-800 text-white text-center py-3 rounded-lg mb-6">
-              STAGE / MÀN HÌNH
-            </div>
-
-            {/* Seat Grid */}
-            {viewMode === 'grid' && seatMap && (
-              <div className="overflow-x-auto">
-                <div className="inline-block min-w-full">
-                  {seatMap.seats.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex items-center gap-2 mb-2">
-                      <div className="w-8 text-center font-bold text-gray-700">
-                        {seatMap.rowLabels[rowIndex]}
-                      </div>
-                      {row.map((seat, colIndex) => {
-                        const reserved = isSeatReserved(rowIndex, colIndex);
-                        const isSelected = selectedSeats.has(
-                          getSeatKey(rowIndex, colIndex)
-                        );
-                        return (
-                          <button
-                            key={colIndex}
-                            onClick={() => {
-                              if (seat.type !== 'empty') {
-                                toggleSeatSelection(rowIndex, colIndex);
-                              }
-                            }}
-                            disabled={seat.type === 'empty'}
-                            className={`w-10 h-10 rounded-lg text-xs font-medium transition-colors ${getSeatStyle(
-                              seat,
-                              reserved,
-                              isSelected
-                            )}`}
-                            title={
-                              reserved
-                                ? `${reserved.reservedFor}: ${reserved.guestName || ''}`
-                                : seat.label
-                            }
-                          >
-                            {seat.type !== 'empty' && (reserved ? '🔒' : colIndex + 1)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
+        <div
+          className="flex-1 overflow-hidden border border-gray-200 rounded-lg bg-gray-50 cursor-grab active:cursor-grabbing relative"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className="inline-block p-4"
+              style={{
+                transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+                transformOrigin: "center",
+                transition: isDragging ? "none" : "transform 0.1s",
+              }}
+            >
+              <div className="flex flex-col items-center gap-4 mb-4">
+                <div className="px-6 py-2 rounded-full bg-gray-200 text-sm font-semibold text-gray-700">
+                  SÂN KHẤU
                 </div>
               </div>
-            )}
+              {seatMap?.seats.map((row, rowIndex) => (
+                <div key={rowIndex} className="flex items-start gap-2 mb-2">
+                  <div className="w-8 text-center font-bold text-gray-700 flex-shrink-0 pt-0.5 text-sm">
+                    {seatMap.rowLabels[rowIndex]}
+                  </div>
+                  <div className="flex gap-1">
+                    {row.map((seat, colIndex) => {
+                      const reserved = isSeatReserved(rowIndex, colIndex);
+                      const isDisabled = seat.type === "disabled";
+                      const isEmpty = seat.type === "empty";
+                      const isSeatBooked = (seat as any).isBooked;
 
-            {/* Legend */}
-            <div className="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-200 rounded"></div>
-                <span>Trống</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-orange-500 rounded"></div>
-                <span>Đang chọn</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-purple-500 rounded"></div>
-                <span>VIP</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-blue-500 rounded"></div>
-                <span>Khách mời</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded"></div>
-                <span>Staff</span>
-              </div>
+                      const baseClass =
+                        isEmpty || isDisabled
+                          ? "bg-gray-200 border border-gray-300"
+                          : isSeatBooked
+                          ? "bg-gray-400 text-white"
+                          : reserved
+                          ? reserved.reservedFor === "VIP"
+                            ? "bg-purple-500 text-white"
+                            : reserved.reservedFor === "GUEST"
+                            ? "bg-blue-500 text-white"
+                            : "bg-green-500 text-white"
+                          : getSeatColor((seat as any).seatType);
+
+                      return (
+                        <div
+                          key={colIndex}
+                          data-seat="true"
+                          className={`flex items-center justify-center rounded transition-all ${
+                            isEmpty || isDisabled || isSeatBooked
+                              ? "cursor-default"
+                              : "cursor-pointer hover:shadow-lg hover:scale-110 hover:z-10"
+                          } ${baseClass}`}
+                          onClick={() =>
+                            handleSeatClick(seat, rowIndex, colIndex)
+                          }
+                          title={
+                            isEmpty || isDisabled
+                              ? "Không khả dụng"
+                              : isSeatBooked
+                              ? `${seat.label} - Đã đặt`
+                              : seat.label
+                          }
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            minWidth: "28px",
+                            fontSize: "10px",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {isEmpty || isDisabled
+                            ? ""
+                            : isSeatBooked
+                            ? "🔒"
+                            : seat.label.replace(/^[A-Z]/, "")}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Reservation Panel */}
-        <div className="space-y-6">
-          {/* Reservation Form */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Đặt trước ghế
-            </h3>
+        <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-4 text-sm flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#F27125] rounded"></div>
+            <span>Tiêu chuẩn</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-purple-500 rounded"></div>
+            <span>VIP</span>
+          </div>
+        </div>
+      </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loại đặt trước
-                </label>
-                <select
-                  value={reservationType}
-                  onChange={(e) =>
-                    setReservationType(e.target.value as 'VIP' | 'GUEST' | 'STAFF')
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
-                >
-                  <option value="VIP">VIP</option>
-                  <option value="GUEST">Khách mời</option>
-                  <option value="STAFF">Staff</option>
-                </select>
-              </div>
+      {/* Configuration Modal */}
+      {selectedSeat && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              Cấu hình ghế {selectedSeat.label}
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Loại hiện tại:{" "}
+              <span className="font-semibold">{selectedSeat.seatType}</span>
+            </p>
 
-              {reservationType === 'GUEST' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tên khách mời
-                  </label>
-                  <input
-                    type="text"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="Nhập tên khách mời..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú
-                </label>
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ghi chú thêm..."
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                <Users size={16} className="inline mr-2" />
-                Đã chọn: {selectedSeats.size} ghế
-              </div>
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => handleUpdateSeatType("standard")}
+                disabled={isUpdating || selectedSeat.seatType === "standard"}
+                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+                  selectedSeat.seatType === "standard"
+                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : "bg-[#F27125] text-white hover:bg-[#E05E1F]"
+                } disabled:opacity-50`}
+              >
+                {isUpdating ? "Đang cập nhật..." : "Đặt làm Tiêu chuẩn"}
+              </button>
 
               <button
-                onClick={handleReserveSeats}
-                disabled={selectedSeats.size === 0}
-                className="w-full flex items-center justify-center gap-2 bg-[#F27125] text-white px-4 py-2 rounded-lg hover:bg-[#d65d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handleUpdateSeatType("vip")}
+                disabled={isUpdating || selectedSeat.seatType === "vip"}
+                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+                  selectedSeat.seatType === "vip"
+                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : "bg-purple-500 text-white hover:bg-purple-600"
+                } disabled:opacity-50`}
               >
-                <Lock size={20} />
-                Đặt trước ghế
+                {isUpdating ? "Đang cập nhật..." : "Đặt làm VIP"}
               </button>
             </div>
-          </div>
 
-          {/* Reserved Seats List */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Danh sách đã đặt ({reservations.length})
-            </h3>
-
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {reservations.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">
-                  Chưa có ghế nào được đặt trước
-                </p>
-              ) : (
-                reservations.map((reservation, index) => {
-                  const seat = seatMap?.seats[reservation.rowIndex][reservation.colIndex];
-                  const badgeColors = {
-                    VIP: 'bg-purple-100 text-purple-700',
-                    GUEST: 'bg-blue-100 text-blue-700',
-                    STAFF: 'bg-green-100 text-green-700',
-                  };
-
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">
-                            {seat?.label}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                              badgeColors[reservation.reservedFor!]
-                            }`}
-                          >
-                            {reservation.reservedFor}
-                          </span>
-                        </div>
-                        {reservation.guestName && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            {reservation.guestName}
-                          </div>
-                        )}
-                        {reservation.note && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {reservation.note}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleCancelReservation(
-                            reservation.rowIndex,
-                            reservation.colIndex
-                          )
-                        }
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Hủy đặt trước"
-                      >
-                        <Unlock size={16} />
-                      </button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <button
+              onClick={() => setSelectedSeat(null)}
+              disabled={isUpdating}
+              className="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all"
+            >
+              Đóng
+            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -5,7 +5,7 @@ import type {
   OrganizerResponse, 
   OrganizerRequest, 
   OrganizerDeleteResponse, 
-  OrganizerEventsAPIResponse as GetEventResponse 
+  OrganizerEventsAPIResponse as EventResponse 
 } from '../types/Organizer';
 import type { ApiResponse } from '../types/ApiResponse';
 import type { CreateEventRequest, GetEventResponse } from '../types/Event';
@@ -65,9 +65,11 @@ const organizerService = {
     },
 
     async postEventStaff(
-    eventId: number, data: {
+        eventId: number | string,
+        data: {
             userId: number;
-    }): Promise<AxiosResponse<ApiResponse<CreateStaffResponse>>> {
+        }
+    ): Promise<AxiosResponse<ApiResponse<CreateStaffResponse>>> {
         return await apiUtils.post<ApiResponse<CreateStaffResponse>>(`${EVENT_URL}${eventId}/staff`, data);
     },
 

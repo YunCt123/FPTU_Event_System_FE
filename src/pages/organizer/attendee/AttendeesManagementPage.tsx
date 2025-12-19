@@ -11,9 +11,10 @@ import {
   FileSpreadsheet,
   Send,
 } from 'lucide-react';
-import type { CheckInStatus, AttendanceReponse, Data} from '../../../types/Attendee';
+import type { CheckInStatus, AttendanceReponse, Data, meta} from '../../../types/Attendee';
 import type { GetEventResponse } from '../../../types/Event';
 import { organizerService, userService } from '../../../services';
+
 // import eventService from '../../../services/eventService';
 
 const AttendeesManagementPage = () => {
@@ -21,23 +22,22 @@ const AttendeesManagementPage = () => {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   // const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(null);
   const [attendees, setAttendees] = useState<Data[]>([]);
+  const [pagination, setPagination] = useState<meta>();
   const [filteredAttendees, setFilteredAttendees] = useState<Data[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | CheckInStatus>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | CheckInStatus | 'VALID' | 'USED' | 'EXPIRED'>('ALL');
   const [selectedAttendees, setSelectedAttendees] = useState<Set<string>>(new Set());
   const [attendee, setAttendee] = useState<AttendanceReponse>();
+  const [currentPage, setCurrentPage] = useState(1);
 
 
   
 
   const fetchEvent = async () => {
     try {
-      const response = await organizerService.getOrganizerEvents();
-      if (response.status === 200 && response.data.data) {
-        setEvents(response.data.data);
-      } else {
-        console.log("No event Data or Api");
-      }
+      const response: any = await organizerService.getOrganizerEvents();
+      const eventData = response?.data?.data ?? response?.data ?? response;
+      setEvents(Array.isArray(eventData) ? eventData : []);
     } catch (error) {
       console.log("Error fetching event data:", error);
     }
@@ -96,13 +96,15 @@ const AttendeesManagementPage = () => {
   //   }
   // };
 
-  const fetchAttendees = async (eventId: string) => {
+  const fetchAttendees = async (eventId: string, page: number) => {
     try{
-      const response = await userService.getAttendUser(eventId);
+      const response = await userService.getAttendUser(eventId, {page: page});
       if(response){
         console.log("response stats", response.data);
         setAttendee(response.data);
         setAttendees(response.data.data);
+        setPagination(response.data.meta);
+        
       }else{
         console.log("No attendees data or Api");
       }
@@ -115,8 +117,15 @@ const AttendeesManagementPage = () => {
     if (!selectedEventId) {
       return;
     }
-    fetchAttendees(selectedEventId);
+    setCurrentPage(1);
   }, [selectedEventId]);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      return;
+    }
+    fetchAttendees(selectedEventId, currentPage);
+  }, [selectedEventId, currentPage]);
   
   console.log(selectedEventId);
   
@@ -146,6 +155,40 @@ const AttendeesManagementPage = () => {
     notCheckedIn: (attendee?.summary?.totalRegistered || 0) - (attendee?.summary?.checkedIn || 0) - (attendee?.summary?.cancelled || 0),
     cancelled: attendee?.summary?.cancelled || 0,
     attendanceRate: attendee?.summary?.attendanceRate || 0,
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
+      VALID: {
+        label: 'Hợp lệ',
+        className: 'bg-blue-100 text-blue-700',
+        icon: Clock,
+      },
+      USED: {
+        label: 'Đã sử dụng',
+        className: 'bg-green-100 text-green-700',
+        icon: CheckCircle,
+      },
+      CANCELLED: {
+        label: 'Đã hủy',
+        className: 'bg-red-100 text-red-700',
+        icon: XCircle,
+      },
+      EXPIRED: {
+        label: 'Đã hết hạn',
+        className: 'bg-gray-100 text-gray-700',
+        icon: XCircle,
+      },
+    };
+
+    const config = statusConfig[status] || statusConfig.VALID;
+    const Icon = config.icon;
+    return (
+      <span className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${config.className}`}>
+        <Icon size={14} />
+        {config.label}
+      </span>
+    );
   };
 
   // const getStatusBadge = (status: string) => {
@@ -201,6 +244,16 @@ const AttendeesManagementPage = () => {
       ? attendees.filter((a) => selectedAttendees.has(a.ticketId))
       : filteredAttendees;
 
+    const getStatusLabel = (status: string) => {
+      const labels: Record<string, string> = {
+        VALID: 'Hợp lệ',
+        USED: 'Đã sử dụng',
+        CANCELLED: 'Đã hủy',
+        EXPIRED: 'Đã hết hạn',
+      };
+      return labels[status] || status;
+    };
+
     const csvContent = [
       ['Mã SV', 'Họ tên', 'Email', 'SĐT', 'Trạng thái', 'Thời gian đăng ký', 'Thời gian check-in', 'Ghế ngồi'],
       ...dataToExport.map((a) => [
@@ -208,7 +261,7 @@ const AttendeesManagementPage = () => {
         a.fullName,
         a.email,
         a.phoneNumber || '',
-        a.status === 'CHECKED_IN' ? 'Đã tham dự' : a.status === 'NOT_CHECKED_IN' ? 'Chưa tham dự' : 'Đã hủy',
+        getStatusLabel(a.status),
         a.bookingDate ? new Date(a.bookingDate).toLocaleString('vi-VN') : '',
         a.checkinTime ? new Date(a.checkinTime).toLocaleString('vi-VN') : '',
         a.seat?.label || '',
@@ -335,15 +388,16 @@ const AttendeesManagementPage = () => {
               value={statusFilter}
               onChange={(e) =>
                 setStatusFilter(
-                  e.target.value as 'ALL' | 'CHECKED_IN' | 'NOT_CHECKED_IN' | 'CANCELLED'
+                  e.target.value as 'ALL' | 'VALID' | 'USED' | 'CANCELLED' | 'EXPIRED'
                 )
               }
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent"
             >
               <option value="ALL">Tất cả trạng thái</option>
-              <option value="CHECKED_IN">Đã check-in</option>
-              <option value="NOT_CHECKED_IN">Chưa check-in</option>
+              <option value="VALID">Hợp lệ</option>
+              <option value="USED">Đã sử dụng</option>
               <option value="CANCELLED">Đã hủy</option>
+              <option value="EXPIRED">Đã hết hạn</option>
             </select>
           </div>
 
@@ -474,7 +528,7 @@ const AttendeesManagementPage = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {attendee.seat?.label || '-'} {attendee.seat?.row ? `(${attendee.seat.row})` : ''}
                     </td>
-                    <td className="px-6 py-4">{(attendee.status)}</td>
+                    <td className="px-6 py-4 text-center">{getStatusBadge(attendee.status)}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {attendee.bookingDate ? new Date(attendee.bookingDate).toLocaleDateString('vi-VN') : '-'}
                       <br />
@@ -499,6 +553,57 @@ const AttendeesManagementPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages >= 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              Trang {pagination.currentPage} / {pagination.totalPages} (Tổng: {pagination.totalItems} người tham dự)
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Trước
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    if (pagination.totalPages <= 7) return true;
+                    if (page === 1 || page === pagination.totalPages) return true;
+                    if (page >= currentPage - 1 && page <= currentPage + 1) return true;
+                    return false;
+                  })
+                  .map((page, idx, arr) => (
+                    <div key={page} className="flex items-center">
+                      {idx > 0 && arr[idx - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-400">...</span>
+                      )}
+                      <button
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 rounded-lg transition-colors ${
+                          currentPage === page
+                            ? 'bg-[#F27125] text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </div>
+                  ))}
+              </div>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                disabled={currentPage === pagination.totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
       </div>
         </>
       )}

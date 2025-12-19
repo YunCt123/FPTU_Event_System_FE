@@ -1,5 +1,6 @@
 export const AUTH_URL = "/auth/";
 export const ORGANIZER_URL = "/organizers/";
+export const ORGANIZER_REQUEST_URL = "/organizer-requests";
 export const USER_URL = "/users/";
 export const CAMPUS_URL = "/campus";
 export const VENUE_URL = "/venue";
@@ -10,3 +11,4 @@ export const TICKET_URL = "/tickets/";
 export const FEEDBACK_URL = "/feedback/";
 export const SPEAKER_URL = "/speakers/";
 export const INCIDENT_URL = "/incidents";
+export const SEAT_URL = "/seat/";

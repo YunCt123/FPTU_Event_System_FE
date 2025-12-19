@@ -1,9 +1,11 @@
 import { apiUtils } from "../api/axios";
 import { TICKET_URL, USER_URL } from "../constants/apiEndPoints";
 import type {
+  CreateStaffRequest,
   GetUsersStatusResponse,
   PatchUserResponse,
   User,
+  UserResponse,
 } from "../types/User";
 import type { ApiResponse } from "../types/ApiResponse";
 import type { AxiosResponse } from "axios";
@@ -20,8 +22,8 @@ const userService = {
     search?: string;
     campusId?: number;
     isActive?: boolean;
-  }): Promise<AxiosResponse<ApiResponse<User[]>>> {
-    return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}`, params);
+  }): Promise<AxiosResponse<ApiResponse<UserResponse>>> {
+    return await apiUtils.get<ApiResponse<UserResponse>>(`${USER_URL}`, params);
   },
 
   async patchUserDeactivate(
@@ -54,13 +56,19 @@ const userService = {
     return await apiUtils.get<ApiResponse<User>>(`${USER_URL}${id}`);
   },
 
-  async getStaffUser(): Promise<AxiosResponse<ApiResponse<User[]>>> {
-    return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}staff`);
+  async getStaffUser(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    isActive?: boolean;
+    campusId?: number;
+  }): Promise<AxiosResponse<ApiResponse<User[]>>> {
+    return await apiUtils.get<ApiResponse<User[]>>(`${USER_URL}staff`, params);
   },
 
   async getAttendUser(
     eventId: string,
-    param: {
+    param?: {
       page?: number;
       limit?: number;
       search?: string;
@@ -68,6 +76,12 @@ const userService = {
   ): Promise<AxiosResponse<ApiResponse<AttendanceReponse>>> {
     return await apiUtils.get<ApiResponse<AttendanceReponse>>(
       `${TICKET_URL}events/${eventId}/attendees`,param);
+  },
+
+  async createStaff(
+    data: CreateStaffRequest
+  ): Promise<AxiosResponse<ApiResponse<User>>> {
+    return await apiUtils.post<ApiResponse<User>>(`${USER_URL}`, data);
   },
 };
 
