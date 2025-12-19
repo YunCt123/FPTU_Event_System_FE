@@ -442,6 +442,22 @@ const EventManagementPage = () => {
     setIsModalOpen(true);
   };
 
+  // Hàm helper kiểm tra sự kiện đã bắt đầu hay chưa
+  const isEventStarted = (event: Event): boolean => {
+    if (!event.startDate) return false;
+
+    try {
+      const startDate = new Date(event.startDate);
+      const now = new Date();
+
+      // Kiểm tra nếu thời gian bắt đầu đã qua (đã bắt đầu hoặc đang diễn ra)
+      return startDate <= now;
+    } catch (error) {
+      console.error("Error parsing startDate:", error);
+      return false;
+    }
+  };
+
   const handleEditEvent = async (event: Event) => {
     console.log("📝 Editing event:", event);
     console.log("Event ID:", event.id);
@@ -456,6 +472,12 @@ const EventManagementPage = () => {
     ) {
       console.error("Invalid event object or missing ID");
       toast.error("Không thể chỉnh sửa sự kiện. Dữ liệu không hợp lệ.");
+      return;
+    }
+
+    // ✅ KIỂM TRA SỰ KIỆN ĐÃ BẮT ĐẦU HAY CHƯA
+    if (isEventStarted(event)) {
+      toast.error("Không thể chỉnh sửa sự kiện đã và đang diễn ra!");
       return;
     }
 
@@ -937,6 +959,7 @@ const EventManagementPage = () => {
                                 label: "Chỉnh sửa",
                                 icon: Edit,
                                 onClick: () => handleEditEvent(event),
+                                disabled: isEventStarted(event),
                               },
                               // ✅ Hiển thị "Xóa" cho PENDING, "Yêu cầu hủy" cho PUBLISHED/APPROVED, không hiển thị cho CANCELED
                               ...(event.status !== "CANCELED"

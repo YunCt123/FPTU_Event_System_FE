@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { LucideIcon } from "lucide-react";
 
-type ActionType = 'danger' | 'safe' | 'detail' ;
+type ActionType = "danger" | "safe" | "detail";
 
 interface DropdownAction {
   label: string;
@@ -18,21 +18,19 @@ interface ActionDropdownProps {
   actions: DropdownAction[];
 }
 
-const actionStyleMap: Record<ActionType | 'default', string> = {
-  danger: 'text-red-600 hover:bg-red-50 active:bg-red-100',
-  safe: 'text-green-600 hover:bg-green-50 active:bg-green-100',
-  detail: 'text-blue-600 hover:bg-blue-50 active:bg-blue-100',
-  default: 'text-gray-600 hover:bg-gray-50 active:bg-gray-100',
+const actionStyleMap: Record<ActionType | "default", string> = {
+  danger: "text-red-600 hover:bg-red-50 active:bg-red-100",
+  safe: "text-green-600 hover:bg-green-50 active:bg-green-100",
+  detail: "text-blue-600 hover:bg-blue-50 active:bg-blue-100",
+  default: "text-gray-600 hover:bg-gray-50 active:bg-gray-100",
 };
 
-const iconStyleMap: Record<ActionType | 'default', string> = {
-  danger: 'text-red-500',
-  safe: 'text-green-500',
-  detail: 'text-blue-500',
-  default: 'text-gray-500',
+const iconStyleMap: Record<ActionType | "default", string> = {
+  danger: "text-red-500",
+  safe: "text-green-500",
+  detail: "text-blue-500",
+  default: "text-gray-500",
 };
-
-
 
 const ActionDropdown = ({ actions }: ActionDropdownProps) => {
   const [open, setOpen] = useState(false);
@@ -42,12 +40,11 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-
   // Click outside → close
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        ref.current && 
+        ref.current &&
         !ref.current.contains(e.target as Node) &&
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node)
@@ -58,7 +55,8 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
 
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [open]);
 
@@ -74,7 +72,8 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
         const spaceAbove = buttonRect.top;
 
         // Determine if should open upward
-        const shouldDropUp = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight;
+        const shouldDropUp =
+          spaceBelow < dropdownHeight && spaceAbove > dropdownHeight;
         setDropUp(shouldDropUp);
 
         // Calculate position
@@ -85,16 +84,15 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
       };
 
       updatePosition();
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
 
       return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
       };
     }
   }, [open]);
-
 
   return (
     <>
@@ -112,45 +110,67 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
       </div>
 
       {/* Dropdown - Render vào body bằng Portal */}
-      {open && createPortal(
-        <div 
-          ref={dropdownRef}
-          className={`fixed z-[9999] w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown ${
-            dropUp ? 'origin-bottom' : 'origin-top'
-          }`}
-          style={{
-            top: dropUp ? 'auto' : `${position.top}px`,
-            bottom: dropUp ? `${window.innerHeight - position.top}px` : 'auto',
-            left: `${position.left}px`,
-          }}
-        >
-          {actions.map((action, index) => {
-            const Icon = action.icon;
-            const actionType = action.type || (action.danger ? 'danger' : 'default');
-            return (
-              <button
-                key={index}
-                onClick={() => {
-                  action.onClick();
-                  setOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150
+      {open &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className={`fixed z-[9999] w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown ${
+              dropUp ? "origin-bottom" : "origin-top"
+            }`}
+            style={{
+              top: dropUp ? "auto" : `${position.top}px`,
+              bottom: dropUp
+                ? `${window.innerHeight - position.top}px`
+                : "auto",
+              left: `${position.left}px`,
+            }}
+          >
+            {actions.map((action, index) => {
+              const Icon = action.icon;
+              const actionType =
+                action.type || (action.danger ? "danger" : "default");
+              const isDisabled = action.disabled;
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (!isDisabled) {
+                      action.onClick();
+                      setOpen(false);
+                    }
+                  }}
+                  disabled={isDisabled}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150
                   ${index === 0 ? "rounded-t-lg" : ""}
                   ${index === actions.length - 1 ? "rounded-b-lg" : ""}
-                   ${actionStyleMap[actionType]}
+                  ${
+                    isDisabled
+                      ? "text-gray-400 cursor-not-allowed opacity-50"
+                      : actionStyleMap[actionType]
+                  }
                 `}
-              >
-                {Icon && (
-                  <Icon size={16} className={iconStyleMap[actionType]} />
-                )}
+                  title={
+                    isDisabled
+                      ? "Không thể chỉnh sửa sự kiện đã và đang diễn ra"
+                      : undefined
+                  }
+                >
+                  {Icon && (
+                    <Icon
+                      size={16}
+                      className={
+                        isDisabled ? "text-gray-400" : iconStyleMap[actionType]
+                      }
+                    />
+                  )}
 
-                <span className="font-medium">{action.label}</span>
-              </button>
-            );
-          })}
-        </div>,
-        document.body
-      )}
+                  <span className="font-medium">{action.label}</span>
+                </button>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </>
   );
 };

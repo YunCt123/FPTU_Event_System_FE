@@ -7,7 +7,11 @@ import { vi } from "date-fns/locale/vi";
 registerLocale("vi", vi);
 
 import { toast } from "react-toastify";
-import { organizerService, venueService, eventService } from "../../../services";
+import {
+  organizerService,
+  venueService,
+  eventService,
+} from "../../../services";
 import type {
   BookingWeeklyRequest,
   BookingWeeklyResponse,
@@ -22,14 +26,21 @@ interface Props {
 }
 
 const RECURRENCE_OPTIONS = [
-  {value: "NONE", label: "Không lặp"},
+  { value: "NONE", label: "Không lặp" },
   { value: "DAILY", label: "Hàng ngày" },
   { value: "WEEKLY", label: "Hàng tuần" },
   { value: "MONTHLY", label: "Hàng tháng" },
 ];
 
-const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) => {
-  const storedUserId = Number(localStorage.getItem("userId") || sessionStorage.getItem("userId") || 0) || 0;
+const EventFormModalWeekly: React.FC<Props> = ({
+  event,
+  onClose,
+  onSuccess,
+}) => {
+  const storedUserId =
+    Number(
+      localStorage.getItem("userId") || sessionStorage.getItem("userId") || 0
+    ) || 0;
   const [organizers, setOrganizers] = useState<organizer[]>([]);
   const [allVenues, setAllVenues] = useState<venue[]>([]); // keep full list
   const [venues, setVenues] = useState<venue[]>([]); // filtered by campus
@@ -65,7 +76,14 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
         if (form.organizerId) {
           const org = (oData || []).find((x: any) => x.id === form.organizerId);
           const campusId = org?.campusId ?? org?.campus?.id;
-          setVenues(campusId ? venuesArray.filter((v: any) => v.campusId === campusId || v.campus?.id === campusId) : []);
+          setVenues(
+            campusId
+              ? venuesArray.filter(
+                  (v: any) =>
+                    v.campusId === campusId || v.campus?.id === campusId
+                )
+              : []
+          );
         } else {
           setVenues([]); // don't show all venues by default
         }
@@ -75,13 +93,17 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
     };
     init();
   }, []);
-  
+
   // when organizer changes, filter venues by organizer's campus
   useEffect(() => {
     const org = organizers.find((o) => o.id === form.organizerId);
     const campusId = org?.campusId ?? org?.campus?.id;
     if (campusId) {
-      setVenues(allVenues.filter((v: any) => v.campusId === campusId || v.campus?.id === campusId));
+      setVenues(
+        allVenues.filter(
+          (v: any) => v.campusId === campusId || v.campus?.id === campusId
+        )
+      );
     } else {
       setVenues([]); // or setAllVenues if you prefer to show all
     }
@@ -90,37 +112,57 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
   useEffect(() => {
     if (event) {
       const ev = event?.event ?? event;
-      setForm((p) => ({
-        ...p,
-        title: ev?.title ?? p.title,
-        description: ev?.description ?? p.description,
-        startTime: ev?.startTime ?? p.startTime,
-        endTime: ev?.endTime ?? p.endTime,
-        startTimeRegister: ev?.startTimeRegistration ?? ev?.startTimeRegister ?? p.startTimeRegister,
-        endTimeRegister: ev?.endTimeRegistration ?? ev?.endTimeRegister ?? p.endTimeRegister,
-        maxCapacity: ev?.maxCapacity ?? p.maxCapacity,
-        organizerId: ev?.organizerId ?? p.organizerId,
-        venueId: ev?.venueId ?? p.venueId,
-        recurrenceType: ev?.recurrenceType ?? p.recurrenceType,
-        recurrenceInterval: ev?.recurrenceInterval ?? p.recurrenceInterval,
-        recurrenceCount: ev?.recurrenceCount ?? p.recurrenceCount,
-      } as any));
+      setForm(
+        (p) =>
+          ({
+            ...p,
+            title: ev?.title ?? p.title,
+            description: ev?.description ?? p.description,
+            startTime: ev?.startTime ?? p.startTime,
+            endTime: ev?.endTime ?? p.endTime,
+            startTimeRegister:
+              ev?.startTimeRegistration ??
+              ev?.startTimeRegister ??
+              p.startTimeRegister,
+            endTimeRegister:
+              ev?.endTimeRegistration ??
+              ev?.endTimeRegister ??
+              p.endTimeRegister,
+            maxCapacity: ev?.maxCapacity ?? p.maxCapacity,
+            organizerId: ev?.organizerId ?? p.organizerId,
+            venueId: ev?.venueId ?? p.venueId,
+            recurrenceType: ev?.recurrenceType ?? p.recurrenceType,
+            recurrenceInterval: ev?.recurrenceInterval ?? p.recurrenceInterval,
+            recurrenceCount: ev?.recurrenceCount ?? p.recurrenceCount,
+          } as any)
+      );
     }
   }, [event]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
     setForm((prev: any) => ({
       ...prev,
       [name]:
-        name === "organizerId" || name === "venueId" || name === "recurrenceInterval"
-          ? (value === "" ? undefined : Number(value))
+        name === "organizerId" ||
+        name === "venueId" ||
+        name === "recurrenceInterval"
+          ? value === ""
+            ? undefined
+            : Number(value)
           : value,
     }));
     setErrors((s) => ({ ...s, [name]: "" }));
   };
 
-  const handleDateChange = (name: keyof BookingWeeklyRequest, date: Date | null) => {
+  const handleDateChange = (
+    name: keyof BookingWeeklyRequest,
+    date: Date | null
+  ) => {
     setForm((p: any) => ({ ...p, [name]: date ? date.toISOString() : "" }));
     setErrors((s) => ({ ...s, [name]: "" }));
   };
@@ -131,17 +173,37 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
     if (!form.description?.trim()) e.description = "Vui lòng nhập mô tả";
     if (!form.startTime) e.startTime = "Chọn thời gian bắt đầu";
     if (!form.endTime) e.endTime = "Chọn thời gian kết thúc";
-    if (!form.startTimeRegister) e.startTimeRegister = "Chọn thời gian mở đăng ký";
-    if (!form.endTimeRegister) e.endTimeRegister = "Chọn thời gian đóng đăng ký";
-    if (!form.organizerId || form.organizerId <= 0) e.organizerId = "Chọn organizer";
+    if (!form.startTimeRegister)
+      e.startTimeRegister = "Chọn thời gian mở đăng ký";
+    if (!form.endTimeRegister)
+      e.endTimeRegister = "Chọn thời gian đóng đăng ký";
+    if (!form.organizerId || form.organizerId <= 0)
+      e.organizerId = "Chọn organizer";
     if (!form.recurrenceType) e.recurrenceType = "Chọn loại lặp";
-    if (!form.recurrenceInterval || form.recurrenceInterval < 1) e.recurrenceInterval = "Khoảng lặp phải >= 1";
+    if (!form.recurrenceInterval || form.recurrenceInterval < 1)
+      e.recurrenceInterval = "Khoảng lặp phải >= 1";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (ev?: React.FormEvent) => {
     ev?.preventDefault();
+
+    // ✅ KIỂM TRA NẾU ĐANG CHỈNH SỬA SỰ KIỆN ĐÃ BẮT ĐẦU
+    if (event && event.startDate) {
+      try {
+        const startDate = new Date(event.startDate);
+        const now = new Date();
+
+        if (startDate <= now) {
+          toast.error("Không thể chỉnh sửa sự kiện đã và đang diễn ra!");
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing startDate:", error);
+      }
+    }
+
     if (!validate()) return;
     setIsSubmitting(true);
     try {
@@ -157,10 +219,12 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
         venueId: form.venueId ? Number(form.venueId) : undefined,
         recurrenceType: form.recurrenceType,
         recurrenceInterval: Number(form.recurrenceInterval) || 1,
-        recurrenceCount: form.recurrenceCount ? Number(form.recurrenceCount) : undefined,
+        recurrenceCount: form.recurrenceCount
+          ? Number(form.recurrenceCount)
+          : undefined,
       } as any;
-      
-      console.log('bookingWeekly payload:', payload);
+
+      console.log("bookingWeekly payload:", payload);
       const res = await eventService.bookingWeekly(payload);
       toast.success("Tạo sự kiện định kỳ thành công");
       const data = (res as any)?.data ?? res;
@@ -168,7 +232,57 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
       onClose();
     } catch (error: any) {
       console.error("bookingWeekly error", error);
-      toast.error(error?.response?.data?.message || "Lỗi khi tạo sự kiện định kỳ");
+      console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
+
+      // Lấy message từ backend - kiểm tra nhiều vị trí
+      const responseData = error.response?.data;
+
+      // Hàm helper để extract message từ response
+      const extractMessage = (data: any): string | null => {
+        if (!data) return null;
+
+        // Nếu message là array, join lại thành string
+        if (Array.isArray(data.message)) {
+          return data.message.join(", ");
+        }
+
+        // Nếu message là string
+        if (typeof data.message === "string") {
+          return data.message;
+        }
+
+        // Kiểm tra data.message
+        if (data.data?.message) {
+          if (Array.isArray(data.data.message)) {
+            return data.data.message.join(", ");
+          }
+          if (typeof data.data.message === "string") {
+            return data.data.message;
+          }
+        }
+
+        // Kiểm tra error.message
+        if (data.error?.message) {
+          return typeof data.error.message === "string"
+            ? data.error.message
+            : null;
+        }
+
+        // Kiểm tra error là array
+        if (Array.isArray(data.error) && data.error[0]?.message) {
+          return data.error[0].message;
+        }
+
+        return null;
+      };
+
+      const backendMessage = extractMessage(responseData);
+      const errorMsg =
+        backendMessage || error?.message || "Lỗi khi tạo sự kiện định kỳ";
+
+      console.error("Final error message:", errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -179,96 +293,285 @@ const EventFormModalWeekly: React.FC<Props> = ({ event, onClose, onSuccess }) =>
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg"><Calendar className="text-white" size={20} /></div>
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Calendar className="text-white" size={20} />
+            </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{event ? "Chỉnh sửa sự kiện định kỳ" : "Tạo sự kiện định kỳ"}</h2>
+              <h2 className="text-2xl font-bold text-white">
+                {event ? "Chỉnh sửa sự kiện định kỳ" : "Tạo sự kiện định kỳ"}
+              </h2>
               <p className="text-white/90 text-sm mt-1">Tạo/sửa sự kiện lặp</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-white hover:bg-white/20 p-2 rounded-lg"><X size={22} /></button>
+          <button
+            onClick={onClose}
+            className="text-white hover:bg-white/20 p-2 rounded-lg"
+          >
+            <X size={22} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold">Tiêu đề <span className="text-red-500">*</span></label>
-              <input name="title" value={form.title} onChange={handleChange} className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.title ? "border-red-500" : "border-gray-300"}`} disabled={isSubmitting} />
-              {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+              <label className="text-sm font-semibold">
+                Tiêu đề <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                  errors.title ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
+              {errors.title && (
+                <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+              )}
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Mô tả <span className="text-red-500">*</span></label>
-              <textarea name="description" value={form.description} onChange={handleChange} rows={5} className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.description ? "border-red-500" : "border-gray-300"}`} disabled={isSubmitting} />
+              <label className="text-sm font-semibold">
+                Mô tả <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                rows={5}
+                className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                  errors.description ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              />
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Organizer <span className="text-red-500">*</span></label>
-              <select name="organizerId" value={form.organizerId} onChange={handleChange} className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.organizerId ? "border-red-500" : "border-gray-300"}`} disabled={isSubmitting}>
+              <label className="text-sm font-semibold">
+                Organizer <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="organizerId"
+                value={form.organizerId}
+                onChange={handleChange}
+                className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                  errors.organizerId ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isSubmitting}
+              >
                 <option value={0}>Chọn organizer...</option>
-                {organizers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                {organizers.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
               </select>
-              {errors.organizerId && <p className="text-xs text-red-500 mt-1">{errors.organizerId}</p>}
+              {errors.organizerId && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.organizerId}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="text-sm font-semibold">Venue</label>
-              <select name="venueId" value={form.venueId ?? ""} onChange={handleChange} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg" disabled={isSubmitting}>
+              <select
+                name="venueId"
+                value={form.venueId ?? ""}
+                onChange={handleChange}
+                className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
+                disabled={isSubmitting}
+              >
                 <option value="">Không chọn</option>
-                {venues.map(v => <option key={v.id} value={v.id}>{v.name} - {v.location}</option>)}
+                {venues.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} - {v.location}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="text-sm font-semibold">Sức chứa tối đa</label>
-              <input name="maxCapacity" type="number" value={form.maxCapacity} onChange={handleChange} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg" disabled={isSubmitting} />
+              <input
+                name="maxCapacity"
+                type="number"
+                value={form.maxCapacity}
+                onChange={handleChange}
+                className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold">Thời gian bắt đầu <span className="text-red-500">*</span></label>
-                <DatePicker selected={form.startTime ? new Date(form.startTime) : null} onChange={(d) => handleDateChange("startTime", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.startTime ? "border-red-500" : "border-gray-300"}`} />
-                {errors.startTime && <p className="text-xs text-red-500 mt-1">{errors.startTime}</p>}
+                <label className="text-sm font-semibold">
+                  Thời gian bắt đầu <span className="text-red-500">*</span>
+                </label>
+                <DatePicker
+                  selected={form.startTime ? new Date(form.startTime) : null}
+                  onChange={(d) => handleDateChange("startTime", d)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  locale="vi"
+                  className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                    errors.startTime ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.startTime && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.startTime}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="text-sm font-semibold">Thời gian kết thúc <span className="text-red-500">*</span></label>
-                <DatePicker selected={form.endTime ? new Date(form.endTime) : null} onChange={(d) => handleDateChange("endTime", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.endTime ? "border-red-500" : "border-gray-300"}`} />
-                {errors.endTime && <p className="text-xs text-red-500 mt-1">{errors.endTime}</p>}
+                <label className="text-sm font-semibold">
+                  Thời gian kết thúc <span className="text-red-500">*</span>
+                </label>
+                <DatePicker
+                  selected={form.endTime ? new Date(form.endTime) : null}
+                  onChange={(d) => handleDateChange("endTime", d)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  locale="vi"
+                  className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                    errors.endTime ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.endTime && (
+                  <p className="text-xs text-red-500 mt-1">{errors.endTime}</p>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold">Mở đăng ký <span className="text-red-500">*</span></label>
-                <DatePicker selected={form.startTimeRegister ? new Date(form.startTimeRegister) : null} onChange={(d) => handleDateChange("startTimeRegister", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.startTimeRegister ? "border-red-500" : "border-gray-300"}`} />
-                {errors.startTimeRegister && <p className="text-xs text-red-500 mt-1">{errors.startTimeRegister}</p>}
+                <label className="text-sm font-semibold">
+                  Mở đăng ký <span className="text-red-500">*</span>
+                </label>
+                <DatePicker
+                  selected={
+                    form.startTimeRegister
+                      ? new Date(form.startTimeRegister)
+                      : null
+                  }
+                  onChange={(d) => handleDateChange("startTimeRegister", d)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  locale="vi"
+                  className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                    errors.startTimeRegister
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {errors.startTimeRegister && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.startTimeRegister}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="text-sm font-semibold">Đóng đăng ký <span className="text-red-500">*</span></label>
-                <DatePicker selected={form.endTimeRegister ? new Date(form.endTimeRegister) : null} onChange={(d) => handleDateChange("endTimeRegister", d)} showTimeSelect timeFormat="HH:mm" timeIntervals={15} dateFormat="dd/MM/yyyy HH:mm" locale="vi" className={`w-full mt-2 px-4 py-2 border rounded-lg ${errors.endTimeRegister ? "border-red-500" : "border-gray-300"}`} />
-                {errors.endTimeRegister && <p className="text-xs text-red-500 mt-1">{errors.endTimeRegister}</p>}
+                <label className="text-sm font-semibold">
+                  Đóng đăng ký <span className="text-red-500">*</span>
+                </label>
+                <DatePicker
+                  selected={
+                    form.endTimeRegister ? new Date(form.endTimeRegister) : null
+                  }
+                  onChange={(d) => handleDateChange("endTimeRegister", d)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  locale="vi"
+                  className={`w-full mt-2 px-4 py-2 border rounded-lg ${
+                    errors.endTimeRegister
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {errors.endTimeRegister && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.endTimeRegister}
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
               <label className="text-sm font-semibold">Recurrence</label>
               <div className="mt-2 flex gap-2">
-                <select name="recurrenceType" value={form.recurrenceType} onChange={handleChange} className="px-3 py-2 border rounded-lg">
-                  {RECURRENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                <select
+                  name="recurrenceType"
+                  value={form.recurrenceType}
+                  onChange={handleChange}
+                  className="px-3 py-2 border rounded-lg"
+                >
+                  {RECURRENCE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
-                <input name="recurrenceInterval" type="number" min={1} value={form.recurrenceInterval} onChange={handleChange} className="px-3 py-2 border rounded-lg w-28" />
-                <input name="recurrenceCount" type="number" min={1} value={form.recurrenceCount ?? ""} onChange={handleChange} placeholder="Số lần (tuỳ chọn)" className="px-3 py-2 border rounded-lg w-36" />
+                <input
+                  name="recurrenceInterval"
+                  type="number"
+                  min={1}
+                  value={form.recurrenceInterval}
+                  onChange={handleChange}
+                  className="px-3 py-2 border rounded-lg w-28"
+                />
+                <input
+                  name="recurrenceCount"
+                  type="number"
+                  min={1}
+                  value={form.recurrenceCount ?? ""}
+                  onChange={handleChange}
+                  placeholder="Số lần (tuỳ chọn)"
+                  className="px-3 py-2 border rounded-lg w-36"
+                />
               </div>
-              {errors.recurrenceInterval && <p className="text-xs text-red-500 mt-1">{errors.recurrenceInterval}</p>}
+              {errors.recurrenceInterval && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.recurrenceInterval}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-6">
-              <button type="button" onClick={onClose} disabled={isSubmitting} className="px-5 py-2.5 bg-white border rounded-lg">Hủy</button>
-              <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-white bg-linear-to-r from-orange-500 to-orange-600 rounded-lg">
-                {isSubmitting ? "Đang gửi..." : (event ? "Cập nhật" : "Tạo định kỳ")}
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-5 py-2.5 bg-white border rounded-lg"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 text-white bg-linear-to-r from-orange-500 to-orange-600 rounded-lg"
+              >
+                {isSubmitting
+                  ? "Đang gửi..."
+                  : event
+                  ? "Cập nhật"
+                  : "Tạo định kỳ"}
               </button>
             </div>
           </div>

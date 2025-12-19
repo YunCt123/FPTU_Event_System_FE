@@ -633,6 +633,21 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     console.log("Form data:", formData);
     console.log("Is editing:", !!event);
 
+    // ✅ KIỂM TRA NẾU ĐANG CHỈNH SỬA SỰ KIỆN ĐÃ BẮT ĐẦU
+    if (event && event.startDate) {
+      try {
+        const startDate = new Date(event.startDate);
+        const now = new Date();
+
+        if (startDate <= now) {
+          toast.error("Không thể chỉnh sửa sự kiện đã và đang diễn ra!");
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing startDate:", error);
+      }
+    }
+
     if (!validateForm()) {
       console.log("Validation failed");
       toast.error("Vui lòng kiểm tra lại thông tin");
@@ -961,63 +976,109 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     } catch (error: any) {
       console.error("Error submitting form:", error);
       console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
 
       let errorMessage = event
         ? "Đã xảy ra lỗi khi cập nhật sự kiện"
         : "Đã xảy ra lỗi khi tạo sự kiện";
 
-      // XỬ LÝ LỖI VENUE CONFLICT
-      if (error.response?.status === 400) {
-        const responseData = error.response.data;
+      // Lấy message từ backend - kiểm tra nhiều vị trí
+      const responseData = error.response?.data;
 
-        if (responseData?.message) {
-          const message = responseData.message;
+      // Hàm helper để extract message từ response
+      const extractMessage = (data: any): string | null => {
+        if (!data) return null;
 
-          if (
-            message.includes("Venue đã được đặt") ||
-            message.includes("venue is already booked") ||
-            message.includes("conflict")
-          ) {
-            const eventNameMatch = message.match(/"([^"]+)"/);
-            const conflictEventName = eventNameMatch
-              ? eventNameMatch[1]
-              : "một sự kiện khác";
+        // Nếu message là array, join lại thành string
+        if (Array.isArray(data.message)) {
+          return data.message.join(", ");
+        }
 
-            errorMessage =
-              `Không thể đặt ${selectedVenue?.name || "địa điểm này"}!\n\n` +
-              `Địa điểm đã được sử dụng cho sự kiện "${conflictEventName}" trong cùng khung giờ.\n\n` +
-              `Vui lòng:\n` +
-              `• Chọn địa điểm khác, hoặc\n` +
-              `• Chọn thời gian khác`;
+        // Nếu message là string
+        if (typeof data.message === "string") {
+          return data.message;
+        }
 
-            toast.error(errorMessage, {
-              autoClose: 8000,
-              style: {
-                whiteSpace: "pre-line",
-              },
-            });
-            return;
+        // Kiểm tra data.message
+        if (data.data?.message) {
+          if (Array.isArray(data.data.message)) {
+            return data.data.message.join(", ");
           }
+          if (typeof data.data.message === "string") {
+            return data.data.message;
+          }
+        }
+
+        // Kiểm tra error.message
+        if (data.error?.message) {
+          return typeof data.error.message === "string"
+            ? data.error.message
+            : null;
+        }
+
+        // Kiểm tra error là array
+        if (Array.isArray(data.error) && data.error[0]?.message) {
+          return data.error[0].message;
+        }
+
+        return null;
+      };
+
+      const backendMessage = extractMessage(responseData);
+
+      // XỬ LÝ LỖI VENUE CONFLICT (ưu tiên hiển thị đẹp)
+      if (error.response?.status === 400 && backendMessage) {
+        const message = backendMessage.toLowerCase();
+
+        if (
+          message.includes("venue đã được đặt") ||
+          message.includes("venue is already booked") ||
+          message.includes("conflict") ||
+          message.includes("đã được đặt")
+        ) {
+          const eventNameMatch = backendMessage.match(/"([^"]+)"/);
+          const conflictEventName = eventNameMatch
+            ? eventNameMatch[1]
+            : "một sự kiện khác";
+
+          errorMessage =
+            `Không thể đặt ${selectedVenue?.name || "địa điểm này"}!\n\n` +
+            `Địa điểm đã được sử dụng cho sự kiện "${conflictEventName}" trong cùng khung giờ.\n\n` +
+            `Vui lòng:\n` +
+            `• Chọn địa điểm khác, hoặc\n` +
+            `• Chọn thời gian khác`;
+
+          toast.error(errorMessage, {
+            autoClose: 8000,
+            style: {
+              whiteSpace: "pre-line",
+            },
+          });
+          return;
         }
       }
 
-      // XỬ LÝ CÁC LỖI KHÁC
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.errors) {
-        if (Array.isArray(error.response.data.errors)) {
-          errorMessage = error.response.data.errors
+      // XỬ LÝ CÁC LỖI KHÁC - Ưu tiên message từ backend
+      if (backendMessage) {
+        errorMessage = backendMessage;
+      } else if (responseData?.errors) {
+        if (Array.isArray(responseData.errors)) {
+          errorMessage = responseData.errors
             .map((e: any) => e.message || e)
             .join(", ");
-        } else if (typeof error.response.data.errors === "object") {
-          errorMessage = Object.entries(error.response.data.errors)
+        } else if (typeof responseData.errors === "object") {
+          errorMessage = Object.entries(responseData.errors)
             .map(([field, msg]) => `${field}: ${msg}`)
             .join(", ");
         }
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
+      // Hiển thị thông báo lỗi với thông tin chi tiết
+      console.error("Final error message:", errorMessage);
       toast.error(errorMessage, {
-        autoClose: 5000,
+        autoClose: 6000,
       });
     } finally {
       console.log("=== SUBMIT END ===");

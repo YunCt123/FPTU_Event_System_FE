@@ -320,13 +320,13 @@ const EventFormModalOnline: React.FC<Props> = ({
       "_blank",
       "width=1200,height=800"
     );
-    
+
     if (meetWindow) {
       toast.info(
         "Đã mở Google Meet. Vui lòng tạo meeting và copy link vào ô bên dưới.",
         { autoClose: 5000 }
       );
-      
+
       // Hướng dẫn người dùng
       setTimeout(() => {
         toast.info(
@@ -440,6 +440,22 @@ const EventFormModalOnline: React.FC<Props> = ({
 
   const handleSubmit = async (ev?: React.FormEvent) => {
     ev?.preventDefault();
+
+    // ✅ KIỂM TRA NẾU ĐANG CHỈNH SỬA SỰ KIỆN ĐÃ BẮT ĐẦU
+    if (event && event.startDate) {
+      try {
+        const startDate = new Date(event.startDate);
+        const now = new Date();
+
+        if (startDate <= now) {
+          toast.error("Không thể chỉnh sửa sự kiện đã và đang diễn ra!");
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing startDate:", error);
+      }
+    }
+
     if (!validate()) {
       toast.error("Vui lòng kiểm tra lại thông tin");
       return;
@@ -592,10 +608,58 @@ const EventFormModalOnline: React.FC<Props> = ({
       }
     } catch (error: any) {
       console.error("Online event error:", error);
+      console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
+
+      // Lấy message từ backend - kiểm tra nhiều vị trí
+      const responseData = error.response?.data;
+
+      // Hàm helper để extract message từ response
+      const extractMessage = (data: any): string | null => {
+        if (!data) return null;
+
+        // Nếu message là array, join lại thành string
+        if (Array.isArray(data.message)) {
+          return data.message.join(", ");
+        }
+
+        // Nếu message là string
+        if (typeof data.message === "string") {
+          return data.message;
+        }
+
+        // Kiểm tra data.message
+        if (data.data?.message) {
+          if (Array.isArray(data.data.message)) {
+            return data.data.message.join(", ");
+          }
+          if (typeof data.data.message === "string") {
+            return data.data.message;
+          }
+        }
+
+        // Kiểm tra error.message
+        if (data.error?.message) {
+          return typeof data.error.message === "string"
+            ? data.error.message
+            : null;
+        }
+
+        // Kiểm tra error là array
+        if (Array.isArray(data.error) && data.error[0]?.message) {
+          return data.error[0].message;
+        }
+
+        return null;
+      };
+
+      const backendMessage = extractMessage(responseData);
       const errorMsg =
-        error?.response?.data?.message ||
-        error?.response?.data?.data?.message ||
+        backendMessage ||
+        error?.message ||
         (event ? "Lỗi khi cập nhật sự kiện" : "Lỗi khi tạo sự kiện");
+
+      console.error("Final error message:", errorMsg);
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -925,13 +989,19 @@ const EventFormModalOnline: React.FC<Props> = ({
                   {form.onlineMeetingUrl && (
                     <div className="mt-2 flex items-center gap-2 text-xs text-gray-600 bg-blue-50 p-2 rounded">
                       <Video size={14} className="text-blue-500" />
-                      <span>Link Google Meet đã được nhập. Bạn có thể click vào nút "Tạo link Meet" để mở Google Meet và tạo link mới.</span>
+                      <span>
+                        Link Google Meet đã được nhập. Bạn có thể click vào nút
+                        "Tạo link Meet" để mở Google Meet và tạo link mới.
+                      </span>
                     </div>
                   )}
                   {!form.onlineMeetingUrl && (
                     <div className="mt-2 flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
                       <Sparkles size={14} className="text-orange-500 mt-0.5" />
-                      <span>Click vào nút "Tạo link Meet" để mở Google Meet và tạo link meeting. Sau đó copy link và paste vào ô trên.</span>
+                      <span>
+                        Click vào nút "Tạo link Meet" để mở Google Meet và tạo
+                        link meeting. Sau đó copy link và paste vào ô trên.
+                      </span>
                     </div>
                   )}
                 </div>
