@@ -911,6 +911,35 @@ const EventFormModalOnline: React.FC<Props> = ({
                       timeIntervals={15}
                       dateFormat="dd/MM/yyyy HH:mm"
                       locale="vi"
+                      minDate={new Date()}
+                      filterTime={(time) => {
+                        const now = new Date();
+                        const selectedDate = form.startTime
+                          ? new Date(form.startTime)
+                          : new Date();
+                        const today = new Date(
+                          now.getFullYear(),
+                          now.getMonth(),
+                          now.getDate()
+                        );
+                        const selectedDay = new Date(
+                          selectedDate.getFullYear(),
+                          selectedDate.getMonth(),
+                          selectedDate.getDate()
+                        );
+
+                        if (selectedDay.getTime() === today.getTime()) {
+                          const timeToCheck = new Date(selectedDay);
+                          timeToCheck.setHours(
+                            time.getHours(),
+                            time.getMinutes(),
+                            0,
+                            0
+                          );
+                          return timeToCheck.getTime() >= now.getTime();
+                        }
+                        return true;
+                      }}
                       placeholderText="Chọn thời gian"
                       className={`w-full px-4 py-3 border ${
                         errors.startTime ? "border-red-500" : "border-gray-300"
@@ -937,6 +966,38 @@ const EventFormModalOnline: React.FC<Props> = ({
                       timeIntervals={15}
                       dateFormat="dd/MM/yyyy HH:mm"
                       locale="vi"
+                      minDate={
+                        form.startTime ? new Date(form.startTime) : new Date()
+                      }
+                      filterTime={(time) => {
+                        if (!form.startTime) return true;
+                        const startDate = new Date(form.startTime);
+                        const selectedDate = form.endTime
+                          ? new Date(form.endTime)
+                          : new Date();
+                        const startDay = new Date(
+                          startDate.getFullYear(),
+                          startDate.getMonth(),
+                          startDate.getDate()
+                        );
+                        const selectedDay = new Date(
+                          selectedDate.getFullYear(),
+                          selectedDate.getMonth(),
+                          selectedDate.getDate()
+                        );
+
+                        if (startDay.getTime() === selectedDay.getTime()) {
+                          const timeToCheck = new Date(selectedDay);
+                          timeToCheck.setHours(
+                            time.getHours(),
+                            time.getMinutes(),
+                            0,
+                            0
+                          );
+                          return timeToCheck.getTime() > startDate.getTime();
+                        }
+                        return true;
+                      }}
                       placeholderText="Chọn thời gian"
                       className={`w-full px-4 py-3 border ${
                         errors.endTime ? "border-red-500" : "border-gray-300"

@@ -422,6 +422,35 @@ const EventFormModalWeekly: React.FC<Props> = ({
                   timeIntervals={15}
                   dateFormat="dd/MM/yyyy HH:mm"
                   locale="vi"
+                  minDate={new Date()}
+                  filterTime={(time) => {
+                    const now = new Date();
+                    const selectedDate = form.startTime
+                      ? new Date(form.startTime)
+                      : new Date();
+                    const today = new Date(
+                      now.getFullYear(),
+                      now.getMonth(),
+                      now.getDate()
+                    );
+                    const selectedDay = new Date(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    );
+
+                    if (selectedDay.getTime() === today.getTime()) {
+                      const timeToCheck = new Date(selectedDay);
+                      timeToCheck.setHours(
+                        time.getHours(),
+                        time.getMinutes(),
+                        0,
+                        0
+                      );
+                      return timeToCheck.getTime() >= now.getTime();
+                    }
+                    return true;
+                  }}
                   className={`w-full mt-2 px-4 py-2 border rounded-lg ${
                     errors.startTime ? "border-red-500" : "border-gray-300"
                   }`}
@@ -445,6 +474,38 @@ const EventFormModalWeekly: React.FC<Props> = ({
                   timeIntervals={15}
                   dateFormat="dd/MM/yyyy HH:mm"
                   locale="vi"
+                  minDate={
+                    form.startTime ? new Date(form.startTime) : new Date()
+                  }
+                  filterTime={(time) => {
+                    if (!form.startTime) return true;
+                    const startDate = new Date(form.startTime);
+                    const selectedDate = form.endTime
+                      ? new Date(form.endTime)
+                      : new Date();
+                    const startDay = new Date(
+                      startDate.getFullYear(),
+                      startDate.getMonth(),
+                      startDate.getDate()
+                    );
+                    const selectedDay = new Date(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    );
+
+                    if (startDay.getTime() === selectedDay.getTime()) {
+                      const timeToCheck = new Date(selectedDay);
+                      timeToCheck.setHours(
+                        time.getHours(),
+                        time.getMinutes(),
+                        0,
+                        0
+                      );
+                      return timeToCheck.getTime() > startDate.getTime();
+                    }
+                    return true;
+                  }}
                   className={`w-full mt-2 px-4 py-2 border rounded-lg ${
                     errors.endTime ? "border-red-500" : "border-gray-300"
                   }`}
@@ -472,6 +533,38 @@ const EventFormModalWeekly: React.FC<Props> = ({
                   timeIntervals={15}
                   dateFormat="dd/MM/yyyy HH:mm"
                   locale="vi"
+                  minDate={new Date()}
+                  filterTime={(time) => {
+                    const now = new Date();
+                    const selectedDate = form.startTimeRegister
+                      ? new Date(form.startTimeRegister)
+                      : new Date();
+                    const today = new Date(
+                      now.getFullYear(),
+                      now.getMonth(),
+                      now.getDate()
+                    );
+                    const selectedDay = new Date(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    );
+
+                    if (selectedDay.getTime() === today.getTime()) {
+                      const timeToCheck = new Date(selectedDay);
+                      timeToCheck.setHours(
+                        time.getHours(),
+                        time.getMinutes(),
+                        0,
+                        0
+                      );
+                      return timeToCheck.getTime() >= now.getTime();
+                    }
+                    return true;
+                  }}
+                  maxDate={
+                    form.startTime ? new Date(form.startTime) : undefined
+                  }
                   className={`w-full mt-2 px-4 py-2 border rounded-lg ${
                     errors.startTimeRegister
                       ? "border-red-500"
@@ -499,6 +592,43 @@ const EventFormModalWeekly: React.FC<Props> = ({
                   timeIntervals={15}
                   dateFormat="dd/MM/yyyy HH:mm"
                   locale="vi"
+                  minDate={
+                    form.startTimeRegister
+                      ? new Date(form.startTimeRegister)
+                      : new Date()
+                  }
+                  filterTime={(time) => {
+                    if (!form.startTimeRegister) return true;
+                    const startRegister = new Date(form.startTimeRegister);
+                    const selectedDate = form.endTimeRegister
+                      ? new Date(form.endTimeRegister)
+                      : new Date();
+                    const startDay = new Date(
+                      startRegister.getFullYear(),
+                      startRegister.getMonth(),
+                      startRegister.getDate()
+                    );
+                    const selectedDay = new Date(
+                      selectedDate.getFullYear(),
+                      selectedDate.getMonth(),
+                      selectedDate.getDate()
+                    );
+
+                    if (startDay.getTime() === selectedDay.getTime()) {
+                      const timeToCheck = new Date(selectedDay);
+                      timeToCheck.setHours(
+                        time.getHours(),
+                        time.getMinutes(),
+                        0,
+                        0
+                      );
+                      return timeToCheck.getTime() > startRegister.getTime();
+                    }
+                    return true;
+                  }}
+                  maxDate={
+                    form.startTime ? new Date(form.startTime) : undefined
+                  }
                   className={`w-full mt-2 px-4 py-2 border rounded-lg ${
                     errors.endTimeRegister
                       ? "border-red-500"

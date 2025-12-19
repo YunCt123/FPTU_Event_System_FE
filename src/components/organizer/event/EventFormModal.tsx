@@ -1249,6 +1249,36 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     timeIntervals={15}
                     dateFormat="dd/MM/yyyy HH:mm"
                     locale="vi"
+                    minDate={new Date()}
+                    filterTime={(time) => {
+                      const now = new Date();
+                      const selectedDate = formData.startDate
+                        ? new Date(formData.startDate)
+                        : new Date();
+                      const today = new Date(
+                        now.getFullYear(),
+                        now.getMonth(),
+                        now.getDate()
+                      );
+                      const selectedDay = new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth(),
+                        selectedDate.getDate()
+                      );
+
+                      // Nếu chọn ngày hôm nay, chỉ cho phép chọn giờ từ bây giờ trở đi
+                      if (selectedDay.getTime() === today.getTime()) {
+                        const timeToCheck = new Date(selectedDay);
+                        timeToCheck.setHours(
+                          time.getHours(),
+                          time.getMinutes(),
+                          0,
+                          0
+                        );
+                        return timeToCheck.getTime() >= now.getTime();
+                      }
+                      return true;
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
@@ -1284,6 +1314,41 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     timeIntervals={15}
                     dateFormat="dd/MM/yyyy HH:mm"
                     locale="vi"
+                    minDate={
+                      formData.startDate
+                        ? new Date(formData.startDate)
+                        : new Date()
+                    }
+                    filterTime={(time) => {
+                      if (!formData.startDate) return true;
+                      const startDate = new Date(formData.startDate);
+                      const selectedDate = formData.endDate
+                        ? new Date(formData.endDate)
+                        : new Date();
+                      const startDay = new Date(
+                        startDate.getFullYear(),
+                        startDate.getMonth(),
+                        startDate.getDate()
+                      );
+                      const selectedDay = new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth(),
+                        selectedDate.getDate()
+                      );
+
+                      // Nếu chọn cùng ngày với thời gian bắt đầu, chỉ cho phép chọn giờ sau thời gian bắt đầu
+                      if (startDay.getTime() === selectedDay.getTime()) {
+                        const timeToCheck = new Date(selectedDay);
+                        timeToCheck.setHours(
+                          time.getHours(),
+                          time.getMinutes(),
+                          0,
+                          0
+                        );
+                        return timeToCheck.getTime() > startDate.getTime();
+                      }
+                      return true;
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
@@ -1324,6 +1389,41 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     timeIntervals={15}
                     dateFormat="dd/MM/yyyy HH:mm"
                     locale="vi"
+                    minDate={new Date()}
+                    filterTime={(time) => {
+                      const now = new Date();
+                      const selectedDate = formData.registrationDeadline
+                        ? new Date(formData.registrationDeadline)
+                        : new Date();
+                      const today = new Date(
+                        now.getFullYear(),
+                        now.getMonth(),
+                        now.getDate()
+                      );
+                      const selectedDay = new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth(),
+                        selectedDate.getDate()
+                      );
+
+                      // Nếu chọn ngày hôm nay, chỉ cho phép chọn giờ từ bây giờ trở đi
+                      if (selectedDay.getTime() === today.getTime()) {
+                        const timeToCheck = new Date(selectedDay);
+                        timeToCheck.setHours(
+                          time.getHours(),
+                          time.getMinutes(),
+                          0,
+                          0
+                        );
+                        return timeToCheck.getTime() >= now.getTime();
+                      }
+                      return true;
+                    }}
+                    maxDate={
+                      formData.startDate
+                        ? new Date(formData.startDate)
+                        : undefined
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
@@ -1362,6 +1462,48 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     timeIntervals={15}
                     dateFormat="dd/MM/yyyy HH:mm"
                     locale="vi"
+                    minDate={
+                      formData.registrationDeadline
+                        ? new Date(formData.registrationDeadline)
+                        : new Date()
+                    }
+                    filterTime={(time) => {
+                      if (!formData.registrationDeadline) return true;
+                      const startRegister = new Date(
+                        formData.registrationDeadline
+                      );
+                      const selectedDate = formData.endTimeRegister
+                        ? new Date(formData.endTimeRegister)
+                        : new Date();
+                      const startDay = new Date(
+                        startRegister.getFullYear(),
+                        startRegister.getMonth(),
+                        startRegister.getDate()
+                      );
+                      const selectedDay = new Date(
+                        selectedDate.getFullYear(),
+                        selectedDate.getMonth(),
+                        selectedDate.getDate()
+                      );
+
+                      // Nếu chọn cùng ngày với thời gian mở đăng ký, chỉ cho phép chọn giờ sau thời gian mở đăng ký
+                      if (startDay.getTime() === selectedDay.getTime()) {
+                        const timeToCheck = new Date(selectedDay);
+                        timeToCheck.setHours(
+                          time.getHours(),
+                          time.getMinutes(),
+                          0,
+                          0
+                        );
+                        return timeToCheck.getTime() > startRegister.getTime();
+                      }
+                      return true;
+                    }}
+                    maxDate={
+                      formData.startDate
+                        ? new Date(formData.startDate)
+                        : undefined
+                    }
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholderText="DD/MM/YYYY HH:mm"
                     disabled={isSubmitting}
