@@ -762,6 +762,16 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           if (newVenueId !== originalData.venueId) {
             updateData.venueId = newVenueId;
           }
+
+          // So sánh staffIds
+          const originalStaffIds = originalData.staffIds || [];
+          const staffIdsChanged =
+            selectedStaffIds.length !== originalStaffIds.length ||
+            selectedStaffIds.some((id) => !originalStaffIds.includes(id)) ||
+            originalStaffIds.some((id) => !selectedStaffIds.includes(id));
+          if (staffIdsChanged) {
+            updateData.staffIds = selectedStaffIds;
+          }
         } else {
           // GỬI TẤT CẢ (KHÔNG CÓ ORIGINAL DATA)
           updateData.title = formData.title.trim();
@@ -778,6 +788,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           updateData.venueId = Number(formData.venueId);
           updateData.isGlobal = true;
           updateData.organizerId = organizerInfo.id;
+          updateData.staffIds = selectedStaffIds;
         }
 
         console.log("Sending UPDATE data:", updateData);
