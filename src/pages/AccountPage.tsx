@@ -24,7 +24,6 @@ import { toast } from "react-toastify";
 import { uploadImageToCloudinary } from "../utils/uploadImg";
 import ChangePasswordModal from "../components/auth/ChangePasswordModal";
 
-
 const InfoItem = ({
   icon: Icon,
   label,
@@ -51,7 +50,8 @@ const AccountPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("");
-  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    useState(false);
   const [formData, setFormData] = useState<UpdateAccountRequest>({
     userName: "",
     firstName: "",
@@ -61,7 +61,12 @@ const AccountPage = () => {
     address: "",
     avatar: "",
   });
-
+  const [errors, setErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: string;
+  }>({});
 
   const fetchUser = async () => {
     setIsLoading(true);
@@ -96,7 +101,7 @@ const AccountPage = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Kích thước ảnh không được vượt quá 5MB');
+        toast.error("Kích thước ảnh không được vượt quá 5MB");
         return;
       }
       setAvatarFile(file);
@@ -108,9 +113,88 @@ const AccountPage = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Validation functions
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case "firstName":
+        if (!value.trim()) {
+          return "Họ không được để trống";
+        }
+        if (value.trim().length < 2) {
+          return "Họ phải có ít nhất 2 ký tự";
+        }
+        if (value.trim().length > 50) {
+          return "Họ không được vượt quá 50 ký tự";
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value.trim())) {
+          return "Họ chỉ được chứa chữ cái và khoảng trắng";
+        }
+        return "";
+
+      case "lastName":
+        if (!value.trim()) {
+          return "Tên không được để trống";
+        }
+        if (value.trim().length < 2) {
+          return "Tên phải có ít nhất 2 ký tự";
+        }
+        if (value.trim().length > 50) {
+          return "Tên không được vượt quá 50 ký tự";
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value.trim())) {
+          return "Tên chỉ được chứa chữ cái và khoảng trắng";
+        }
+        return "";
+
+      case "phoneNumber":
+        if (value && value.trim()) {
+          // Remove spaces and dashes
+          const cleaned = value.replace(/[\s-]/g, "");
+          // Check if it's a valid Vietnamese phone number
+          if (!/^(0|\+84)[3-9]\d{8,9}$/.test(cleaned)) {
+            return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam (ví dụ: 0901234567)";
+          }
+        }
+        return "";
+
+      case "address":
+        if (value && value.trim().length > 200) {
+          return "Địa chỉ không được vượt quá 200 ký tự";
+        }
+        return "";
+
+      default:
+        return "";
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    newErrors.firstName = validateField("firstName", formData.firstName);
+    newErrors.lastName = validateField("lastName", formData.lastName);
+    newErrors.phoneNumber = validateField(
+      "phoneNumber",
+      formData.phoneNumber || ""
+    );
+    newErrors.address = validateField("address", formData.address || "");
+
+    setErrors(newErrors);
+
+    return !Object.values(newErrors).some((error) => error !== "");
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Validate on change
+    if (editing) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
   };
 
   const handleEdit = () => {
@@ -131,12 +215,14 @@ const AccountPage = () => {
       setAvatarPreview(user.avatar || "");
       setAvatarFile(null);
     }
+    setErrors({});
     setEditing(false);
   };
 
   const handleSubmit = async () => {
-    if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      toast.error('Vui lòng nhập họ và tên');
+    // Validate all fields
+    if (!validateForm()) {
+      toast.error("Vui lòng kiểm tra lại thông tin đã nhập");
       return;
     }
 
@@ -146,7 +232,7 @@ const AccountPage = () => {
 
       // Upload avatar if changed
       if (avatarFile) {
-        toast.info('Đang tải ảnh đại diện...');
+        toast.info("Đang tải ảnh đại diện...");
         avatarUrl = await uploadImageToCloudinary(avatarFile);
       }
 
@@ -156,16 +242,17 @@ const AccountPage = () => {
       };
 
       const response = await authService.updateAccount(updateData);
-      
+
       if (response.status === 200) {
-        toast.success('Cập nhật thông tin thành công!');
+        toast.success("Cập nhật thông tin thành công!");
         await fetchUser();
         setEditing(false);
         setAvatarFile(null);
       }
     } catch (error: any) {
-      console.error('Error updating account:', error);
-      const errorMessage = error.response?.data?.message || 'Cập nhật thất bại. Vui lòng thử lại!';
+      console.error("Error updating account:", error);
+      const errorMessage =
+        error.response?.data?.message || "Cập nhật thất bại. Vui lòng thử lại!";
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -257,36 +344,19 @@ const AccountPage = () => {
             </div>
           </div>
 
-          {!editing ? (
-            <button
-              onClick={handleEdit}
-              className="bg-white text-[#F27125] px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow hover:shadow-lg transition"
-            >
-              <Edit size={18} /> Chỉnh sửa
-            </button>
-          ) : (
-            <div className="flex gap-3">
+          {!editing && (
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={handleCancel}
-                disabled={isSubmitting}
-                className="bg-white/20 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-white/30 transition disabled:opacity-50"
+                onClick={handleEdit}
+                className="bg-white text-[#F27125] px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow hover:shadow-lg transition"
               >
-                <X size={18} /> Hủy
+                <Edit size={18} /> Chỉnh sửa
               </button>
               <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-white text-[#F27125] px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow hover:shadow-lg transition disabled:opacity-50"
+                onClick={() => setIsChangePasswordModalOpen(true)}
+                className="bg-white/20 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-white/30 transition border border-white/30"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader size={18} className="animate-spin" /> Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <Save size={18} /> Lưu
-                  </>
-                )}
+                <Lock size={18} /> Đổi mật khẩu
               </button>
             </div>
           )}
@@ -312,8 +382,16 @@ const AccountPage = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none ${
+                      errors.firstName ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Nhập họ"
                   />
+                  {errors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -324,8 +402,16 @@ const AccountPage = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none ${
+                      errors.lastName ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Nhập tên"
                   />
+                  {errors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -348,9 +434,16 @@ const AccountPage = () => {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none"
-                  placeholder="0123456789"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none ${
+                    errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="0901234567"
                 />
+                {errors.phoneNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.phoneNumber}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -361,36 +454,64 @@ const AccountPage = () => {
                   value={formData.address}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none resize-none"
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none resize-none ${
+                    errors.address ? "border-red-500" : "border-gray-300"
+                  }`}
                   placeholder="Nhập địa chỉ"
                 />
+                {errors.address && (
+                  <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                )}
               </div>
-
-              <button
-                onClick={() => setIsChangePasswordModalOpen(true)}
-                className="w-full bg-[#F27125] text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow hover:bg-[#d95c0b] transition"
-              >
-                <Lock size={18} /> Đổi mật khẩu
-              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoItem icon={Mail} label="Email" value={user.email} />
-              <InfoItem
-                icon={Phone}
-                label="Số điện thoại"
-                value={user.phoneNumber || "—"}
-              />
-              <InfoItem
-                icon={MapPin}
-                label="Địa chỉ"
-                value={user.address || "—"}
-              />
-              <InfoItem
-                icon={Calendar}
-                label="Ngày tạo"
-                value={new Date(user.createdAt).toLocaleDateString("vi-VN")}
-              />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InfoItem icon={Mail} label="Email" value={user.email} />
+                <InfoItem
+                  icon={Phone}
+                  label="Số điện thoại"
+                  value={user.phoneNumber || "—"}
+                />
+                <InfoItem
+                  icon={MapPin}
+                  label="Địa chỉ"
+                  value={user.address || "—"}
+                />
+                <InfoItem
+                  icon={Calendar}
+                  label="Ngày tạo"
+                  value={new Date(user.createdAt).toLocaleDateString("vi-VN")}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Nút Lưu và Hủy khi đang edit - đặt ở dưới cùng */}
+          {editing && (
+            <div className="flex gap-3 pt-4 border-t border-gray-200 mt-6">
+              <button
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 transition disabled:opacity-50"
+              >
+                <X size={18} /> Hủy
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="flex-1 bg-[#F27125] text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow hover:bg-[#d95c0b] transition disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader size={18} className="animate-spin" /> Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} /> Lưu
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>
@@ -432,7 +553,9 @@ const AccountPage = () => {
               Student Card
             </div>
             <img
-              src={user.avatar || "https://via.placeholder.com/400x250"}
+              src={
+                user.studentCardImage || "https://via.placeholder.com/400x250"
+              }
               className="w-full bg-gray-100 object-contain"
             />
           </div>

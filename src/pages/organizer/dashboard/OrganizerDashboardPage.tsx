@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Calendar,
   Users,
@@ -8,11 +8,11 @@ import {
   AlertCircle,
   BarChart3,
   PieChart,
-} from 'lucide-react';
-import organizerService from '../../../services/organizerService';
-import userService from '../../../services/userService';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+} from "lucide-react";
+import organizerService from "../../../services/organizerService";
+import userService from "../../../services/userService";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardStats {
   totalEvents: number;
@@ -35,7 +35,7 @@ interface EventChartData {
 
 const OrganizerDashboardPage = () => {
   const navigate = useNavigate();
-  
+
   const [stats, setStats] = useState<DashboardStats>({
     totalEvents: 0,
     activeEvents: 0,
@@ -49,12 +49,18 @@ const OrganizerDashboardPage = () => {
   const [recentEvents, setRecentEvents] = useState<any[]>([]);
   const [chartData, setChartData] = useState<EventChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<string>(String(new Date().getFullYear()));
-  
+
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    new Date().getMonth() + 1
+  );
+  const [selectedYear, setSelectedYear] = useState<string>(
+    String(new Date().getFullYear())
+  );
+
   // State tạm để lưu năm đang nhập (không trigger useEffect)
-  const [tempYear, setTempYear] = useState<string>(String(new Date().getFullYear()));
+  const [tempYear, setTempYear] = useState<string>(
+    String(new Date().getFullYear())
+  );
 
   // Chỉ fetch khi component mount hoặc khi selectedMonth/selectedYear thay đổi SAU KHI BLUR
   useEffect(() => {
@@ -69,100 +75,111 @@ const OrganizerDashboardPage = () => {
         limit: 100,
       });
 
-      console.log('📊 Events response:', eventsResponse);
+      console.log("📊 Events response:", eventsResponse);
 
       if (eventsResponse) {
-        const eventsData = eventsResponse.data?.data || eventsResponse.data || [];
+        const eventsData =
+          eventsResponse.data?.data || eventsResponse.data || [];
         const meta = eventsResponse.data?.meta || eventsResponse.meta;
 
         // ✅ LOG TẤT CẢ STATUS ĐỂ DEBUG
-        console.log('📊 All event statuses:', eventsData.map((e: any) => ({
-          id: e.id,
-          title: e.title,
-          status: e.status
-      })));
-
-      const totalEvents = meta?.total || eventsData.length;
-      
-      const approvedEvents = eventsData.filter(
-        (e: any) => e.status === 'PUBLISHED' || e.status === 'APPROVED'
-      );
-      console.log('✅ Approved events:', approvedEvents.length);
-      
-      const pendingEvents = eventsData.filter((e: any) => e.status === 'PENDING');
-      console.log('⏳ Pending events:', pendingEvents.length);
-      
-      const completedEvents = eventsData.filter((e: any) => e.status === 'COMPLETED');
-      console.log('🎉 Completed events:', completedEvents.length);
-      
-      // ✅ MỞ RỘNG FILTER CHO REJECTED EVENTS - BAO GỒM TẤT CẢ TRẠNG THÁI CÓ THỂ
-      const rejectedEvents = eventsData.filter((e: any) => {
-        const status = e.status?.toUpperCase(); // Chuyển về uppercase để so sánh
-        return (
-          status === 'CANCELED' || 
-          status === 'CANCELLED' ||  // UK spelling
-          status === 'REJECTED' ||
-          status === 'REJECT' ||
-          status === 'DENIED'
+        console.log(
+          "📊 All event statuses:",
+          eventsData.map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            status: e.status,
+          }))
         );
-      });
-      
-      console.log('❌ Rejected events:', rejectedEvents.length);
-      console.log('❌ Rejected event details:', rejectedEvents.map((e: any) => ({
-        id: e.id,
-        title: e.title,
-        status: e.status
-      })));
 
-      const totalAttendance = eventsData.reduce(
-        (sum: number, event: any) => sum + (event.checkinCount || 0),
-        0
-      );
+        const totalEvents = meta?.total || eventsData.length;
 
-      let totalRegistrations = 0;
+        const approvedEvents = eventsData.filter(
+          (e: any) => e.status === "PUBLISHED" || e.status === "APPROVED"
+        );
+        console.log("✅ Approved events:", approvedEvents.length);
 
-      for (const event of eventsData) {
-        try {
-          const attendeesResponse = await userService.getAttendUser(
-            String(event.id),
-            {
-              page: 1,
-              limit: 1,
-            }
+        const pendingEvents = eventsData.filter(
+          (e: any) => e.status === "PENDING"
+        );
+        console.log("⏳ Pending events:", pendingEvents.length);
+
+        const completedEvents = eventsData.filter(
+          (e: any) => e.status === "COMPLETED"
+        );
+        console.log("🎉 Completed events:", completedEvents.length);
+
+        // ✅ MỞ RỘNG FILTER CHO REJECTED EVENTS - BAO GỒM TẤT CẢ TRẠNG THÁI CÓ THỂ
+        const rejectedEvents = eventsData.filter((e: any) => {
+          const status = e.status?.toUpperCase(); // Chuyển về uppercase để so sánh
+          return (
+            status === "CANCELED" ||
+            status === "CANCELLED" || // UK spelling
+            status === "REJECTED" ||
+            status === "REJECT" ||
+            status === "DENIED"
           );
+        });
 
-          if (attendeesResponse && attendeesResponse.data) {
-            const attendeesTotal = attendeesResponse.data.meta?.total || 0;
-            totalRegistrations += attendeesTotal;
+        console.log("❌ Rejected events:", rejectedEvents.length);
+        console.log(
+          "❌ Rejected event details:",
+          rejectedEvents.map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            status: e.status,
+          }))
+        );
+
+        const totalAttendance = eventsData.reduce(
+          (sum: number, event: any) => sum + (event.checkinCount || 0),
+          0
+        );
+
+        let totalRegistrations = 0;
+
+        for (const event of eventsData) {
+          try {
+            const attendeesResponse = await userService.getAttendUser(
+              String(event.id),
+              {
+                page: 1,
+                limit: 1,
+              }
+            );
+
+            if (attendeesResponse && attendeesResponse.data) {
+              const attendeesTotal = attendeesResponse.data.meta?.total || 0;
+              totalRegistrations += attendeesTotal;
+            }
+          } catch (error) {
+            totalRegistrations += event.registeredCount || 0;
           }
-        } catch (error) {
-          totalRegistrations += event.registeredCount || 0;
         }
-      }
 
-      const averageAttendance =
-        totalRegistrations > 0
-          ? Math.round((totalAttendance / totalRegistrations) * 100)
-          : 0;
+        const averageAttendance =
+          totalRegistrations > 0
+            ? Math.round((totalAttendance / totalRegistrations) * 100)
+            : 0;
 
-      setStats({
-        totalEvents,
-        activeEvents: approvedEvents.length,
-        pendingEvents: pendingEvents.length,
-        completedEvents: completedEvents.length,
-        rejectedEvents: rejectedEvents.length, // ✅ Set đúng giá trị
-        totalRegistrations,
-        totalAttendance,
-        averageAttendance,
-      });
+        setStats({
+          totalEvents,
+          activeEvents: approvedEvents.length,
+          pendingEvents: pendingEvents.length,
+          completedEvents: completedEvents.length,
+          rejectedEvents: rejectedEvents.length, // ✅ Set đúng giá trị
+          totalRegistrations,
+          totalAttendance,
+          averageAttendance,
+        });
 
-      console.log('📊 Final stats:', {
-        totalEvents,
-        activeEvents: approvedEvents.length,
-        pendingEvents: pendingEvents.length,
-        completedEvents: completedEvents.length,
-        rejectedEvents: rejectedEvents.length,
-      });
+        console.log("📊 Final stats:", {
+          totalEvents,
+          activeEvents: approvedEvents.length,
+          pendingEvents: pendingEvents.length,
+          completedEvents: completedEvents.length,
+          rejectedEvents: rejectedEvents.length,
+        });
 
         const sortedEvents = [...eventsData]
           .sort(
@@ -184,14 +201,15 @@ const OrganizerDashboardPage = () => {
 
         const chartDataPromises = filteredEvents.map(async (event: any) => {
           let registrations = event.registeredCount || 0;
-          
+
           try {
             const attendeesResponse = await userService.getAttendUser(
               String(event.id),
               { page: 1, limit: 1 }
             );
             if (attendeesResponse && attendeesResponse.data) {
-              registrations = attendeesResponse.data.meta?.total || registrations;
+              registrations =
+                attendeesResponse.data.meta?.total || registrations;
             }
           } catch (error) {
             console.warn(`Cannot fetch attendees for event ${event.id}`);
@@ -207,113 +225,128 @@ const OrganizerDashboardPage = () => {
         });
 
         const resolvedChartData = await Promise.all(chartDataPromises);
-        
+
         resolvedChartData.sort(
-          (a: EventChartData, b: EventChartData) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+          (a: EventChartData, b: EventChartData) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
 
         setChartData(resolvedChartData);
       }
     } catch (error: any) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Không thể tải dữ liệu dashboard. Vui lòng thử lại.');
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Không thể tải dữ liệu dashboard. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const months = [
-    { value: 1, label: 'Tháng 1' },
-    { value: 2, label: 'Tháng 2' },
-    { value: 3, label: 'Tháng 3' },
-    { value: 4, label: 'Tháng 4' },
-    { value: 5, label: 'Tháng 5' },
-    { value: 6, label: 'Tháng 6' },
-    { value: 7, label: 'Tháng 7' },
-    { value: 8, label: 'Tháng 8' },
-    { value: 9, label: 'Tháng 9' },
-    { value: 10, label: 'Tháng 10' },
-    { value: 11, label: 'Tháng 11' },
-    { value: 12, label: 'Tháng 12' },
+    { value: 1, label: "Tháng 1" },
+    { value: 2, label: "Tháng 2" },
+    { value: 3, label: "Tháng 3" },
+    { value: 4, label: "Tháng 4" },
+    { value: 5, label: "Tháng 5" },
+    { value: 6, label: "Tháng 6" },
+    { value: 7, label: "Tháng 7" },
+    { value: 8, label: "Tháng 8" },
+    { value: 9, label: "Tháng 9" },
+    { value: 10, label: "Tháng 10" },
+    { value: 11, label: "Tháng 11" },
+    { value: 12, label: "Tháng 12" },
   ];
 
   const statCards = [
     {
-      title: 'Tổng số sự kiện',
+      title: "Tổng số sự kiện",
       value: stats.totalEvents,
       icon: Calendar,
-      bgGradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
-      textColor: 'text-blue-600',
-      bgLight: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      iconBg: 'bg-blue-100',
+      bgGradient: "bg-gradient-to-br from-blue-500 to-blue-600",
+      textColor: "text-blue-600",
+      bgLight: "bg-blue-50",
+      borderColor: "border-blue-200",
+      iconBg: "bg-blue-100",
     },
     {
-      title: 'Được duyệt',
+      title: "Được duyệt",
       value: stats.activeEvents,
       icon: CheckCircle,
-      bgGradient: 'bg-gradient-to-br from-green-500 to-green-600',
-      textColor: 'text-green-600',
-      bgLight: 'bg-green-50',
-      borderColor: 'border-green-200',
-      iconBg: 'bg-green-100',
+      bgGradient: "bg-gradient-to-br from-green-500 to-green-600",
+      textColor: "text-green-600",
+      bgLight: "bg-green-50",
+      borderColor: "border-green-200",
+      iconBg: "bg-green-100",
     },
     {
-      title: 'Chờ phê duyệt',
+      title: "Chờ phê duyệt",
       value: stats.pendingEvents,
       icon: Clock,
-      bgGradient: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
-      textColor: 'text-yellow-600',
-      bgLight: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      iconBg: 'bg-yellow-100',
+      bgGradient: "bg-gradient-to-br from-yellow-500 to-yellow-600",
+      textColor: "text-yellow-600",
+      bgLight: "bg-yellow-50",
+      borderColor: "border-yellow-200",
+      iconBg: "bg-yellow-100",
     },
     {
-      title: 'Bị từ chối',
+      title: "Bị từ chối",
       value: stats.rejectedEvents || 0,
       icon: AlertCircle,
-      bgGradient: 'bg-gradient-to-br from-red-500 to-red-600',
-      textColor: 'text-red-600',
-      bgLight: 'bg-red-50',
-      borderColor: 'border-red-200',
-      iconBg: 'bg-red-100',
+      bgGradient: "bg-gradient-to-br from-red-500 to-red-600",
+      textColor: "text-red-600",
+      bgLight: "bg-red-50",
+      borderColor: "border-red-200",
+      iconBg: "bg-red-100",
     },
     {
-      title: 'Đã hoàn thành',
+      title: "Đã hoàn thành",
       value: stats.completedEvents,
       icon: TrendingUp,
-      bgGradient: 'bg-gradient-to-br from-purple-500 to-purple-600',
-      textColor: 'text-purple-600',
-      bgLight: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      iconBg: 'bg-purple-100',
+      bgGradient: "bg-gradient-to-br from-purple-500 to-purple-600",
+      textColor: "text-purple-600",
+      bgLight: "bg-purple-50",
+      borderColor: "border-purple-200",
+      iconBg: "bg-purple-100",
     },
   ];
 
   const getStatusBadge = (status: string) => {
     const statusUpper = status?.toUpperCase();
-    
+
     const statusConfig: Record<string, { label: string; className: string }> = {
-      DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-700' },
-      PENDING: { label: 'Chờ duyệt', className: 'bg-yellow-100 text-yellow-700' },
-      PUBLISHED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700' },
-      APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700' },
-      CANCELED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
-      CANCELLED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
-      REJECTED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
-      REJECT: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
-      DENIED: { label: 'Bị từ chối', className: 'bg-red-100 text-red-700' },
-      COMPLETED: { label: 'Hoàn thành', className: 'bg-blue-100 text-blue-700' },
-      PENDING_DELETE: { label: 'Chờ xóa', className: 'bg-orange-100 text-orange-700' },
+      DRAFT: { label: "Nháp", className: "bg-gray-100 text-gray-700" },
+      PENDING: {
+        label: "Chờ duyệt",
+        className: "bg-yellow-100 text-yellow-700",
+      },
+      PUBLISHED: {
+        label: "Đã duyệt",
+        className: "bg-green-100 text-green-700",
+      },
+      APPROVED: { label: "Đã duyệt", className: "bg-green-100 text-green-700" },
+      CANCELED: { label: "Bị từ chối", className: "bg-red-100 text-red-700" },
+      CANCELLED: { label: "Bị từ chối", className: "bg-red-100 text-red-700" },
+      REJECTED: { label: "Bị từ chối", className: "bg-red-100 text-red-700" },
+      REJECT: { label: "Bị từ chối", className: "bg-red-100 text-red-700" },
+      DENIED: { label: "Bị từ chối", className: "bg-red-100 text-red-700" },
+      COMPLETED: {
+        label: "Hoàn thành",
+        className: "bg-blue-100 text-blue-700",
+      },
+      PENDING_DELETE: {
+        label: "Chờ xóa",
+        className: "bg-orange-100 text-orange-700",
+      },
     };
 
     const config = statusConfig[statusUpper] || {
       label: status,
-      className: 'bg-gray-100 text-gray-700',
+      className: "bg-gray-100 text-gray-700",
     };
-    
+
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.className}`}>
+      <span
+        className={`px-2 py-1 text-xs font-medium rounded-full ${config.className}`}
+      >
         {config.label}
       </span>
     );
@@ -340,9 +373,14 @@ const OrganizerDashboardPage = () => {
         </div>
         <button
           onClick={fetchDashboardData}
-          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-[#F27125] text-white rounded-lg hover:bg-[#d95c0b] shadow-sm hover:shadow-md transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -350,7 +388,7 @@ const OrganizerDashboardPage = () => {
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-          Làm mới
+          <span className="text-sm font-medium text-white">Làm mới</span>
         </button>
       </div>
 
@@ -365,11 +403,17 @@ const OrganizerDashboardPage = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white/90 mb-2">{card.title}</p>
+                  <p className="text-sm font-medium text-white/90 mb-2">
+                    {card.title}
+                  </p>
                   <p className="text-5xl font-bold text-white">{card.value}</p>
                 </div>
                 <div className={`${card.iconBg} p-4 rounded-xl shadow-md`}>
-                  <Icon className={card.textColor} size={32} strokeWidth={2.5} />
+                  <Icon
+                    className={card.textColor}
+                    size={32}
+                    strokeWidth={2.5}
+                  />
                 </div>
               </div>
             </div>
@@ -382,10 +426,12 @@ const OrganizerDashboardPage = () => {
         {/* Registration & Attendance Chart */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Đăng ký & Tham dự theo sự kiện</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Đăng ký & Tham dự theo sự kiện
+            </h2>
             <BarChart3 className="text-gray-400" size={20} />
           </div>
-          
+
           {/* Filter Tháng/Năm */}
           <div className="flex gap-3 mb-6">
             <select
@@ -407,38 +453,40 @@ const OrganizerDashboardPage = () => {
               onChange={(e) => {
                 const value = e.target.value;
                 // Chỉ cho phép nhập số hoặc để trống, cập nhật tempYear (KHÔNG trigger useEffect)
-                if (value === '' || /^\d{0,4}$/.test(value)) {
+                if (value === "" || /^\d{0,4}$/.test(value)) {
                   setTempYear(value);
                 }
               }}
               onKeyDown={(e) => {
                 // Khi ấn Enter, trigger validation và update selectedYear
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   const value = (e.target as HTMLInputElement).value;
-      
-                  if (value === '' || value.length < 4) {
+
+                  if (value === "" || value.length < 4) {
                     // Nếu trống hoặc chưa đủ 4 số, set về năm hiện tại
                     const currentYear = String(new Date().getFullYear());
                     setTempYear(currentYear);
                     setSelectedYear(currentYear); // Trigger useEffect
-                    toast.info('Năm không hợp lệ, đã set về năm hiện tại');
+                    toast.info("Năm không hợp lệ, đã set về năm hiện tại");
                   } else {
                     const year = Number(value);
                     if (year < 1900) {
-                      setTempYear('1900');
-                      setSelectedYear('1900'); // Trigger useEffect
-                      toast.info('Năm tối thiểu là 1900');
+                      setTempYear("1900");
+                      setSelectedYear("1900"); // Trigger useEffect
+                      toast.info("Năm tối thiểu là 1900");
                     } else if (year > 2100) {
-                      setTempYear('2100');
-                      setSelectedYear('2100'); // Trigger useEffect
-                      toast.info('Năm tối đa là 2100');
+                      setTempYear("2100");
+                      setSelectedYear("2100"); // Trigger useEffect
+                      toast.info("Năm tối đa là 2100");
                     } else {
                       setSelectedYear(value); // Trigger useEffect với năm hợp lệ
-                      toast.success(`Đã lọc theo tháng ${selectedMonth}/${value}`);
+                      toast.success(
+                        `Đã lọc theo tháng ${selectedMonth}/${value}`
+                      );
                     }
                   }
-      
+
                   // Blur input sau khi Enter
                   (e.target as HTMLInputElement).blur();
                 }
@@ -446,7 +494,7 @@ const OrganizerDashboardPage = () => {
               onBlur={(e) => {
                 // Nếu blur mà chưa nhập đủ, reset về selectedYear hiện tại
                 const value = e.target.value;
-                if (value === '' || value.length < 4) {
+                if (value === "" || value.length < 4) {
                   setTempYear(selectedYear); // Reset về giá trị đang active
                 }
               }}
@@ -461,7 +509,10 @@ const OrganizerDashboardPage = () => {
               chartData.map((data, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-900 font-medium truncate max-w-[200px]" title={data.eventName}>
+                    <span
+                      className="text-gray-900 font-medium truncate max-w-[200px]"
+                      title={data.eventName}
+                    >
                       {data.eventName}
                     </span>
                     <div className="flex gap-4">
@@ -479,7 +530,12 @@ const OrganizerDashboardPage = () => {
                       style={{
                         width: `${
                           data.registrations > 0
-                            ? (data.registrations / Math.max(...chartData.map((d) => d.registrations), 1)) * 100
+                            ? (data.registrations /
+                                Math.max(
+                                  ...chartData.map((d) => d.registrations),
+                                  1
+                                )) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -489,7 +545,12 @@ const OrganizerDashboardPage = () => {
                       style={{
                         width: `${
                           data.attendance > 0
-                            ? (data.attendance / Math.max(...chartData.map((d) => d.registrations), 1)) * 100
+                            ? (data.attendance /
+                                Math.max(
+                                  ...chartData.map((d) => d.registrations),
+                                  1
+                                )) *
+                              100
                             : 0
                         }%`,
                       }}
@@ -503,7 +564,7 @@ const OrganizerDashboardPage = () => {
               </div>
             )}
           </div>
-          
+
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Tỷ lệ tham dự trung bình</span>
@@ -517,38 +578,56 @@ const OrganizerDashboardPage = () => {
         {/* Event Status Distribution */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Phân bổ trạng thái</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Phân bổ trạng thái
+            </h2>
             <PieChart className="text-gray-400" size={20} />
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Được duyệt</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Được duyệt
+                </span>
               </div>
-              <span className="text-lg font-bold text-green-600">{stats.activeEvents}</span>
+              <span className="text-lg font-bold text-green-600">
+                {stats.activeEvents}
+              </span>
             </div>
             <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Chờ phê duyệt</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Chờ phê duyệt
+                </span>
               </div>
-              <span className="text-lg font-bold text-yellow-600">{stats.pendingEvents}</span>
+              <span className="text-lg font-bold text-yellow-600">
+                {stats.pendingEvents}
+              </span>
             </div>
             <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Đã hoàn thành</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Đã hoàn thành
+                </span>
               </div>
-              <span className="text-lg font-bold text-purple-600">{stats.completedEvents}</span>
+              <span className="text-lg font-bold text-purple-600">
+                {stats.completedEvents}
+              </span>
             </div>
             {/* ✅ Thêm card Bị từ chối */}
             <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Bị từ chối</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Bị từ chối
+                </span>
               </div>
-              <span className="text-lg font-bold text-red-600">{stats.rejectedEvents || 0}</span>
+              <span className="text-lg font-bold text-red-600">
+                {stats.rejectedEvents || 0}
+              </span>
             </div>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-200 space-y-2">
@@ -572,9 +651,11 @@ const OrganizerDashboardPage = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Sự kiện gần đây</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Sự kiện gần đây
+            </h2>
             <button
-              onClick={() => navigate('/organizer/events')}
+              onClick={() => navigate("/organizer/events")}
               className="text-sm text-[#F27125] hover:text-[#d65d1a] font-medium"
             >
               Xem tất cả →
@@ -602,16 +683,16 @@ const OrganizerDashboardPage = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {recentEvents.map((event) => (
-                <tr 
-                  key={event.id} 
+                <tr
+                  key={event.id}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => {
                     if (!event.id) {
-                      console.error('Event ID is missing:', event);
-                      toast.error('Không thể mở chi tiết sự kiện');
+                      console.error("Event ID is missing:", event);
+                      toast.error("Không thể mở chi tiết sự kiện");
                       return;
                     }
-                    console.log('Navigating to event:', event.id);
+                    console.log("Navigating to event:", event.id);
                     navigate(`/organizer/events/${event.id}`);
                   }}
                 >
@@ -621,29 +702,32 @@ const OrganizerDashboardPage = () => {
                       <div className="text-sm font-medium text-gray-900 hover:text-orange-600 transition-colors">
                         {event.title}
                       </div>
-                      <div className="text-sm text-gray-500">{event.category || 'N/A'}</div>
+                      <div className="text-sm text-gray-500">
+                        {event.category || "N/A"}
+                      </div>
                     </div>
                   </td>
-                  
+
                   {/* Cột 2: Trạng thái - Căn giữa, 20% */}
                   <td className="px-6 py-4 text-center w-[20%]">
                     {getStatusBadge(event.status)}
                   </td>
-                  
+
                   {/* Cột 3: Ngày bắt đầu - Căn giữa, 20% */}
                   <td className="px-6 py-4 text-center w-[20%]">
                     <span className="text-sm text-gray-600">
-                      {new Date(event.startTime).toLocaleDateString('vi-VN')}
+                      {new Date(event.startTime).toLocaleDateString("vi-VN")}
                     </span>
                   </td>
-                  
+
                   {/* Cột 4: Đăng ký / Tham dự - Căn giữa, 20% */}
                   <td className="px-6 py-4 w-[20%]">
                     <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-blue-400" />
                         <span className="text-xs text-gray-900">
-                          Đăng ký: {event.registeredCount || 0}/{event.maxCapacity}
+                          Đăng ký: {event.registeredCount || 0}/
+                          {event.maxCapacity}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -671,7 +755,8 @@ const OrganizerDashboardPage = () => {
                 Có {stats.pendingEvents} sự kiện chờ phê duyệt
               </h4>
               <p className="text-sm text-yellow-700 mt-1">
-                Các sự kiện của bạn đang chờ admin phê duyệt. Vui lòng kiểm tra thường xuyên.
+                Các sự kiện của bạn đang chờ admin phê duyệt. Vui lòng kiểm tra
+                thường xuyên.
               </p>
             </div>
           </div>

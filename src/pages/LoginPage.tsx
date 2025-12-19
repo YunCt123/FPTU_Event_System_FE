@@ -5,7 +5,6 @@ import { useState } from "react";
 import authService from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 import { GOOGLE_URL } from "../constants/apiEndPoints";
-import RegisterUserModal from "../components/auth/RegisterUserModal";
 import { Eye, EyeOff } from "lucide-react";
 import {
   requestNotificationPermission,
@@ -18,10 +17,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-
 
   const handleGoogleLogin = () => {
     window.location.href = GOOGLE_URL;
@@ -30,7 +26,6 @@ const LoginPage = () => {
   // Hàm xử lý đăng ký notification sau khi login
   const handleNotificationSubscription = async () => {
     try {
-
       // Kiểm tra xem user đã cho phép notification chưa
       const isEnabled = await isPushNotificationsEnabled();
 
@@ -208,16 +203,6 @@ const LoginPage = () => {
               />
               <span>Đăng nhập với Google</span>
             </button>
-            {/* Footer */}
-            <p className="text-gray-600 text-sm mt-8 text-center">
-              Bạn chưa có tài khoản?{" "}
-              <button
-                onClick={() => setIsRegisterOpen(true)}
-                className="text-[#F27125] font-semibold hover:underline"
-              >
-                Đăng ký
-              </button>
-            </p>
           </div>
         </div>
       </div>
@@ -229,12 +214,6 @@ const LoginPage = () => {
           className="w-full h-full object-cover"
         />
       </div>
-
-      {/* Register Modal */}
-      <RegisterUserModal
-        isOpen={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-      />
     </div>
   );
 };
