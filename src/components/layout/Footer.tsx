@@ -141,19 +141,19 @@ const Footer = () => {
 
         <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-400 text-sm text-center md:text-left">
-            © {new Date().getFullYear()} FPT University. Capstone Project by{" "}
+            © {new Date().getFullYear()} FPT University. Dự án Capstone bởi{" "}
             <span className="text-gray-600 font-medium">FPT University</span>.
           </p>
 
           <div className="flex gap-6 text-sm text-gray-400">
             <a href="#" className="hover:text-gray-600">
-              Privacy Policy
+              Chính sách bảo mật
             </a>
             <a href="#" className="hover:text-gray-600">
-              Terms of Service
+              Điều khoản dịch vụ
             </a>
             <a href="#" className="hover:text-gray-600">
-              Cookies Settings
+              Cài đặt Cookie
             </a>
           </div>
         </div>

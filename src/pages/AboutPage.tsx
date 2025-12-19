@@ -6,16 +6,16 @@ const AboutPage: React.FC = () => {
       {/* Hero Section */}
       <div className="bg-linear-to-r from-gray-700 to-gray-900 text-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-sm tracking-widest mb-2">ALL YOU NEED TO KNOW</p>
+          <p className="text-sm tracking-widest mb-2">TẤT CẢ NHỮNG GÌ BẠN CẦN BIẾT</p>
           <h1 className="text-5xl font-bold mb-4">
-            ABOUT <span className="text-orange-500">FPT EVENT</span>
+            VỀ <span className="text-orange-500">FPT EVENT</span>
           </h1>
           <div className="flex justify-center items-center gap-4 text-sm mt-8">
             <a href="/" className="hover:text-orange-500 transition">
-              Home
+              Trang chủ
             </a>
             <span>|</span>
-            <span className="text-gray-300">About Us</span>
+            <span className="text-gray-300">Về chúng tôi</span>
           </div>
         </div>
       </div>
@@ -26,13 +26,13 @@ const AboutPage: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-12 mb-20">
           <div className="flex flex-col justify-center">
             <p className="text-gray-500 text-sm tracking-wider mb-2">
-              WE ARE HARMONI
+              CHÚNG TÔI LÀ HARMONI
             </p>
             <h2 className="text-4xl font-bold mb-6">
-              <span className="text-5xl">No.1</span> Events Management
+              <span className="text-5xl">Số 1</span> Quản Lý Sự Kiện
             </h2>
             <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full w-fit transition">
-              GET STARTED
+              BẮT ĐẦU NGAY
             </button>
           </div>
 
@@ -40,27 +40,27 @@ const AboutPage: React.FC = () => {
           <div className="grid sm:grid-cols-2 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                Our Mission
+                Sứ Mệnh Của Chúng Tôi
                 <span className="h-1 w-8 bg-orange-500 rounded"></span>
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                Lorem ipsum dolor site amet the best consectetur adipiscing sites sed diam nonummy nibh euismod tincidunt ut dolore magna aliqum erat volutpat magna.
+                Cung cấp nền tảng quản lý sự kiện toàn diện và hiện đại nhất cho cộng đồng sinh viên và giảng viên, giúp mỗi sự kiện trở nên ý nghĩa và đáng nhớ hơn.
               </p>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Lorem ipsum dolor site amet the best consectetur adipiscing sites sed diam nonummy nibh euismod.
+                Chúng tôi cam kết mang đến trải nghiệm tốt nhất với công nghệ tiên tiến và dịch vụ chuyên nghiệp.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                Our Vission
+                Tầm Nhìn Của Chúng Tôi
                 <span className="h-1 w-8 bg-orange-500 rounded"></span>
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                Lorem ipsum dolor site amet the best consectetur adipiscing sites sed diam nonummy nibh euismod tincidunt ut dolore magna aliqum erat volutpat magna.
+                Trở thành nền tảng quản lý sự kiện hàng đầu tại Việt Nam, kết nối và phát triển cộng đồng sinh viên thông qua những trải nghiệm sự kiện chất lượng cao.
               </p>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Lorem ipsum dolor site amet the best consectetur adipiscing sites sed diam nonummy nibh euismod.
+                Xây dựng một hệ sinh thái sự kiện toàn diện, nơi mọi người có thể dễ dàng tổ chức và tham gia.
               </p>
             </div>
           </div>
@@ -96,7 +96,7 @@ const AboutPage: React.FC = () => {
                     HARMONI
                   </h3>
                   <div className="border-t border-gray-300 pt-4 mb-4"></div>
-                  <p className="text-gray-600 text-sm mb-2">Working Since</p>
+                  <p className="text-gray-600 text-sm mb-2">Hoạt Động Từ</p>
                   <p className="text-6xl font-bold text-gray-800">1980</p>
                 </div>
               </div>
@@ -106,10 +106,10 @@ const AboutPage: React.FC = () => {
           {/* Awards List */}
           <div>
             <p className="text-gray-500 text-sm tracking-wider mb-2">
-              FPT AWARD
+              GIẢI THƯỞNG FPT
             </p>
             <h2 className="text-4xl font-bold mb-8">
-              Our Winning <span className="font-bold">Awards</span>
+              Các Giải Thưởng <span className="font-bold">Đạt Được</span>
             </h2>
 
             <div className="space-y-8">
@@ -117,14 +117,13 @@ const AboutPage: React.FC = () => {
               <div className="relative pl-12 border-l-2 border-gray-300">
                 <div className="absolute -left-2.5 top-0 w-5 h-5 bg-gray-300 rounded-full"></div>
                 <span className="text-orange-500 text-sm font-semibold">
-                  AUG 2015
+                  THÁNG 8, 2015
                 </span>
                 <h4 className="text-xl font-bold mt-1 mb-2">
-                  1st Place For Unique Events 2018
+                  Giải Nhất Sự Kiện Độc Đáo 2018
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit diam
-                  sed diam irummy nibh euismod tincidunt.
+                  Giải thưởng danh giá dành cho đơn vị tổ chức sự kiện xuất sắc nhất với những ý tưởng sáng tạo và độc đáo.
                 </p>
               </div>
 
@@ -132,14 +131,13 @@ const AboutPage: React.FC = () => {
               <div className="relative pl-12 border-l-2 border-gray-300">
                 <div className="absolute -left-2.5 top-0 w-5 h-5 bg-gray-300 rounded-full"></div>
                 <span className="text-orange-500 text-sm font-semibold">
-                  MAY 2016
+                  THÁNG 5, 2016
                 </span>
                 <h4 className="text-xl font-bold mt-1 mb-2">
-                  1st Winner Best New Years Events
+                  Giải Nhất Sự Kiện Năm Mới Xuất Sắc
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit diam
-                  sed diam irummy nibh euismod tincidunt.
+                  Vinh danh cho sự kiện chào đón năm mới ấn tượng và thu hút sự tham gia đông đảo nhất.
                 </p>
               </div>
 
@@ -147,14 +145,13 @@ const AboutPage: React.FC = () => {
               <div className="relative pl-12">
                 <div className="absolute -left-2.5 top-0 w-5 h-5 bg-gray-300 rounded-full"></div>
                 <span className="text-orange-500 text-sm font-semibold">
-                  DEC 2017
+                  THÁNG 12, 2017
                 </span>
                 <h4 className="text-xl font-bold mt-1 mb-2">
-                  1st Place International Events Awards
+                  Giải Nhất Sự Kiện Quốc Tế
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit diam
-                  sed diam irummy nibh euismod tincidunt.
+                  Giải thưởng quốc tế dành cho đơn vị tổ chức sự kiện có tầm ảnh hưởng và quy mô lớn nhất.
                 </p>
               </div>
             </div>

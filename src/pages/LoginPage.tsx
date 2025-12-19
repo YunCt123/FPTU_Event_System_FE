@@ -90,7 +90,7 @@ const LoginPage = () => {
         localStorage.setItem("token", accessToken);
         localStorage.setItem("user", JSON.stringify(decodedToken));
 
-        toast.success("Login successfully!");
+        toast.success("Đăng nhập thành công!");
 
         // Đăng ký nhận thông báo OneSignal sau khi login thành công
         handleNotificationSubscription();
@@ -117,13 +117,13 @@ const LoginPage = () => {
             break;
         }
       } else {
-        toast.error("Email or password is incorrect!");
+        toast.error("Email hoặc mật khẩu không đúng!");
       }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.data?.message ||
-        "Email or password is incorrect!";
+        "Email hoặc mật khẩu không đúng!";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -155,7 +155,7 @@ const LoginPage = () => {
             {/* password */}
             <div className="mb-10 ">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-medium">Password</label>
+                <label className="text-sm font-medium">Mật khẩu</label>
               </div>
               <div className="relative">
                 <input
