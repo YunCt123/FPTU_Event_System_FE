@@ -25,7 +25,7 @@ const AttendeesManagementPage = () => {
   const [pagination, setPagination] = useState<meta>();
   const [filteredAttendees, setFilteredAttendees] = useState<Data[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | CheckInStatus>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | CheckInStatus | 'VALID' | 'USED' | 'EXPIRED'>('ALL');
   const [selectedAttendees, setSelectedAttendees] = useState<Set<string>>(new Set());
   const [attendee, setAttendee] = useState<AttendanceReponse>();
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,12 +35,9 @@ const AttendeesManagementPage = () => {
 
   const fetchEvent = async () => {
     try {
-      const response = await organizerService.getOrganizerEvents();
-      if (response.status === 200 && response.data.data) {
-        setEvents(response.data.data);
-      } else {
-        console.log("No event Data or Api");
-      }
+      const response: any = await organizerService.getOrganizerEvents();
+      const eventData = response?.data?.data ?? response?.data ?? response;
+      setEvents(Array.isArray(eventData) ? eventData : []);
     } catch (error) {
       console.log("Error fetching event data:", error);
     }

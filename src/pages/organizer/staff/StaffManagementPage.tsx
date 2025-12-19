@@ -82,7 +82,7 @@ const fetchEvent = async () => {
       const response = await eventService.getEventById(eventId);
       if (response) {
         console.log("response2", response);
-        setStaffList(response.data.eventStaffs);
+        setStaffList(response.data.eventStaffs || []);
         setSelectedEvent(response.data);
       }
     } catch (error) {

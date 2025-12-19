@@ -378,7 +378,7 @@ const EventFormModalOnline: React.FC<Props> = ({
   };
   const updateSpeaker = (
     idx: number,
-    key: keyof eventSpeaker | "topic",
+    key: "speakerId" | "topic",
     value: any
   ) => {
     setForm((p) => {

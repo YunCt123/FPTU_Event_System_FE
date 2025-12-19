@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import type { eventStaff, User } from "../../../types/Event";
+import type { eventStaff } from "../../../types/Event";
+import type { User } from "../../../types/User";
 import { organizerService, userService } from "../../../services";
 import { toast } from "react-toastify";
 import { X, Search, UserPlus, Users } from "lucide-react";

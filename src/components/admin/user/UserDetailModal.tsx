@@ -261,7 +261,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       </label>
                       <p
                         className="text-gray-900 font-medium line-clamp-2 text-xs"
-                        title={userDetail.address}
+                        title={userDetail?.address || ""}
                       >
                         {userDetail.address}
                       </p>
@@ -293,7 +293,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({
                       Vai trò
                     </label>
                     <p className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-linear-to-r from-purple-600 to-pink-600 text-white">
-                      {getRoleLabel(userDetail?.roleName)}
+                      {getRoleLabel(userDetail?.roleName || "")}
                     </p>
                   </div>
                 </div>

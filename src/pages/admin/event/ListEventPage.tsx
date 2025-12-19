@@ -508,7 +508,7 @@ if (statusFilter !== "all") {
                     <p className="text-sm font-semibold text-cyan-700">Mở đăng ký</p>
                   </div>
                   <p className="text-base font-bold text-cyan-900">
-                    {new Date(selectedEvent.startTimeRegister).toLocaleString('vi-VN', {
+                    {new Date(selectedEvent.startTimeRegister || (selectedEvent as any).startTimeRegistration || "").toLocaleString('vi-VN', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
@@ -527,7 +527,7 @@ if (statusFilter !== "all") {
                     <p className="text-sm font-semibold text-pink-700">Đóng đăng ký</p>
                   </div>
                   <p className="text-base font-bold text-pink-900">
-                    {new Date(selectedEvent.endTimeRegister).toLocaleString('vi-VN', {
+                    {new Date(selectedEvent.endTimeRegister || (selectedEvent as any).endTimeRegistration || "").toLocaleString('vi-VN', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',

@@ -75,7 +75,7 @@ const AccountPage = () => {
           firstName: res.data.firstName,
           lastName: res.data.lastName,
           phoneNumber: res.data.phoneNumber || "",
-          gender: res.data.gender,
+          gender: res.data.gender ?? true,
           address: res.data.address || "",
           avatar: res.data.avatar || "",
         });
@@ -124,7 +124,7 @@ const AccountPage = () => {
         firstName: user.firstName,
         lastName: user.lastName,
         phoneNumber: user.phoneNumber || "",
-        gender: user.gender,
+        gender: user.gender ?? true,
         address: user.address || "",
         avatar: user.avatar || "",
       });

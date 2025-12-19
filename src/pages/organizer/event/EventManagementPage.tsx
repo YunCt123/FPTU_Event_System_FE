@@ -8,49 +8,55 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
-} from 'lucide-react';
-import type { Event, EventStatus } from '../../../types/Event';
-import EventFormModal from '../../../components/organizer/event/EventFormModal';
-import EventFormModalOnline from '../../../components/organizer/event/EventFormModalOnline'; // ✅ IMPORT MODAL ONLINE
-import DeleteRequestModal from '../../../components/organizer/event/DeleteRequestModal';
-import { organizerService, eventService } from '../../../services'; // ✅ THÊM eventService
-import { toast } from 'react-toastify';
-import ActionDropdown from '../../../components/ActionDropdown';
-import { Edit, Trash2, Eye } from 'lucide-react'; // ✅ Thêm Eye icon
+} from "lucide-react";
+import type { Event, EventStatus } from "../../../types/Event";
+import EventFormModal from "../../../components/organizer/event/EventFormModal";
+import EventFormModalOnline from "../../../components/organizer/event/EventFormModalOnline"; // ✅ IMPORT MODAL ONLINE
+import DeleteRequestModal from "../../../components/organizer/event/DeleteRequestModal";
+import { organizerService, eventService } from "../../../services"; // ✅ THÊM eventService
+import { toast } from "react-toastify";
+import ActionDropdown from "../../../components/ActionDropdown";
+import { Edit, Trash2, Eye } from "lucide-react"; // ✅ Thêm Eye icon
 
 const EventManagementPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<EventStatus | 'ALL'>('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<EventStatus | "ALL">("ALL");
 
   // modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [eventTypeToCreate, setEventTypeToCreate] = useState<"offline" | "online" | "weekly" | null>(null);
+  const [eventTypeToCreate, setEventTypeToCreate] = useState<
+    "offline" | "online" | "weekly" | null
+  >(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   // loading state for fetching events
   const [isLoading, setIsLoading] = useState(false);
 
   // open modal (normal)
-  const openModal = (type: "offline" | "online" | "weekly", ev?: Event | null) => {
+  const openModal = (
+    type: "offline" | "online" | "weekly",
+    ev?: Event | null
+  ) => {
     setSelectedEvent(ev ?? null);
     setEventTypeToCreate(type);
     setIsModalOpen(true);
   };
 
-
   // ✅ THÊM STATE PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Số item mỗi trang
-  
+
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
     eventId: string | null;
     eventTitle: string;
+    isPending?: boolean;
   }>({
     isOpen: false,
     eventId: null,
-    eventTitle: '',
+    eventTitle: "",
+    isPending: false,
   });
 
   // ✅ THÊM STATE CHO MODAL LOẠI SỰ KIỆN
@@ -62,30 +68,74 @@ const EventManagementPage = () => {
 
   const normalizeStatus = (status: string): EventStatus => {
     const normalizedStatus = status?.toUpperCase().trim();
-    
+
     const statusMap: Record<string, EventStatus> = {
-      'PENDING': 'PENDING',
-      'APPROVED': 'APPROVED',
-      'PUBLISHED': 'APPROVED', 
-      'CANCELED': 'CANCELED',
-      'CANCELLED': 'CANCELED',
-      'REJECTED': 'CANCELED',
-      'COMPLETED': 'COMPLETED',
-      'FINISHED': 'COMPLETED',
-      'DONE': 'COMPLETED',
+      PENDING: "PENDING",
+      APPROVED: "APPROVED",
+      PUBLISHED: "APPROVED",
+      CANCELED: "CANCELED",
+      CANCELLED: "CANCELED",
+      REJECTED: "CANCELED",
+      COMPLETED: "COMPLETED",
+      FINISHED: "COMPLETED",
+      DONE: "COMPLETED",
     };
-    
+
     const mappedStatus = statusMap[normalizedStatus];
-    
-    console.log(`Mapping status: "${status}" -> "${normalizedStatus}" -> "${mappedStatus}"`);
-    
-    return mappedStatus || 'PENDING';
+
+    console.log(
+      `Mapping status: "${status}" -> "${normalizedStatus}" -> "${mappedStatus}"`
+    );
+
+    return mappedStatus || "PENDING";
+  };
+
+  const mapApiEventToEvent = (apiEvent: any): Event | null => {
+    const source = apiEvent?.event || apiEvent;
+    if (source === null || source === undefined) {
+      return null;
+    }
+
+    const rawId = source.id ?? source.eventId;
+    const eventId =
+      rawId !== null && rawId !== undefined ? String(rawId).trim() : "";
+    if (!eventId) {
+      return null;
+    }
+
+    const mappedStatus = normalizeStatus(source.status || "PENDING");
+
+    return {
+      id: eventId,
+      title: source.title || "",
+      description: source.description || "",
+      eventType: source.category || source.eventType || "OTHER",
+      status: mappedStatus,
+      startDate: source.startTime || source.startDate || "",
+      endDate: source.endTime || source.endDate || "",
+      registrationDeadline:
+        source.startTimeRegister ||
+        source.startTimeRegistration ||
+        source.registrationDeadline ||
+        "",
+      maxParticipants: source.maxCapacity || source.maxParticipants || 0,
+      currentParticipants:
+        source.registeredCount || source.currentParticipants || 0,
+      venueId: source.venueId || source.venue?.id || 0,
+      venueName: source.venue?.name || source.venueName || "Chua x c d?nh",
+      campusId: source.venue?.campusId || source.campusId || 0,
+      campusName: source.venue?.campus?.name || source.campusName || "",
+      organizerId: source.organizerId || source.organizer?.id || 0,
+      organizerName: source.organizer?.name || source.organizerName || "",
+      requiresApproval: source.requiresApproval ?? true,
+      isPublished: source.isPublished ?? source.status === "PUBLISHED",
+    };
   };
 
   const fetchEventsByOrganizer = async () => {
     setIsLoading(true);
     try {
-      console.log('Fetching all organizer events with pagination...');
+      console.log("Fetching all organizer events with pagination...");
 
       let allEvents: any[] = [];
       let currentPage = 1;
@@ -95,27 +145,33 @@ const EventManagementPage = () => {
       // FETCH TẤT CẢ PAGES
       do {
         console.log(`\n Fetching page ${currentPage}/${totalPages}...`);
-        
+
         const response: any = await organizerService.getOrganizerEvents({
           page: currentPage,
           limit: 10,
         });
 
         console.log(`Page ${currentPage} response:`, response.data);
-        
+
         // ✅ THÊM LOG ĐỂ DEBUG
-        console.log('Full response object:', response);
-        console.log('response.data type:', typeof response.data);
-        console.log('response.data keys:', Object.keys(response.data || {}));
-        
+        console.log("Full response object:", response);
+        console.log("response.data type:", typeof response.data);
+        console.log("response.data keys:", Object.keys(response.data || {}));
+
         if (response.data?.data) {
-          console.log('response.data.data type:', typeof response.data.data);
-          console.log('response.data.data is array:', Array.isArray(response.data.data));
-          
+          console.log("response.data.data type:", typeof response.data.data);
+          console.log(
+            "response.data.data is array:",
+            Array.isArray(response.data.data)
+          );
+
           if (Array.isArray(response.data.data) && response.data.data[0]) {
-            console.log('First event sample:', response.data.data[0]);
-            console.log('First event ID:', response.data.data[0].id);
-            console.log('First event ID type:', typeof response.data.data[0].id);
+            console.log("First event sample:", response.data.data[0]);
+            console.log("First event ID:", response.data.data[0].id);
+            console.log(
+              "First event ID type:",
+              typeof response.data.data[0].id
+            );
           }
         }
 
@@ -123,107 +179,125 @@ const EventManagementPage = () => {
         if (response.data?.meta) {
           totalPages = response.data.meta.totalPages || 1;
           totalItems = response.data.meta.total || 0;
-          console.log(`Meta: page ${currentPage}/${totalPages}, total: ${totalItems}`);
+          console.log(
+            `Meta: page ${currentPage}/${totalPages}, total: ${totalItems}`
+          );
         }
 
         // EXTRACT EVENTS
         let pageEvents: any[] = [];
-        
-        if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
+
+        if (
+          response.data?.data?.data &&
+          Array.isArray(response.data.data.data)
+        ) {
           pageEvents = response.data.data.data;
-          console.log('Found events in response.data.data.data');
+          console.log("Found events in response.data.data.data");
         } else if (response.data?.data && Array.isArray(response.data.data)) {
           pageEvents = response.data.data;
-          console.log('Found events in response.data.data');
+          console.log("Found events in response.data.data");
         } else if (Array.isArray(response.data)) {
           pageEvents = response.data;
-          console.log('Found events in response.data');
+          console.log("Found events in response.data");
         }
 
         console.log(`Page ${currentPage}: Found ${pageEvents.length} events`);
         allEvents = [...allEvents, ...pageEvents];
-        
+
         currentPage++;
-        
       } while (currentPage <= totalPages);
 
-      console.log('\n TOTAL EVENTS FETCHED:', allEvents.length);
-      console.log('EXPECTED TOTAL:', totalItems);
+      console.log("\n TOTAL EVENTS FETCHED:", allEvents.length);
+      console.log("EXPECTED TOTAL:", totalItems);
 
       if (allEvents.length === 0) {
-        console.warn('No events found');
+        console.warn("No events found");
         setEvents([]);
         setFilteredEvents([]);
         return;
       }
 
       // MAP DỮ LIỆU
-      const mappedEvents: Event[] = allEvents.map((apiEvent: any, index: number) => {
-        console.log(`\n=== Mapping event ${index + 1} ===`);
-        console.log('Raw apiEvent:', apiEvent);
-        console.log('apiEvent.id:', apiEvent.id, 'type:', typeof apiEvent.id);
-        
-        // ✅ QUAN TRỌNG: CONVERT ID SANG STRING
-        let eventId: string = '';
-        
-        if (apiEvent.id !== null && apiEvent.id !== undefined) {
-          eventId = String(apiEvent.id).trim();
-          console.log('✅ Converted Event ID:', eventId);
-        }
-        
-        if (!eventId || eventId === 'undefined' || eventId === 'null') {
-          console.error('Invalid event ID after conversion:', {
-            rawId: apiEvent.id,
-            convertedId: eventId,
-            title: apiEvent.title,
-          });
-          return null;
-        }
-        
-        const mappedStatus = normalizeStatus(apiEvent.status || 'PENDING');
-        
-        return {
-          id: eventId,
-          title: apiEvent.title || '',
-          description: apiEvent.description || '',
-          eventType: apiEvent.category || apiEvent.eventType || 'OTHER',
-          status: mappedStatus,
-          startDate: apiEvent.startTime || apiEvent.startDate || '',
-          endDate: apiEvent.endTime || apiEvent.endDate || '',
-          registrationDeadline: apiEvent.startTimeRegister || apiEvent.startTimeRegistration || apiEvent.registrationDeadline || '',
-          maxParticipants: apiEvent.maxCapacity || apiEvent.maxParticipants || 0,
-          currentParticipants: apiEvent.registeredCount || apiEvent.currentParticipants || 0,
-          venueId: apiEvent.venueId || apiEvent.venue?.id || 0,
-          venueName: apiEvent.venue?.name || apiEvent.venueName || 'Chưa xác định',
-          campusId: apiEvent.venue?.campusId || apiEvent.campusId || 0,
-          campusName: apiEvent.venue?.campus?.name || apiEvent.campusName || '',
-          organizerId: apiEvent.organizerId || apiEvent.organizer?.id || 0,
-          organizerName: apiEvent.organizer?.name || apiEvent.organizerName || '',
-          requiresApproval: apiEvent.requiresApproval ?? true,
-          isPublished: apiEvent.isPublished ?? (apiEvent.status === 'PUBLISHED'),
-        };
-      }).filter((event): event is Event => event !== null);
+      const mappedEvents = allEvents
+        .map<Event | null>((apiEvent: any, index: number) => {
+          console.log(`\n=== Mapping event ${index + 1} ===`);
+          console.log("Raw apiEvent:", apiEvent);
+          console.log("apiEvent.id:", apiEvent.id, "type:", typeof apiEvent.id);
 
-      console.log('\n✅ All mapped event IDs:', mappedEvents.map(e => `${e.id} (${e.title})`));
-      
+          // ✅ QUAN TRỌNG: CONVERT ID SANG STRING
+          let eventId: string = "";
+
+          if (apiEvent.id !== null && apiEvent.id !== undefined) {
+            eventId = String(apiEvent.id).trim();
+            console.log("✅ Converted Event ID:", eventId);
+          }
+
+          if (!eventId || eventId === "undefined" || eventId === "null") {
+            console.error("Invalid event ID after conversion:", {
+              rawId: apiEvent.id,
+              convertedId: eventId,
+              title: apiEvent.title,
+            });
+            return null;
+          }
+
+          const mappedStatus = normalizeStatus(apiEvent.status || "PENDING");
+
+          return {
+            id: eventId,
+            title: apiEvent.title || "",
+            description: apiEvent.description || "",
+            eventType: apiEvent.category || apiEvent.eventType || "OTHER",
+            status: mappedStatus,
+            startDate: apiEvent.startTime || apiEvent.startDate || "",
+            endDate: apiEvent.endTime || apiEvent.endDate || "",
+            registrationDeadline:
+              apiEvent.startTimeRegister ||
+              apiEvent.startTimeRegistration ||
+              apiEvent.registrationDeadline ||
+              "",
+            maxParticipants:
+              apiEvent.maxCapacity || apiEvent.maxParticipants || 0,
+            currentParticipants:
+              apiEvent.registeredCount || apiEvent.currentParticipants || 0,
+            venueId: apiEvent.venueId || apiEvent.venue?.id || 0,
+            venueName:
+              apiEvent.venue?.name || apiEvent.venueName || "Chưa xác định",
+            campusId: apiEvent.venue?.campusId || apiEvent.campusId || 0,
+            campusName:
+              apiEvent.venue?.campus?.name || apiEvent.campusName || "",
+            organizerId: apiEvent.organizerId || apiEvent.organizer?.id || 0,
+            organizerName:
+              apiEvent.organizer?.name || apiEvent.organizerName || "",
+            requiresApproval: apiEvent.requiresApproval ?? true,
+            isPublished:
+              apiEvent.isPublished ?? apiEvent.status === "PUBLISHED",
+          };
+        })
+        .filter((event): event is Event => event !== null);
+
+      console.log(
+        "\n✅ All mapped event IDs:",
+        mappedEvents.map((e) => `${e.id} (${e.title})`)
+      );
+
       setEvents(mappedEvents);
       setFilteredEvents(mappedEvents);
-      
     } catch (error: any) {
-      console.error('Error fetching events:', error);
-      
-      let errorMessage = 'Không thể tải danh sách sự kiện';
-      
+      console.error("Error fetching events:", error);
+
+      let errorMessage = "Không thể tải danh sách sự kiện";
+
       if (error.response?.status === 404) {
-        errorMessage = 'API endpoint không tồn tại. Vui lòng liên hệ admin.';
+        errorMessage = "API endpoint không tồn tại. Vui lòng liên hệ admin.";
       } else if (error.response?.status === 401) {
-        errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+        errorMessage = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
       } else if (error.response?.status === 403) {
-        errorMessage = 'Bạn không có quyền truy cập. Vui lòng kiểm tra role.';
+        errorMessage = "Bạn không có quyền truy cập. Vui lòng kiểm tra role.";
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      
+
       toast.error(errorMessage);
       setEvents([]);
       setFilteredEvents([]);
@@ -233,29 +307,30 @@ const EventManagementPage = () => {
   };
 
   useEffect(() => {
-    console.log('Filtering events...');
-    console.log('Search query:', searchQuery);
-    console.log('Status filter:', statusFilter);
-    console.log('Total events:', events.length);
+    console.log("Filtering events...");
+    console.log("Search query:", searchQuery);
+    console.log("Status filter:", statusFilter);
+    console.log("Total events:", events.length);
 
     let filtered = events;
 
     if (searchQuery.trim()) {
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (event) =>
+          event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          event.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      console.log('After search filter:', filtered.length);
+      console.log("After search filter:", filtered.length);
     }
 
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(event => event.status === statusFilter);
-      console.log('After status filter:', filtered.length);
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter((event) => event.status === statusFilter);
+      console.log("After status filter:", filtered.length);
     }
 
-    console.log('Final filtered events:', filtered.length);
+    console.log("Final filtered events:", filtered.length);
     setFilteredEvents(filtered);
-    
+
     // ✅ RESET VỀ TRANG 1 KHI FILTER THAY ĐỔI
     setCurrentPage(1);
   }, [searchQuery, statusFilter, events]);
@@ -269,20 +344,20 @@ const EventManagementPage = () => {
   // ✅ HÀM XỬ LÝ PAGINATION
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -299,21 +374,21 @@ const EventManagementPage = () => {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         pages.push(currentPage - 1);
         pages.push(currentPage);
         pages.push(currentPage + 1);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
@@ -323,16 +398,35 @@ const EventManagementPage = () => {
 
   const getStatusBadge = (status: EventStatus) => {
     const statusConfig = {
-      PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Đang xử lý' },
-      APPROVED: { bg: 'bg-green-100', text: 'text-green-800', label: 'Đã duyệt' },
-      CANCELED: { bg: 'bg-red-100', text: 'text-red-800', label: 'Bị từ chối' },
-      COMPLETED: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Hoàn thành' },
+      PENDING: {
+        bg: "bg-yellow-100",
+        text: "text-yellow-800",
+        label: "Đang xử lý",
+      },
+      APPROVED: {
+        bg: "bg-green-100",
+        text: "text-green-800",
+        label: "Đã duyệt",
+      },
+      CANCELED: { bg: "bg-red-100", text: "text-red-800", label: "Bị từ chối" },
+      PENDING_DELETE: {
+        bg: "bg-amber-100",
+        text: "text-amber-800",
+        label: "Chờ xóa",
+      },
+      COMPLETED: {
+        bg: "bg-blue-100",
+        text: "text-blue-800",
+        label: "Hoàn thành",
+      },
     };
 
     const config = statusConfig[status] || statusConfig.PENDING;
-    
+
     return (
-      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${config.bg} ${config.text}`}>
+      <span
+        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${config.bg} ${config.text}`}
+      >
         {config.label}
       </span>
     );
@@ -349,36 +443,44 @@ const EventManagementPage = () => {
   };
 
   const handleEditEvent = async (event: Event) => {
-    console.log('📝 Editing event:', event);
-    console.log('Event ID:', event.id);
-    console.log('Event ID type:', typeof event.id);
-    
+    console.log("📝 Editing event:", event);
+    console.log("Event ID:", event.id);
+    console.log("Event ID type:", typeof event.id);
+
     // ✅ VALIDATE STRING ID
-    if (!event || !event.id || typeof event.id !== 'string' || event.id.trim() === '') {
-      console.error('Invalid event object or missing ID');
-      toast.error('Không thể chỉnh sửa sự kiện. Dữ liệu không hợp lệ.');
+    if (
+      !event ||
+      !event.id ||
+      typeof event.id !== "string" ||
+      event.id.trim() === ""
+    ) {
+      console.error("Invalid event object or missing ID");
+      toast.error("Không thể chỉnh sửa sự kiện. Dữ liệu không hợp lệ.");
       return;
     }
-    
-    console.log('✅ Event validation passed');
-    
+
+    console.log("✅ Event validation passed");
+
     try {
       // Fetch event details để xác định loại event (online hay offline)
       const response = await eventService.getEventById(event.id);
       const fullEvent = response.data?.data || response.data;
-      
-      console.log('Full event details for edit:', fullEvent);
-      
+
+      console.log("Full event details for edit:", fullEvent);
+
       // Xác định loại event: online nếu có onlineMeetingUrl hoặc isOnline = true
-      const isOnlineEvent = fullEvent?.isOnline === true || 
-                           fullEvent?.onlineMeetingUrl || 
-                           (fullEvent?.venueId === null || fullEvent?.venueId === undefined || fullEvent?.venueId === 0);
-      
+      const isOnlineEvent =
+        fullEvent?.isOnline === true ||
+        fullEvent?.onlineMeetingUrl ||
+        fullEvent?.venueId === null ||
+        fullEvent?.venueId === undefined ||
+        fullEvent?.venueId === 0;
+
       setSelectedEvent(event);
       setEventTypeToCreate(isOnlineEvent ? "online" : "offline");
       setIsModalOpen(true);
     } catch (error: any) {
-      console.error('Error fetching event details:', error);
+      console.error("Error fetching event details:", error);
       // Fallback: dựa vào venueId để xác định
       const isOnlineEvent = !event.venueId || event.venueId === 0;
       setSelectedEvent(event);
@@ -388,11 +490,11 @@ const EventManagementPage = () => {
   };
 
   const handleDeleteEvent = (event: Event) => {
-    console.log('Requesting delete for event:', event);
+    console.log("Requesting delete for event:", event);
 
-    if (!event || !event.id || typeof event.id !== 'string') {
-      console.error('Invalid event ID');
-      toast.error('Không thể gửi yêu cầu xóa. Dữ liệu không hợp lệ.');
+    if (!event || !event.id || typeof event.id !== "string") {
+      console.error("Invalid event ID");
+      toast.error("Không thể gửi yêu cầu xóa. Dữ liệu không hợp lệ.");
       return;
     }
 
@@ -401,7 +503,7 @@ const EventManagementPage = () => {
 
     setDeleteModalState({
       isOpen: true,
-      eventId: event.id, 
+      eventId: event.id,
       eventTitle: event.title,
       isPending: isPending,
     });
@@ -457,12 +559,12 @@ const EventManagementPage = () => {
 
   const handleSubmitDeleteRequest = async (reason: string) => {
     if (!deleteModalState.eventId) {
-      toast.error('Không tìm thấy ID sự kiện');
+      toast.error("Không tìm thấy ID sự kiện");
       return;
     }
 
     try {
-      console.log('📤 Submitting cancel request:', {
+      console.log("📤 Submitting cancel request:", {
         eventId: deleteModalState.eventId,
         reason,
       });
@@ -472,14 +574,17 @@ const EventManagementPage = () => {
         eventId: deleteModalState.eventId,
         data: {
           reason: reason.trim(),
+        },
+      });
+
+      console.log("✅ Cancel request created:", response.data);
+
+      toast.success(
+        "Đã gửi yêu cầu hủy sự kiện. Vui lòng chờ Admin phê duyệt.",
+        {
+          autoClose: 5000,
         }
-      });
-
-      console.log('✅ Cancel request created:', response.data);
-
-      toast.success('Đã gửi yêu cầu hủy sự kiện. Vui lòng chờ Admin phê duyệt.', {
-        autoClose: 5000,
-      });
+      );
 
       // ❌ KHÔNG CẬP NHẬT STATUS VỀ PENDING NỮA
       // setEvents((prev) =>
@@ -494,33 +599,35 @@ const EventManagementPage = () => {
       setDeleteModalState({
         isOpen: false,
         eventId: null,
-        eventTitle: '',
+        eventTitle: "",
       });
 
       // Refresh lại danh sách (status vẫn giữ nguyên)
       await fetchEventsByOrganizer();
-      
     } catch (error: any) {
-      console.error('❌ Error submitting cancel request:', error);
-      console.error('Error response:', error.response);
-      
-      let errorMessage = 'Không thể gửi yêu cầu hủy sự kiện';
-      
+      console.error("❌ Error submitting cancel request:", error);
+      console.error("Error response:", error.response);
+
+      let errorMessage = "Không thể gửi yêu cầu hủy sự kiện";
+
       if (error.response?.status === 400) {
         const messages = error.response.data?.message;
         if (Array.isArray(messages)) {
-          errorMessage = messages.join(', ');
+          errorMessage = messages.join(", ");
         } else {
-          errorMessage = messages || 'Yêu cầu không hợp lệ (sự kiện đã bị hủy/hoàn thành, hoặc đang có yêu cầu chờ duyệt)';
+          errorMessage =
+            messages ||
+            "Yêu cầu không hợp lệ (sự kiện đã bị hủy/hoàn thành, hoặc đang có yêu cầu chờ duyệt)";
         }
       } else if (error.response?.status === 403) {
-        errorMessage = 'Bạn không có quyền hủy sự kiện này. Chỉ organizer owner mới có thể yêu cầu hủy.';
+        errorMessage =
+          "Bạn không có quyền hủy sự kiện này. Chỉ organizer owner mới có thể yêu cầu hủy.";
       } else if (error.response?.status === 404) {
-        errorMessage = 'Không tìm thấy sự kiện';
+        errorMessage = "Không tìm thấy sự kiện";
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      
+
       toast.error(errorMessage, {
         autoClose: 5000,
       });
@@ -528,11 +635,27 @@ const EventManagementPage = () => {
   };
 
   const stats = [
-    { label: 'Tổng sự kiện', value: events.length, color: 'text-blue-600' },
-    { label: 'Đang xử lý', value: events.filter(e => e.status === 'PENDING').length, color: 'text-yellow-600' },
-    { label: 'Đã duyệt', value: events.filter(e => e.status === 'APPROVED').length, color: 'text-green-600' },
-    { label: 'Bị từ chối', value: events.filter(e => e.status === 'CANCELED').length, color: 'text-red-600' },
-    { label: 'Hoàn thành', value: events.filter(e => e.status === 'COMPLETED').length, color: 'text-blue-600' },
+    { label: "Tổng sự kiện", value: events.length, color: "text-blue-600" },
+    {
+      label: "Đang xử lý",
+      value: events.filter((e) => e.status === "PENDING").length,
+      color: "text-yellow-600",
+    },
+    {
+      label: "Đã duyệt",
+      value: events.filter((e) => e.status === "APPROVED").length,
+      color: "text-green-600",
+    },
+    {
+      label: "Bị từ chối",
+      value: events.filter((e) => e.status === "CANCELED").length,
+      color: "text-red-600",
+    },
+    {
+      label: "Hoàn thành",
+      value: events.filter((e) => e.status === "COMPLETED").length,
+      color: "text-blue-600",
+    },
   ];
 
   return (
@@ -540,11 +663,13 @@ const EventManagementPage = () => {
       {/* Header */}
       <div className="bg-linear-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">Quản lý Sự kiện</h1>
-        <p className="text-orange-100">Tạo, chỉnh sửa và quản lý vòng đời sự kiện</p>
+        <p className="text-orange-100">
+          Tạo, chỉnh sửa và quản lý vòng đời sự kiện
+        </p>
       </div>
 
-        {/* Stats - COMMENTED OUT */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {/* Stats - COMMENTED OUT */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {stats.map((stat, index) => (
             <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
@@ -557,7 +682,10 @@ const EventManagementPage = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Tìm kiếm sự kiện..."
@@ -568,7 +696,9 @@ const EventManagementPage = () => {
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as EventStatus | 'ALL')}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as EventStatus | "ALL")
+            }
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
             <option value="ALL">Tất cả trạng thái</option>
@@ -592,7 +722,9 @@ const EventManagementPage = () => {
       {showTypeModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 shadow-lg flex flex-col gap-4 min-w-[320px]">
-            <h3 className="text-lg font-bold mb-2 text-gray-800">Bạn muốn tạo sự kiện nào?</h3>
+            <h3 className="text-lg font-bold mb-2 text-gray-800">
+              Bạn muốn tạo sự kiện nào?
+            </h3>
             <button
               className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
               onClick={() => handleSelectType("offline")}
@@ -630,8 +762,12 @@ const EventManagementPage = () => {
         ) : filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Không tìm thấy sự kiện</h3>
-            <p className="text-gray-600 mb-6">Bắt đầu bằng cách tạo sự kiện đầu tiên</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Không tìm thấy sự kiện
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Bắt đầu bằng cách tạo sự kiện đầu tiên
+            </p>
             <button
               onClick={handleCreateEvent}
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold"
@@ -668,7 +804,7 @@ const EventManagementPage = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {currentEvents.map((event, index) => (
-                    <tr 
+                    <tr
                       key={`event-${event.id}-${index}`}
                       className="hover:bg-gray-50 transition-colors"
                     >
@@ -692,13 +828,19 @@ const EventManagementPage = () => {
                       {/* Thời gian */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-                          <Calendar size={16} className="text-orange-500 flex-shrink-0" />
+                          <Calendar
+                            size={16}
+                            className="text-orange-500 flex-shrink-0"
+                          />
                           <span className="whitespace-nowrap">
-                            {new Date(event.startDate).toLocaleDateString('vi-VN', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric'
-                            })}
+                            {new Date(event.startDate).toLocaleDateString(
+                              "vi-VN",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )}
                           </span>
                         </div>
                       </td>
@@ -706,10 +848,13 @@ const EventManagementPage = () => {
                       {/* Địa điểm */}
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-2">
-                          <MapPin size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                          <MapPin
+                            size={16}
+                            className="text-gray-400 flex-shrink-0 mt-0.5"
+                          />
                           <div className="flex flex-col min-w-0">
                             <span className="text-sm font-medium text-gray-900 truncate">
-                              {event.venueName || 'Chưa xác định'}
+                              {event.venueName || "Chưa xác định"}
                             </span>
                             {event.campusName && (
                               <span className="text-xs text-gray-500 truncate">
@@ -723,7 +868,10 @@ const EventManagementPage = () => {
                       {/* Người tham gia */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Users size={16} className="text-gray-400 flex-shrink-0" />
+                          <Users
+                            size={16}
+                            className="text-gray-400 flex-shrink-0"
+                          />
                           <span className="text-sm font-medium text-gray-900">
                             {event.currentParticipants}/{event.maxParticipants}
                           </span>
@@ -736,46 +884,62 @@ const EventManagementPage = () => {
                           <ActionDropdown
                             actions={[
                               {
-                                label: 'Xem chi tiết',
+                                label: "Xem chi tiết",
                                 icon: Eye,
                                 onClick: () => {
-                                  console.group('🔍 CLICK XEM CHI TIẾT');
-                                  console.log('1. Full event object:', event);
-                                  console.log('2. Event ID:', event.id);
-                                  console.log('3. Event ID type:', typeof event.id);
-                                  console.log('4. Event Title:', event.title);
-                                  console.log('5. Current URL:', window.location.href);
-                                  
+                                  console.group("🔍 CLICK XEM CHI TIẾT");
+                                  console.log("1. Full event object:", event);
+                                  console.log("2. Event ID:", event.id);
+                                  console.log(
+                                    "3. Event ID type:",
+                                    typeof event.id
+                                  );
+                                  console.log("4. Event Title:", event.title);
+                                  console.log(
+                                    "5. Current URL:",
+                                    window.location.href
+                                  );
+
                                   if (!event.id) {
-                                    console.error('❌ Event ID is missing!');
-                                    toast.error('Không thể mở chi tiết sự kiện: Thiếu ID');
+                                    console.error("❌ Event ID is missing!");
+                                    toast.error(
+                                      "Không thể mở chi tiết sự kiện: Thiếu ID"
+                                    );
                                     console.groupEnd();
                                     return;
                                   }
-                                  
-                                  if (typeof event.id !== 'string' || event.id.trim() === '') {
-                                    console.error('❌ Invalid Event ID:', event.id);
-                                    toast.error('Không thể mở chi tiết sự kiện: ID không hợp lệ');
+
+                                  if (
+                                    typeof event.id !== "string" ||
+                                    event.id.trim() === ""
+                                  ) {
+                                    console.error(
+                                      "❌ Invalid Event ID:",
+                                      event.id
+                                    );
+                                    toast.error(
+                                      "Không thể mở chi tiết sự kiện: ID không hợp lệ"
+                                    );
                                     console.groupEnd();
                                     return;
                                   }
-                                  
+
                                   const targetUrl = `/organizer/events/${event.id}`;
-                                  console.log('6. ✅ Target URL:', targetUrl);
-                                  console.log('7. ✅ Navigating...');
+                                  console.log("6. ✅ Target URL:", targetUrl);
+                                  console.log("7. ✅ Navigating...");
                                   console.groupEnd();
-                                  
+
                                   // ✅ SỬA: Dùng window.location.href (hoặc navigate nếu có useNavigate)
                                   window.location.href = targetUrl;
                                 },
                               },
                               {
-                                label: 'Chỉnh sửa',
+                                label: "Chỉnh sửa",
                                 icon: Edit,
                                 onClick: () => handleEditEvent(event),
                               },
                               // ✅ Hiển thị "Xóa" cho PENDING, "Yêu cầu hủy" cho PUBLISHED/APPROVED, không hiển thị cho CANCELED
-                              ...(event.status !== 'CANCELED'
+                              ...(event.status !== "CANCELED"
                                 ? [
                                     {
                                       label:
@@ -815,8 +979,8 @@ const EventManagementPage = () => {
                       aria-label="Trang trước"
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300'
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300"
                       }`}
                     >
                       <ChevronLeft size={16} />
@@ -825,15 +989,15 @@ const EventManagementPage = () => {
                     <div className="flex items-center gap-1">
                       {getPageNumbers().map((page, index) => (
                         <React.Fragment key={index}>
-                          {page === '...' ? (
+                          {page === "..." ? (
                             <span className="px-3 py-2 text-gray-500">...</span>
                           ) : (
                             <button
                               onClick={() => handlePageChange(page as number)}
                               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 currentPage === page
-                                  ? 'bg-orange-500 text-white'
-                                  : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300'
+                                  ? "bg-orange-500 text-white"
+                                  : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300"
                               }`}
                             >
                               {page}
@@ -849,8 +1013,8 @@ const EventManagementPage = () => {
                       aria-label="Trang sau"
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300'
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-300"
                       }`}
                     >
                       <ChevronRight size={16} />
@@ -886,7 +1050,7 @@ const EventManagementPage = () => {
               setSelectedEvent(null);
               await fetchEventsByOrganizer();
             } catch (error) {
-              console.error('Error in onSuccess:', error);
+              console.error("Error in onSuccess:", error);
             }
           }}
         />
@@ -901,19 +1065,22 @@ const EventManagementPage = () => {
           }}
           onSuccess={async (savedEvent) => {
             try {
+              const mappedEvent = mapApiEventToEvent(savedEvent);
+              if (!mappedEvent) {
+                return;
+              }
               if (selectedEvent) {
                 setEvents((prev) =>
-                  prev.map((e) => (e.id === savedEvent.id ? savedEvent : e))
+                  prev.map((e) => (e.id === mappedEvent.id ? mappedEvent : e))
                 );
-                // toast.success('Cập nhật sự kiện thành công!');
               } else {
-                // toast.success('Tạo sự kiện thành công!');
+                setEvents((prev) => [mappedEvent, ...prev]);
               }
               setIsModalOpen(false);
               setSelectedEvent(null);
               await fetchEventsByOrganizer();
             } catch (error) {
-              console.error('Error in onSuccess:', error);
+              console.error("Error in onSuccess:", error);
             }
           }}
         />
@@ -924,7 +1091,14 @@ const EventManagementPage = () => {
         <DeleteRequestModal
           eventTitle={deleteModalState.eventTitle}
           eventId={deleteModalState.eventId || ""}
-          onClose={() => setDeleteModalState({ isOpen: false, eventId: null, eventTitle: '', isPending: false })}
+          onClose={() =>
+            setDeleteModalState({
+              isOpen: false,
+              eventId: null,
+              eventTitle: "",
+              isPending: false,
+            })
+          }
           onSubmit={handleSubmitDeleteRequest}
           isPending={deleteModalState.isPending}
           onDeletePending={handleDeletePendingEvent}
@@ -935,4 +1109,3 @@ const EventManagementPage = () => {
 };
 
 export default EventManagementPage;
-

@@ -11,6 +11,7 @@ interface DropdownAction {
   onClick: () => void;
   type?: ActionType;
   disabled?: boolean;
+  danger?: boolean;
 }
 
 interface ActionDropdownProps {
@@ -125,7 +126,7 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
         >
           {actions.map((action, index) => {
             const Icon = action.icon;
-            const actionType = action.type || 'default';
+            const actionType = action.type || (action.danger ? 'danger' : 'default');
             return (
               <button
                 key={index}

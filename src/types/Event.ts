@@ -45,6 +45,8 @@ export interface organizer{
   description: string;
   contactEmail: string;
   logoUrl?: string;
+  campusId?: number;
+  campus?: campus;
 }
 
 export interface campus{
@@ -98,6 +100,11 @@ export interface speaker{
   company: string;
 }
 
+// API th?c t? hi?n t?i tr? l?i d? li?u speaker kh„ng nh?t qu n
+// nˆn c?n type bao r?ng h?n (?y t?o union cho c? chu?i v… object)
+export type SpeakerPayload = eventSpeaker | speaker | string | Record<string, any>;
+export type SpeakerField = SpeakerPayload | SpeakerPayload[];
+
 
 
 export interface eventStaff{
@@ -131,10 +138,16 @@ export interface GetEventResponse {
   venue?: venue;
   host: host;
   eventSpeakers?: eventSpeaker[];
+  event_speakers?: SpeakerField;
+  speakers?: SpeakerField;
+  speaker?: SpeakerField;
   eventStaffs?: eventStaff[];
   checkinCount: number; 
   endTimeRegister?: string;
   startTimeRegister?: string;
+  isOnline?: boolean;
+  onlineMeetingUrl?: string;
+  isPublished?: boolean;
 }
 
 export interface GetTotalEventsResponse {

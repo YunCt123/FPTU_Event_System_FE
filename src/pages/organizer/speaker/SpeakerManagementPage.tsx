@@ -67,7 +67,7 @@ const SpeakerManagementPage = () => {
           const response = await eventService.getEventById(eventId);
           if (response) {
             console.log("response2", response.data.eventSpeakers);
-            setSpeakers(response.data.eventSpeakers);
+            setSpeakers(response.data.eventSpeakers || []);
             setSelectedEvent(response.data);
           }
         } catch (error) {

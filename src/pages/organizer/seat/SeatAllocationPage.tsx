@@ -104,8 +104,8 @@ const SeatAllocationPage = () => {
           const seats = rowLabels.map((rowLabel) => {
             const rowSeats = seatsByRow[rowLabel];
             return rowSeats
-              .sort((a, b) => a.colLabel - b.colLabel)
-              .map((seat) => ({
+              .sort((a: ApiSeat, b: ApiSeat) => a.colLabel - b.colLabel)
+              .map((seat: ApiSeat) => ({
                 id: seat.id,
                 row: rowLabels.indexOf(rowLabel),
                 col: seat.colLabel - 1,
