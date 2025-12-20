@@ -220,22 +220,36 @@ const AttendeesManagementPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventSearchQuery, isEventDropdownOpen]);
 
-  // Initial load when dropdown opens
+  // Initial load on mount - auto-select first event
   useEffect(() => {
-    if (isEventDropdownOpen && events.length === 0) {
-      fetchEvents(1, "", false);
+    if (eventsCacheLoadedRef.current && eventsCacheRef.current.length > 0) {
+      // Use cache if available
+      setEvents(eventsCacheRef.current);
+      if (!selectedEventId && eventsCacheRef.current.length > 0) {
+        const firstEvent = eventsCacheRef.current[0];
+        setSelectedEventId(firstEvent.id);
+        setSelectedEvent(firstEvent);
+      }
+    } else {
+      // Load events on mount
+      fetchEvents(1, "", false, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load events when dropdown opens (use cache if available)
+  useEffect(() => {
+    if (isEventDropdownOpen) {
+      if (!eventSearchQuery.trim() && eventsCacheLoadedRef.current) {
+        // Use cache if no search
+        fetchEvents(1, "", false, true);
+      } else if (events.length === 0) {
+        // Load if no cache or has search
+        fetchEvents(1, eventSearchQuery, false, false);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEventDropdownOpen]);
-
-  // Auto-select first event if available
-  useEffect(() => {
-    if (events.length > 0 && !selectedEventId) {
-      const firstEvent = events[0];
-      setSelectedEventId(firstEvent.id);
-      setSelectedEvent(firstEvent);
-    }
-  }, [events, selectedEventId]);
 
   // Update selected event when selectedEventId changes
   useEffect(() => {
@@ -816,14 +830,17 @@ const AttendeesManagementPage = () => {
                       Trạng thái
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                      Thời gian
+                      Thời gian đăng ký
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      Thời gian check-in
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredAttendees.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center">
+                      <td colSpan={9} className="px-6 py-12 text-center">
                         <User
                           className="mx-auto text-gray-400 mb-3"
                           size={48}
@@ -885,30 +902,28 @@ const AttendeesManagementPage = () => {
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {attendee.bookingDate
-                            ? new Date(attendee.bookingDate).toLocaleDateString(
-                                "vi-VN"
-                              )
-                            : "-"}
-                          <br />
-                          {attendee.bookingDate
-                            ? new Date(attendee.bookingDate).toLocaleTimeString(
+                            ? new Date(attendee.bookingDate).toLocaleString(
                                 "vi-VN",
                                 {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 }
                               )
-                            : ""}
+                            : "-"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {attendee.checkinTime
                             ? new Date(attendee.checkinTime).toLocaleString(
                                 "vi-VN",
                                 {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
                                   day: "2-digit",
                                   month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
                                 }
                               )
                             : "-"}
