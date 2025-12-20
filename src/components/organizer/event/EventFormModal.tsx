@@ -69,6 +69,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
     recurrenceType: "NONE",
     recurrenceInterval: 1,
     recurrenceCount: "",
+    isGlobal: true, // Mặc định mở cho mọi campus
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -201,6 +202,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             recurrenceCount: fullEvent.recurrenceCount
               ? String(fullEvent.recurrenceCount)
               : "",
+            isGlobal:
+              typeof fullEvent.isGlobal === "boolean"
+                ? fullEvent.isGlobal
+                : true,
           };
 
           console.log("Formatted form data:", formattedData);
@@ -228,7 +233,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
               fullEvent.endTimeRegister ||
               fullEvent.endTime, // ✅ FIX
             maxCapacity: fullEvent.maxCapacity || event.maxParticipants,
-            isGlobal: fullEvent.isGlobal ?? true,
+            isGlobal:
+              typeof fullEvent.isGlobal === "boolean"
+                ? fullEvent.isGlobal
+                : true,
             organizerId: fullEvent.organizerId || event.organizerId,
             venueId: fullEvent.venueId || event.venueId,
             hostId: fullEvent.hostId || 1,
@@ -258,6 +266,10 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             recurrenceType: "NONE",
             recurrenceInterval: 1,
             recurrenceCount: "",
+            isGlobal:
+              typeof (event as any).isGlobal === "boolean"
+                ? (event as any).isGlobal
+                : true,
           };
 
           console.log(
@@ -285,6 +297,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           recurrenceType: "NONE",
           recurrenceInterval: 1,
           recurrenceCount: "",
+          isGlobal: true,
         });
         setSelectedStaffIds([]);
         setOriginalData(null);
@@ -778,6 +791,12 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             updateData.venueId = newVenueId;
           }
 
+          const newIsGlobal = Boolean(formData.isGlobal);
+          const originalIsGlobal = Boolean(originalData.isGlobal);
+          if (newIsGlobal !== originalIsGlobal) {
+            updateData.isGlobal = newIsGlobal;
+          }
+
           // So sánh staffIds
           const originalStaffIds = originalData.staffIds || [];
           const staffIdsChanged =
@@ -801,7 +820,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
           updateData.endTimeRegister = formatDateTime(formData.endTimeRegister);
           updateData.maxCapacity = Number(formData.maxParticipants);
           updateData.venueId = Number(formData.venueId);
-          updateData.isGlobal = true;
+          updateData.isGlobal = formData.isGlobal;
           updateData.organizerId = organizerInfo.id;
           updateData.staffIds = selectedStaffIds;
         }
@@ -840,6 +859,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             recurrenceCount: formData.recurrenceCount || undefined,
             staffIds: selectedStaffIds || [], // ✅ Thêm staffIds
             speakers: [], // ✅ Thêm speakers (offline events có thể không có speakers, nhưng vẫn gửi array rỗng)
+            isGlobal: formData.isGlobal, // ✅ Thêm isGlobal
           };
 
           console.log("Sending RECURRING CREATE data:", weeklyData);
@@ -857,7 +877,7 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
             startTimeRegister: formatDateTime(formData.registrationDeadline),
             endTimeRegister: formatDateTime(formData.endTimeRegister),
             maxCapacity: Number(formData.maxParticipants),
-            isGlobal: true,
+            isGlobal: formData.isGlobal,
             organizerId: organizerInfo.id,
             venueId: Number(formData.venueId),
             hostId: 1,
@@ -1665,6 +1685,41 @@ const EventFormModal = ({ event, onClose, onSuccess }: EventFormModalProps) => {
                     {errors.maxParticipants}
                   </p>
                 )}
+              </div>
+
+              {/* Phạm vi sự kiện */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
+                  <MapPin size={16} className="text-orange-500" />
+                  Phạm vi sự kiện
+                </label>
+                <div className="flex items-center gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  <input
+                    type="checkbox"
+                    id="isGlobal"
+                    name="isGlobal"
+                    checked={formData.isGlobal}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        isGlobal: e.target.checked,
+                      }))
+                    }
+                    className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                    disabled={isSubmitting}
+                  />
+                  <label
+                    htmlFor="isGlobal"
+                    className="flex-1 cursor-pointer text-sm text-gray-700"
+                  >
+                    <span className="font-medium">Mở cho mọi campus</span>
+                    <span className="block text-xs text-gray-500 mt-1">
+                      {formData.isGlobal
+                        ? "Sự kiện sẽ hiển thị cho tất cả các campus"
+                        : "Sự kiện chỉ hiển thị cho campus của bạn"}
+                    </span>
+                  </label>
+                </div>
               </div>
 
               {/* Staff selection */}

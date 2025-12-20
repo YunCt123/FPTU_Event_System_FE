@@ -47,7 +47,9 @@ const EventFormModalWeekly: React.FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [form, setForm] = useState<BookingWeeklyRequest>({
+  const [form, setForm] = useState<
+    BookingWeeklyRequest & { isGlobal?: boolean }
+  >({
     title: "",
     description: "",
     startTime: "",
@@ -60,6 +62,7 @@ const EventFormModalWeekly: React.FC<Props> = ({
     recurrenceType: "WEEKLY",
     recurrenceInterval: 1,
     recurrenceCount: undefined,
+    isGlobal: true, // Mặc định mở cho mọi campus
   } as any);
 
   useEffect(() => {
@@ -134,6 +137,7 @@ const EventFormModalWeekly: React.FC<Props> = ({
             recurrenceType: ev?.recurrenceType ?? p.recurrenceType,
             recurrenceInterval: ev?.recurrenceInterval ?? p.recurrenceInterval,
             recurrenceCount: ev?.recurrenceCount ?? p.recurrenceCount,
+            isGlobal: (ev as any)?.isGlobal ?? true,
           } as any)
       );
     }
@@ -222,6 +226,7 @@ const EventFormModalWeekly: React.FC<Props> = ({
         recurrenceCount: form.recurrenceCount
           ? Number(form.recurrenceCount)
           : undefined,
+        isGlobal: form.isGlobal ?? true, // ✅ Thêm isGlobal
       } as any;
 
       console.log("bookingWeekly payload:", payload);
@@ -681,6 +686,39 @@ const EventFormModalWeekly: React.FC<Props> = ({
                   {errors.recurrenceInterval}
                 </p>
               )}
+            </div>
+
+            {/* Phạm vi sự kiện */}
+            <div>
+              <label className="text-sm font-semibold mb-2 block">
+                Phạm vi sự kiện
+              </label>
+              <div className="flex items-center gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                <input
+                  type="checkbox"
+                  id="isGlobal-weekly"
+                  checked={form.isGlobal ?? true}
+                  onChange={(e) =>
+                    setForm((prev: any) => ({
+                      ...prev,
+                      isGlobal: e.target.checked,
+                    }))
+                  }
+                  className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                  disabled={isSubmitting}
+                />
+                <label
+                  htmlFor="isGlobal-weekly"
+                  className="flex-1 cursor-pointer text-sm text-gray-700"
+                >
+                  <span className="font-medium">Mở cho mọi campus</span>
+                  <span className="block text-xs text-gray-500 mt-1">
+                    {form.isGlobal ?? true
+                      ? "Sự kiện sẽ hiển thị cho tất cả các campus"
+                      : "Sự kiện chỉ hiển thị cho campus của bạn"}
+                  </span>
+                </label>
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-6">

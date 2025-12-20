@@ -1,22 +1,22 @@
-import type { User } from './User';
-export type EventStatus = 
-  | 'PENDING'    // Đang xử lý
-  | 'APPROVED'   // Đã duyệt
-  | 'CANCELED'   // Bị từ chối
-  | 'COMPLETED'  // Hoàn thành
-  | 'PENDING_DELETE'; // TRẠNG THÁI CHỜ XÓA
+import type { User } from "./User";
+export type EventStatus =
+  | "PENDING" // Đang xử lý
+  | "APPROVED" // Đã duyệt
+  | "CANCELED" // Bị từ chối
+  | "COMPLETED" // Hoàn thành
+  | "PENDING_DELETE"; // TRẠNG THÁI CHỜ XÓA
 
-export type EventType = 
-'CONFERENCE' 
-| 'WORKSHOP' 
-| 'SEMINAR' 
-| 'COMPETITION' 
-| 'CULTURAL' 
-| 'SPORTS' 
-| 'OTHER';
+export type EventType =
+  | "CONFERENCE"
+  | "WORKSHOP"
+  | "SEMINAR"
+  | "COMPETITION"
+  | "CULTURAL"
+  | "SPORTS"
+  | "OTHER";
 
 export interface Event {
-  id: string; 
+  id: string;
   title: string;
   description: string;
   eventType: EventType;
@@ -39,7 +39,7 @@ export interface Event {
   updatedAt?: string;
 }
 
-export interface organizer{
+export interface organizer {
   id: number;
   name: string;
   description: string;
@@ -49,14 +49,14 @@ export interface organizer{
   campus?: campus;
 }
 
-export interface campus{
+export interface campus {
   id: number;
   name: string;
   code: string;
   addres: string;
 }
 
-export interface venue{
+export interface venue {
   id: number;
   name: string;
   location: string;
@@ -65,33 +65,33 @@ export interface venue{
   campus: campus;
 }
 
-export interface host{
+export interface host {
   id: number;
   name: string;
   email: string;
   firtName: string;
   lastName: string;
-} 
+}
 
 // export interface eventSpeaker{
 //   id: number;
 //   topic: string;
 // }
 
-export interface meta{
+export interface meta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
 }
 
-export interface eventSpeaker{
+export interface eventSpeaker {
   id: number;
   topic: string;
   speaker: speaker;
 }
 
-export interface speaker{
+export interface speaker {
   id: number;
   name: string;
   bio: string;
@@ -102,13 +102,15 @@ export interface speaker{
 
 // API th?c t? hi?n t?i tr? l?i d? li?u speaker kh„ng nh?t qu n
 // nˆn c?n type bao r?ng h?n (?y t?o union cho c? chu?i v… object)
-export type SpeakerPayload = eventSpeaker | speaker | string | Record<string, any>;
+export type SpeakerPayload =
+  | eventSpeaker
+  | speaker
+  | string
+  | Record<string, any>;
 export type SpeakerField = SpeakerPayload | SpeakerPayload[];
 
-
-
-export interface eventStaff{
-  id:number;
+export interface eventStaff {
+  id: number;
   createdAt: string;
   eventId: number;
   userId: number;
@@ -121,7 +123,7 @@ export interface GetEventResponse {
   description: string;
   category?: string;
   bannerUrl?: string;
-  imageUrl?: string; 
+  imageUrl?: string;
   startTimeRegistration: string;
   endTimeRegistration: string;
   startTime: string;
@@ -142,7 +144,7 @@ export interface GetEventResponse {
   speakers?: SpeakerField;
   speaker?: SpeakerField;
   eventStaffs?: eventStaff[];
-  checkinCount: number; 
+  checkinCount: number;
   endTimeRegister?: string;
   startTimeRegister?: string;
   isOnline?: boolean;
@@ -151,7 +153,7 @@ export interface GetEventResponse {
 }
 
 export interface GetTotalEventsResponse {
-  data: GetEventResponse
+  data: GetEventResponse;
   meta?: meta;
 }
 
@@ -242,8 +244,8 @@ export interface UpdateEventResponse {
     name: string;
     location: string;
     hasSeats: boolean;
-  }
-  host: host;  
+  };
+  host: host;
 }
 
 export interface EventDeleteResponse {
@@ -256,7 +258,7 @@ export interface DeleteRequest {
   eventId: string;
   eventTitle: string;
   reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   requestedBy: {
     id: number;
     name: string;
@@ -275,7 +277,7 @@ export interface DeleteRequest {
 export interface CancellationReason {
   id: number;
   reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   createdAt: string;
   updatedAt: string;
   reviewedAt: string | null;
@@ -327,7 +329,7 @@ export interface GetDeleteRequestsResponse {
 export interface DeleteRequestItem {
   id: number;
   reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   createdAt: string;
   updatedAt: string;
   reviewedAt: string | null;
@@ -377,10 +379,11 @@ export interface BookingOnlineRequest {
   }[];
   isOnline: boolean;
   onlineMeetingUrl?: string;
+  isGlobal: boolean;
 }
 
 export interface BookingOnlineResponse {
-  event:{
+  event: {
     id: string;
     title: string;
     description: string;
@@ -410,7 +413,7 @@ export interface BookingOnlineResponse {
     eventSpeakers?: eventSpeaker[];
     eventStaffs?: eventStaff[];
     checkinCount: number;
-  }
+  };
   totalOccurrences: number;
 }
 
@@ -455,13 +458,9 @@ export interface BookingWeeklyResponse {
   organizerId: number;
   venueId: number;
   organizer: organizer;
-  venue:venue;
+  venue: venue;
   host: host;
   eventSpeakers: any[];
   eventStaffs: any[];
   checkinCount: number;
 }
-
-
-
-

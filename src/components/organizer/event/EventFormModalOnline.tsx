@@ -71,6 +71,7 @@ const EventFormModalOnline: React.FC<Props> = ({
       recurrenceType?: string;
       recurrenceInterval?: number;
       recurrenceCount?: string;
+      isGlobal?: boolean;
     }
   >({
     title: "",
@@ -88,6 +89,7 @@ const EventFormModalOnline: React.FC<Props> = ({
     recurrenceType: "NONE",
     recurrenceInterval: 1,
     recurrenceCount: "",
+    isGlobal: true, // Mặc định mở cho mọi campus
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -151,6 +153,10 @@ const EventFormModalOnline: React.FC<Props> = ({
             }),
             isOnline: true,
             onlineMeetingUrl: (fullEvent as any)?.onlineMeetingUrl ?? "",
+            isGlobal:
+              typeof (fullEvent as any)?.isGlobal === "boolean"
+                ? (fullEvent as any).isGlobal
+                : true,
           };
 
           console.log("Formatted speakers:", formattedData.speakers);
@@ -186,6 +192,10 @@ const EventFormModalOnline: React.FC<Props> = ({
             ),
             isOnline: true,
             onlineMeetingUrl: ev?.onlineMeetingUrl ?? "",
+            isGlobal:
+              typeof (ev as any)?.isGlobal === "boolean"
+                ? (ev as any).isGlobal
+                : true,
           };
           setForm(fallbackData);
           setOriginalData(fallbackData);
@@ -518,6 +528,14 @@ const EventFormModalOnline: React.FC<Props> = ({
           updateData.hostId = form.hostId;
         }
 
+        const newIsGlobal = Boolean((form as any).isGlobal);
+        const originalIsGlobal = Boolean(
+          (originalData as any)?.isGlobal ?? true
+        );
+        if (newIsGlobal !== originalIsGlobal) {
+          updateData.isGlobal = newIsGlobal;
+        }
+
         if (Object.keys(updateData).length === 0) {
           toast.info("Không có thay đổi nào để lưu");
           onClose();
@@ -566,6 +584,7 @@ const EventFormModalOnline: React.FC<Props> = ({
                 speakerId: Number(s.speakerId),
                 topic: s.topic,
               })) || [], // ✅ Thêm speakers
+            isGlobal: (form as any).isGlobal ?? true, // ✅ Thêm isGlobal
           };
 
           console.log("Creating recurring online event:", weeklyData);
@@ -595,6 +614,7 @@ const EventFormModalOnline: React.FC<Props> = ({
               })) || [],
             isOnline: true,
             onlineMeetingUrl: form.onlineMeetingUrl,
+            isGlobal: (form as any).isGlobal ?? true, // ✅ Thêm isGlobal
           };
 
           console.log("Creating online event:", payload);
@@ -1111,6 +1131,40 @@ const EventFormModalOnline: React.FC<Props> = ({
                       Đã chọn {form.staffIds.length} nhân viên
                     </p>
                   )}
+                </div>
+
+                {/* Phạm vi sự kiện */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
+                    <LinkIcon size={16} className="text-orange-500" />
+                    Phạm vi sự kiện
+                  </label>
+                  <div className="flex items-center gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                    <input
+                      type="checkbox"
+                      id="isGlobal-online"
+                      checked={(form as any).isGlobal ?? true}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          isGlobal: e.target.checked,
+                        }))
+                      }
+                      className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      htmlFor="isGlobal-online"
+                      className="flex-1 cursor-pointer text-sm text-gray-700"
+                    >
+                      <span className="font-medium">Mở cho mọi campus</span>
+                      <span className="block text-xs text-gray-500 mt-1">
+                        {(form as any).isGlobal ?? true
+                          ? "Sự kiện sẽ hiển thị cho tất cả các campus"
+                          : "Sự kiện chỉ hiển thị cho campus của bạn"}
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Recurrence Settings - Chỉ hiển thị khi tạo mới, không hiển thị khi chỉnh sửa */}
