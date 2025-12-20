@@ -10,6 +10,7 @@ import {
   User,
   FileSpreadsheet,
   Send,
+  LogOut,
 } from "lucide-react";
 import type {
   CheckInStatus,
@@ -367,10 +368,7 @@ const AttendeesManagementPage = () => {
   const stats = {
     total: attendee?.summary?.totalRegistered || 0,
     checkedIn: attendee?.summary?.checkedIn || 0,
-    notCheckedIn:
-      (attendee?.summary?.totalRegistered || 0) -
-      (attendee?.summary?.checkedIn || 0) -
-      (attendee?.summary?.cancelled || 0),
+    notCheckedIn: attendee?.summary?.notCheckin || 0,
     cancelled: attendee?.summary?.cancelled || 0,
     attendanceRate: attendee?.summary?.attendanceRate || 0,
   };
@@ -487,6 +485,7 @@ const AttendeesManagementPage = () => {
         "Trạng thái",
         "Thời gian đăng ký",
         "Thời gian check-in",
+        "Thời gian check-out",
         "Ghế ngồi",
       ],
       ...dataToExport.map((a) => [
@@ -497,6 +496,7 @@ const AttendeesManagementPage = () => {
         getStatusLabel(a.status),
         a.bookingDate ? new Date(a.bookingDate).toLocaleString("vi-VN") : "",
         a.checkinTime ? new Date(a.checkinTime).toLocaleString("vi-VN") : "",
+        a.checkoutTime ? new Date(a.checkoutTime).toLocaleString("vi-VN") : "",
         a.seat?.label || "",
       ]),
     ]
@@ -835,12 +835,15 @@ const AttendeesManagementPage = () => {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                       Thời gian check-in
                     </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                      Thời gian check-out
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredAttendees.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center">
+                      <td colSpan={10} className="px-6 py-12 text-center">
                         <User
                           className="mx-auto text-gray-400 mb-3"
                           size={48}
@@ -915,18 +918,49 @@ const AttendeesManagementPage = () => {
                             : "-"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {attendee.checkinTime
-                            ? new Date(attendee.checkinTime).toLocaleString(
-                                "vi-VN",
-                                {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )
-                            : "-"}
+                          {attendee.checkinTime ? (
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle
+                                size={14}
+                                className="text-green-500"
+                              />
+                              <span>
+                                {new Date(attendee.checkinTime).toLocaleString(
+                                  "vi-VN",
+                                  {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {attendee.checkoutTime ? (
+                            <div className="flex items-center gap-1.5">
+                              <LogOut size={14} className="text-orange-500" />
+                              <span>
+                                {new Date(attendee.checkoutTime).toLocaleString(
+                                  "vi-VN",
+                                  {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
                       </tr>
                     ))
