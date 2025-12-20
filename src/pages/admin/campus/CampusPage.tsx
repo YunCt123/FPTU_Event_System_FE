@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, CheckCircle, Ban } from "lucide-react";
 import { toast } from "react-toastify";
+import ActionDropdown from "../../../components/ActionDropdown";
 import type {
   Campus,
   Status,
@@ -280,31 +281,30 @@ const CampusPage = () => {
                       {getStatusBadge(campus.status)}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(campus)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        {campus.status === "Inactive" ? (
-                          <button
-                            onClick={() => handleActivate(campus.id)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Kích hoạt lại"
-                          >
-                            <CheckCircle size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleDelete(campus.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Ngừng hoạt động"
-                          >
-                            <Ban size={18} />
-                          </button>
-                        )}
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          actions={[
+                            {
+                              label: "Chỉnh sửa",
+                              icon: Edit,
+                              onClick: () => handleEdit(campus),
+                            },
+                            campus.status === "Inactive"
+                              ? {
+                                  label: "Kích hoạt lại",
+                                  icon: CheckCircle,
+                                  onClick: () => handleActivate(campus.id),
+                                  type: "safe",
+                                }
+                              : {
+                                  label: "Ngừng hoạt động",
+                                  icon: Ban,
+                                  onClick: () => handleDelete(campus.id),
+                                  type: "danger",
+                                  danger: true,
+                                },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>

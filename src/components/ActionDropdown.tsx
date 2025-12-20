@@ -79,7 +79,7 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
         // Calculate position
         setPosition({
           top: shouldDropUp ? buttonRect.top - 8 : buttonRect.bottom + 8,
-          left: buttonRect.right - 176, // 176px = w-44 (11rem * 16px)
+          left: buttonRect.right - 224, // 224px = w-56 (14rem * 16px)
         });
       };
 
@@ -114,7 +114,7 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
         createPortal(
           <div
             ref={dropdownRef}
-            className={`fixed z-[9999] w-44 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown ${
+            className={`fixed z-[9999] w-56 rounded-lg bg-white border border-gray-200 shadow-lg animate-slideDown ${
               dropUp ? "origin-bottom" : "origin-top"
             }`}
             style={{
@@ -140,7 +140,7 @@ const ActionDropdown = ({ actions }: ActionDropdownProps) => {
                     }
                   }}
                   disabled={isDisabled}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150 whitespace-nowrap
                   ${index === 0 ? "rounded-t-lg" : ""}
                   ${index === actions.length - 1 ? "rounded-b-lg" : ""}
                   ${

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, CheckCircle, Ban } from "lucide-react";
 import { toast } from "react-toastify";
+import ActionDropdown from "../../../components/ActionDropdown";
 import type {
   Venue,
   VenueStatus,
@@ -65,9 +66,7 @@ const AdminVenuePage = () => {
       const payload: any = response.data;
 
       // Handle both array and ApiResponse wrapper
-      const venueData = Array.isArray(payload)
-        ? payload
-        : payload?.data || [];
+      const venueData = Array.isArray(payload) ? payload : payload?.data || [];
 
       // Filter venues by selected campus
       const filteredVenues = venueData.filter(
@@ -377,31 +376,30 @@ const AdminVenuePage = () => {
                       {getStatusBadge(venue.status)}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(venue)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        {venue.status === "INACTIVE" ? (
-                          <button
-                            onClick={() => handleActivate(venue.id)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Kích hoạt lại"
-                          >
-                            <CheckCircle size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleDelete(venue.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Vô hiệu hóa"
-                          >
-                            <Ban size={18} />
-                          </button>
-                        )}
+                      <div className="flex items-center justify-end">
+                        <ActionDropdown
+                          actions={[
+                            {
+                              label: "Chỉnh sửa",
+                              icon: Edit,
+                              onClick: () => handleEdit(venue),
+                            },
+                            venue.status === "INACTIVE"
+                              ? {
+                                  label: "Kích hoạt lại",
+                                  icon: CheckCircle,
+                                  onClick: () => handleActivate(venue.id),
+                                  type: "safe",
+                                }
+                              : {
+                                  label: "Vô hiệu hóa",
+                                  icon: Ban,
+                                  onClick: () => handleDelete(venue.id),
+                                  type: "danger",
+                                  danger: true,
+                                },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
