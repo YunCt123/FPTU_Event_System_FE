@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import OrganizerModal from "./OrganizerModal";
 import OrganizerDetailModal from "./OrganizerDetailModal";
 import AddOrganizerModal from "./AddOrganizerModal";
-import { Search, Plus, Trash2, Edit, Eye } from "lucide-react";
+import { Search, Trash2, Edit, Eye } from "lucide-react";
 import ConfirmModal from "../../common/ConfirmModal";
 import organizerService from "../../../services/organizerService";
 import { toast } from "react-toastify";
@@ -10,7 +10,15 @@ import type { OrganizerResponse } from "../../../types/Organizer";
 import ActionDropdown from "../../ActionDropdown";
 
 const OrganizerListGrid = () => {
-  const [selectedOrganizer, setSelectedOrganizer] = useState<OrganizerResponse | null>(null);
+  // Get current user role
+  const currentUser = useMemo(() => {
+    const userData = localStorage.getItem("user");
+    return userData ? JSON.parse(userData) : null;
+  }, []);
+
+  const isEventOrganizer = currentUser?.roleName === "event_organizer";
+  const [selectedOrganizer, setSelectedOrganizer] =
+    useState<OrganizerResponse | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -37,7 +45,9 @@ const OrganizerListGrid = () => {
       }
     } catch (error: any) {
       console.error("Error fetching organizers:", error);
-      toast.error(error.response?.data?.message || "Không thể tải danh sách nhà tổ chức");
+      toast.error(
+        error.response?.data?.message || "Không thể tải danh sách nhà tổ chức"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -64,20 +74,15 @@ const OrganizerListGrid = () => {
   };
 
   const handleUpdateSuccess = () => {
-    fetchOrganizers(); 
-  };
-
-  const handleAddNew = () => {
-    setIsAddOpen(true);
+    fetchOrganizers();
   };
 
   const handleCloseAdd = () => {
     setIsAddOpen(false);
   };
 
-  const handleAddSuccess = (_newOrganizer: OrganizerResponse) => {
-    fetchOrganizers(); 
-    // toast.success("Thêm nhà tổ chức thành công!");
+  const handleAddSuccess = () => {
+    fetchOrganizers();
   };
 
   const handleDelete = (id: number) => {
@@ -90,17 +95,18 @@ const OrganizerListGrid = () => {
 
     try {
       const response = await organizerService.deleteOrganizer(organizerId);
-      
+
       if (response.status === 200 || response.data.success) {
         toast.success("Xóa nhà tổ chức thành công");
-        fetchOrganizers(); 
+        fetchOrganizers();
         setConfirmModal({ isOpen: false, organizerId: null });
       }
     } catch (error: any) {
-      console.error('Error deleting organizer:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.data?.message || 
-                          'Không thể xóa nhà tổ chức!';
+      console.error("Error deleting organizer:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.data?.message ||
+        "Không thể xóa nhà tổ chức!";
       toast.error(errorMessage);
       setConfirmModal({ isOpen: false, organizerId: null });
     }
@@ -142,8 +148,8 @@ const OrganizerListGrid = () => {
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow-md">
-        <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
-          <table className="w-full" style={{ overflow: 'visible' }}>
+        <div className="overflow-x-auto" style={{ overflow: "visible" }}>
+          <table className="w-full" style={{ overflow: "visible" }}>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
@@ -161,9 +167,7 @@ const OrganizerListGrid = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                   Email liên hệ
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                  
-                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -185,7 +189,9 @@ const OrganizerListGrid = () => {
                     colSpan={6}
                     className="px-6 py-12 text-center text-gray-500"
                   >
-                    {organizers.length === 0 ? "Chưa có nhà tổ chức nào" : "Không tìm thấy nhà tổ chức nào"}
+                    {organizers.length === 0
+                      ? "Chưa có nhà tổ chức nào"
+                      : "Không tìm thấy nhà tổ chức nào"}
                   </td>
                 </tr>
               ) : (
@@ -218,7 +224,9 @@ const OrganizerListGrid = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600">{org.campus?.name || "N/A"}</div>
+                      <div className="text-sm text-gray-600">
+                        {org.campus?.name || "N/A"}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <a
@@ -236,20 +244,23 @@ const OrganizerListGrid = () => {
                               label: "Chỉnh sửa",
                               icon: Edit,
                               onClick: () => handleOpenDetails(org),
-                              type: 'detail'
                             },
-                            {
-                              label: "Xóa",
-                              icon: Trash2,
-                              onClick: () => handleDelete(org.id),
-                              type: 'danger'
-                            },
+                            // Ẩn nút Xóa nếu role là event_organizer
+                            ...(isEventOrganizer
+                              ? []
+                              : [
+                                  {
+                                    label: "Xóa",
+                                    icon: Trash2,
+                                    onClick: () => handleDelete(org.id),
+                                    danger: true,
+                                  },
+                                ]),
                             {
                               label: "Chi tiết",
                               icon: Eye,
                               onClick: () => handleViewDetails(org),
-                              
-                            }
+                            },
                           ]}
                         />
                       </div>
@@ -298,7 +309,6 @@ const OrganizerListGrid = () => {
         />
       )}
 
-      
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title="Xác nhận xóa"
@@ -312,6 +322,5 @@ const OrganizerListGrid = () => {
     </div>
   );
 };
-
 
 export default OrganizerListGrid;

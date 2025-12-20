@@ -134,13 +134,15 @@ const AdminVenuePage = () => {
     try {
       await venueService.deleteVenue(venueId);
 
-      toast.success("Xóa venue thành công!");
+      toast.success("Vô hiệu hóa venue thành công!");
 
       // Refresh the venue list from API after delete
       await fetchVenues();
     } catch (error: any) {
       console.error("Error deleting venue:", error);
-      toast.error(error?.response?.data?.message || "Không thể xóa venue");
+      toast.error(
+        error?.response?.data?.message || "Không thể vô hiệu hóa venue"
+      );
     } finally {
       setConfirmModal({ isOpen: false, venueId: null });
     }

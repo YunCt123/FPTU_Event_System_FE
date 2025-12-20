@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
-import { toast } from 'react-toastify'
-import { X } from 'lucide-react'
-import type { OrganizerResponse } from '../../../types/Organizer'
-import organizerService from '../../../services/organizerService'
-import userService from '../../../services/userService'
-import { uploadImageToCloudinary } from '../../../utils/uploadImg'
-import type { User } from '../../../types/User'
+import { useState, useEffect, useMemo } from "react";
+import { toast } from "react-toastify";
+import { X } from "lucide-react";
+import type { OrganizerResponse } from "../../../types/Organizer";
+import organizerService from "../../../services/organizerService";
+import userService from "../../../services/userService";
+import { uploadImageToCloudinary } from "../../../utils/uploadImg";
+import type { User } from "../../../types/User";
 
 interface OrganizerModalProps {
   organizer: OrganizerResponse | null;
@@ -14,23 +14,35 @@ interface OrganizerModalProps {
   onSuccess?: () => void;
 }
 
-const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onClose, onSuccess }) => {
+const OrganizerModal: React.FC<OrganizerModalProps> = ({
+  organizer,
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
+  // Get current user role
+  const currentUser = useMemo(() => {
+    const userData = localStorage.getItem("user");
+    return userData ? JSON.parse(userData) : null;
+  }, []);
+
+  const isEventOrganizer = currentUser?.roleName === "event_organizer";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventOrganizers, setEventOrganizers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    contactEmail: '',
-    logoUrl: '',
+    name: "",
+    description: "",
+    contactEmail: "",
+    logoUrl: "",
     campusId: 0,
-    campusName: '',
+    campusName: "",
     ownerId: 0,
-    ownerName: '',
-    createdAt: '',
-    updatedAt: ''
+    ownerName: "",
+    createdAt: "",
+    updatedAt: "",
   });
 
   useEffect(() => {
@@ -39,16 +51,23 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
         name: organizer.name,
         description: organizer.description,
         contactEmail: organizer.contactEmail,
-        logoUrl: organizer.logoUrl || '',
+        logoUrl: organizer.logoUrl || "",
         campusId: organizer.campusId,
-        campusName: organizer.campus?.name || '',
+        campusName: organizer.campus?.name || "",
         ownerId: organizer.ownerId || 0,
-        ownerName: organizer.owner ? `${organizer.owner.firstName || ''} ${organizer.owner.lastName || ''}`.trim() : 'Chưa có',
+        ownerName: organizer.owner
+          ? `${organizer.owner.firstName || ""} ${
+              organizer.owner.lastName || ""
+            }`.trim()
+          : "Chưa có",
         createdAt: organizer.createdAt,
-        updatedAt: organizer.updatedAt
+        updatedAt: organizer.updatedAt,
       });
-      setPreviewUrl(organizer.logoUrl || '');
-      fetchEventOrganizers();
+      setPreviewUrl(organizer.logoUrl || "");
+      // Only fetch event organizers if not event_organizer role
+      if (!isEventOrganizer) {
+        fetchEventOrganizers();
+      }
     }
 
     return () => {
@@ -56,40 +75,44 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [isOpen, organizer]);
+  }, [isOpen, organizer, isEventOrganizer]);
 
   const fetchEventOrganizers = async () => {
     setIsLoadingUsers(true);
     try {
-      const response = await userService.getUsers({ 
-        roleName: 'event_organizer'
+      const response = await userService.getUsers({
+        roleName: "event_organizer",
       });
       if (response) {
         setEventOrganizers(response.data.data);
       }
     } catch (error: any) {
-      console.error('Error fetching event organizers:', error);
+      console.error("Error fetching event organizers:", error);
     } finally {
       setIsLoadingUsers(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn file ảnh');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file ảnh");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      toast.error("Kích thước ảnh không được vượt quá 5MB");
       return;
     }
 
@@ -102,15 +125,15 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
     setIsUploading(true);
     try {
       const imageUrl = await uploadImageToCloudinary(file);
-      setFormData(prev => ({ ...prev, logoUrl: imageUrl }));
-      toast.success('Tải ảnh lên thành công!');
+      setFormData((prev) => ({ ...prev, logoUrl: imageUrl }));
+      toast.success("Tải ảnh lên thành công!");
     } catch (err: any) {
-      toast.error('Có lỗi xảy ra khi tải ảnh lên');
-      console.error('Error uploading image:', err);
+      toast.error("Có lỗi xảy ra khi tải ảnh lên");
+      console.error("Error uploading image:", err);
       if (previewUrl && previewUrl !== organizer?.logoUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-      setPreviewUrl(organizer?.logoUrl || '');
+      setPreviewUrl(organizer?.logoUrl || "");
     } finally {
       setIsUploading(false);
     }
@@ -120,53 +143,62 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
     if (previewUrl && previewUrl !== organizer?.logoUrl) {
       URL.revokeObjectURL(previewUrl);
     }
-    setPreviewUrl('');
-    setFormData(prev => ({ ...prev, logoUrl: '' }));
+    setPreviewUrl("");
+    setFormData((prev) => ({ ...prev, logoUrl: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!organizer) return;
 
     if (!formData.logoUrl) {
-      toast.error('URL Logo là bắt buộc!');
+      toast.error("URL Logo là bắt buộc!");
       return;
     }
 
-    if (!formData.ownerId) {
-      toast.error('Vui lòng chọn Event Organizer!');
+    // Only validate ownerId if not event_organizer role
+    if (!isEventOrganizer && !formData.ownerId) {
+      toast.error("Vui lòng chọn Event Organizer!");
       return;
     }
 
     if (!formData.campusId) {
-      toast.error('Vui lòng chọn cơ sở!');
+      toast.error("Vui lòng chọn cơ sở!");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const updateData = {
+      const updateData: any = {
         name: formData.name,
         description: formData.description,
         contactEmail: formData.contactEmail,
         logoUrl: formData.logoUrl,
         campusId: formData.campusId,
-        ownerId: formData.ownerId
       };
 
-      const response = await organizerService.putOrganizer(organizer.id, updateData);
-      
+      // Only include ownerId if not event_organizer role
+      if (!isEventOrganizer) {
+        updateData.ownerId = formData.ownerId;
+      }
+
+      const response = await organizerService.putOrganizer(
+        organizer.id,
+        updateData
+      );
+
       if (response.status === 200 || response.data.success) {
-        toast.success('Cập nhật nhà tổ chức thành công!');
+        toast.success("Cập nhật nhà tổ chức thành công!");
         onSuccess?.();
         onClose();
       }
     } catch (error: any) {
-      console.error('Error updating organizer:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.data?.message || 
-                          'Không thể cập nhật nhà tổ chức!';
+      console.error("Error updating organizer:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.data?.message ||
+        "Không thể cập nhật nhà tổ chức!";
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -176,26 +208,33 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
   if (!organizer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div 
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
         className="bg-white rounded-xl shadow-xl w-full max-w-3xl"
-        onClick={(e) => e.stopPropagation()} 
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 bg-gradient-to-r from-[#F27125] to-[#d95c0b] rounded-t-xl">
           <div>
-            <h2 className="text-xl font-bold text-white">Cập nhật nhà tổ chức</h2>
-            <p className="text-sm text-white/90">Chỉnh sửa thông tin nhà tổ chức</p>
+            <h2 className="text-xl font-bold text-white">
+              Cập nhật nhà tổ chức
+            </h2>
+            <p className="text-sm text-white/90">
+              Chỉnh sửa thông tin nhà tổ chức
+            </p>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-white/80 hover:text-white transition-colors"
             aria-label="Đóng"
           >
             <X size={24} />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           {/* Form Content */}
           <div className="p-5">
@@ -228,9 +267,17 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
                         aria-label="Chọn ảnh logo"
                         className="w-full text-sm border border-gray-300 rounded-lg file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#F27125] file:text-white hover:file:bg-[#d65d1a] disabled:opacity-50"
                       />
-                      {isUploading && <p className="text-xs text-[#F27125] mt-1">Đang tải...</p>}
+                      {isUploading && (
+                        <p className="text-xs text-[#F27125] mt-1">
+                          Đang tải...
+                        </p>
+                      )}
                       {previewUrl && (
-                        <button type="button" onClick={handleRemoveImage} className="text-red-600 text-xs mt-1">
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="text-red-600 text-xs mt-1"
+                        >
                           Xóa ảnh
                         </button>
                       )}
@@ -262,7 +309,12 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
                   <select
                     name="campusId"
                     value={formData.campusId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, campusId: parseInt(e.target.value) }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        campusId: parseInt(e.target.value),
+                      }))
+                    }
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm"
                   >
@@ -275,27 +327,38 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
                   </select>
                 </div>
 
-                {/* Event Organizer */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Event Organizer <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="ownerId"
-                    value={formData.ownerId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, ownerId: parseInt(e.target.value) }))}
-                    required
-                    disabled={isLoadingUsers}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm disabled:bg-gray-100"
-                  >
-                    <option value="0">{isLoadingUsers ? 'Đang tải...' : 'Chọn Event Organizer'}</option>
-                    {eventOrganizers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName} ({user.email})
+                {/* Event Organizer - Hide for event_organizer role */}
+                {!isEventOrganizer && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Event Organizer <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="ownerId"
+                      value={formData.ownerId}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          ownerId: parseInt(e.target.value),
+                        }))
+                      }
+                      required
+                      disabled={isLoadingUsers}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F27125] focus:border-transparent outline-none text-sm disabled:bg-gray-100"
+                    >
+                      <option value="0">
+                        {isLoadingUsers
+                          ? "Đang tải..."
+                          : "Chọn Event Organizer"}
                       </option>
-                    ))}
-                  </select>
-                </div>
+                      {eventOrganizers.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.firstName} {user.lastName} ({user.email})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Right Column */}
@@ -372,13 +435,13 @@ const OrganizerModal: React.FC<OrganizerModalProps> = ({ organizer, isOpen, onCl
               disabled={isSubmitting || isUploading}
               className="px-5 py-2 bg-[#F27125] text-white rounded-lg hover:bg-[#d65d1a] transition-colors shadow-md disabled:opacity-50"
             >
-              {isSubmitting ? 'Đang cập nhật...' : 'Cập nhật'}
+              {isSubmitting ? "Đang cập nhật..." : "Cập nhật"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default OrganizerModal
+export default OrganizerModal;
