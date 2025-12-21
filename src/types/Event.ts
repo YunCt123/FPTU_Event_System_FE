@@ -20,6 +20,7 @@ export interface Event {
   title: string;
   description: string;
   eventType: EventType;
+  category?: string;
   status: EventStatus;
   startDate: string;
   endDate: string;
@@ -28,6 +29,19 @@ export interface Event {
   currentParticipants: number;
   venueId?: number;
   venueName?: string;
+  venue?: {
+    id: number;
+    name: string;
+    location?: string;
+    hasSeats?: boolean;
+    campusId?: number;
+    campus?: {
+      id: number;
+      name: string;
+      code?: string;
+      address?: string;
+    };
+  };
   campusId?: number;
   campusName?: string;
   organizerId: number;
@@ -35,6 +49,8 @@ export interface Event {
   imageUrl?: string;
   requiresApproval: boolean;
   isPublished: boolean;
+  isOnline?: boolean;
+  onlineMeetingUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -100,8 +116,8 @@ export interface speaker {
   company: string;
 }
 
-// API th?c t? hi?n t?i tr? l?i d? li?u speaker kh„ng nh?t qu n
-// nˆn c?n type bao r?ng h?n (?y t?o union cho c? chu?i v… object)
+// API thuc te hien tai tra lai du lieu speaker khong nhat quan
+// nen can type bao rong hon (day tao union cho ca chuoi va object)
 export type SpeakerPayload =
   | eventSpeaker
   | speaker

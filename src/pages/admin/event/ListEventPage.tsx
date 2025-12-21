@@ -1,4 +1,17 @@
-import { Search, Filter, Eye, Check, X, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Eye,
+  Check,
+  X,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Tag,
+  Video,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import EventModal from "../../../components/admin/event/EventModal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
@@ -12,7 +25,9 @@ const ListEventPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [events, setEvents] = useState<GetEventResponse[]>([]);
 
-  const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<GetEventResponse | null>(
+    null
+  );
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -30,16 +45,14 @@ const ListEventPage = () => {
     setIsLoading(true);
     try {
       const params: any = {
-  page: currentPage,
-  limit: itemsPerPage,
-  search: searchTerm || undefined,
-};
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm || undefined,
+      };
 
-
-
-if (statusFilter !== "all") {
-  params.status = statusFilter;
-}
+      if (statusFilter !== "all") {
+        params.status = statusFilter;
+      }
       const response: any = await eventService.getAllEvents(params);
       if (response && response.data) {
         setEvents(response.data.data || []);
@@ -85,26 +98,31 @@ if (statusFilter !== "all") {
     return pages;
   };
 
-  const handleApproveEvent = async (eventId: string | number, status: string) => {
+  const handleApproveEvent = async (
+    eventId: string | number,
+    status: string
+  ) => {
     setSubmitting(true);
     try {
       console.log("Approving event:", eventId);
-      
-      const response = await eventService.patchEvent(String(eventId), { status : "PUBLISHED" });
-      
+
+      const response = await eventService.patchEvent(String(eventId), {
+        status: "PUBLISHED",
+      });
+
       console.log("Approve response:", response);
-      
+
       if (response) {
         toast.success("Duyệt sự kiện thành công!");
-        
-        setEvents(prevEvents => 
-          prevEvents.map(e => 
+
+        setEvents((prevEvents) =>
+          prevEvents.map((e) =>
             e.id === eventId ? { ...e, status: "PUBLISHED" } : e
           )
         );
-        
+
         fetchEvents();
-      } 
+      }
     } catch (error: any) {
       console.error("Error approving event:", error);
       console.error("Error response:", error.response?.data);
@@ -118,22 +136,24 @@ if (statusFilter !== "all") {
     setSubmitting(true);
     try {
       console.log("Rejecting event:", eventId);
-      
-      const response = await eventService.patchEvent(String(eventId), { status: "CANCELED" });
-      
+
+      const response = await eventService.patchEvent(String(eventId), {
+        status: "CANCELED",
+      });
+
       console.log("Reject response:", response);
-      
+
       if (response) {
         toast.success("Từ chối sự kiện thành công!");
-        
-        setEvents(prevEvents => 
-          prevEvents.map(e => 
+
+        setEvents((prevEvents) =>
+          prevEvents.map((e) =>
             e.id === eventId ? { ...e, status: "CANCELED" } : e
           )
         );
-        
+
         fetchEvents();
-      } 
+      }
     } catch (error: any) {
       console.error("Error rejecting event:", error);
       console.error("Error response:", error.response?.data);
@@ -145,19 +165,21 @@ if (statusFilter !== "all") {
 
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
-    
+
     setSubmitting(true);
     try {
       const response = await eventService.deleteEvent(selectedEvent.id);
-      
+
       if (response.status == 200) {
         toast.success("Xóa sự kiện thành công!");
-        
-        setEvents(prevEvents => prevEvents.filter(e => e.id !== selectedEvent.id));
-        
+
+        setEvents((prevEvents) =>
+          prevEvents.filter((e) => e.id !== selectedEvent.id)
+        );
+
         setShowDeleteConfirm(false);
         setSelectedEvent(null);
-        
+
         await fetchEvents();
       } else {
         toast.error(response.data.message || "Xóa sự kiện thất bại!");
@@ -172,21 +194,25 @@ if (statusFilter !== "all") {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, string> = {
-      "PUBLISHED": "bg-green-100 text-green-700",
-      "PENDING": "bg-yellow-100 text-yellow-700",
-      "CANCELED": "bg-red-100 text-red-700",
-      "DRAFT": "bg-gray-100 text-gray-700",
+      PUBLISHED: "bg-green-100 text-green-700",
+      PENDING: "bg-yellow-100 text-yellow-700",
+      CANCELED: "bg-red-100 text-red-700",
+      DRAFT: "bg-gray-100 text-gray-700",
     };
 
     const statusLabel: Record<string, string> = {
-      "PUBLISHED": "Đã duyệt",
-      "PENDING": "Đang xử lý",
-      "CANCELED": "Bị từ chối",
-      "DRAFT": "Nháp",
+      PUBLISHED: "Đã duyệt",
+      PENDING: "Đang xử lý",
+      CANCELED: "Bị từ chối",
+      DRAFT: "Nháp",
     };
 
     return (
-      <span className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${statusConfig[status] || "bg-gray-100 text-gray-700"}`}>
+      <span
+        className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${
+          statusConfig[status] || "bg-gray-100 text-gray-700"
+        }`}
+      >
         {statusLabel[status] || status}
       </span>
     );
@@ -232,16 +258,31 @@ if (statusFilter !== "all") {
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto" style={{ overflow: 'visible' }}>
-          <table className="w-full" style={{ overflow: 'visible' }}>
+        <div className="overflow-x-auto" style={{ overflow: "visible" }}>
+          <table className="w-full" style={{ overflow: "visible" }}>
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">STT</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Tên sự kiện</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ban tổ chức</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Ngày tạo</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Địa điểm</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Trạng thái</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  STT
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Tên sự kiện
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Loại
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Ban tổ chức
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Ngày tạo
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Địa điểm
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                  Trạng thái
+                </th>
                 <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900"></th>
               </tr>
             </thead>
@@ -249,27 +290,116 @@ if (statusFilter !== "all") {
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Đang tải...
                   </td>
                 </tr>
               ) : events.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td
+                    colSpan={8}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
                     Không có dữ liệu
                   </td>
                 </tr>
               ) : (
                 events.map((e, index) => (
                   <tr key={e.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.title}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.organizer.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {new Date(e.createdAt).toLocaleDateString('vi-VN')}
+                      {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{e.venue?.name || "-"}</td>
-                    <td className="px-6 py-4 text-sm">{getStatusBadge(e.status)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {e.title}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Tag size={14} className="text-gray-400" />
+                        <span className="text-gray-700 font-medium">
+                          {e.category || "N/A"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {e.organizer.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {new Date(e.createdAt).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {e.isOnline || e.onlineMeetingUrl ? (
+                        <div className="flex items-start gap-2">
+                          <Video
+                            size={16}
+                            className="text-blue-500 flex-shrink-0 mt-0.5"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-blue-600">
+                              Trực tuyến
+                            </span>
+                            {e.onlineMeetingUrl && (
+                              <a
+                                href={e.onlineMeetingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-gray-500 truncate hover:text-blue-600 flex items-center gap-1 group"
+                                title={e.onlineMeetingUrl}
+                              >
+                                <span className="truncate">
+                                  {(() => {
+                                    const url = e.onlineMeetingUrl || "";
+                                    const meetMatch = url.match(
+                                      /meet\.google\.com\/([a-z-]+)/i
+                                    );
+                                    if (meetMatch) {
+                                      return `meet.google.com/${meetMatch[1]}`;
+                                    }
+                                    try {
+                                      const urlObj = new URL(url);
+                                      return urlObj.hostname.replace(
+                                        "www.",
+                                        ""
+                                      );
+                                    } catch {
+                                      return url.length > 25
+                                        ? `${url.substring(0, 22)}...`
+                                        : url;
+                                    }
+                                  })()}
+                                </span>
+                                <ExternalLink
+                                  size={12}
+                                  className="text-blue-400 group-hover:text-blue-600 flex-shrink-0"
+                                />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2">
+                          <MapPin
+                            size={16}
+                            className="text-gray-400 flex-shrink-0 mt-0.5"
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-gray-900 truncate">
+                              {e.venue?.name || "-"}
+                            </span>
+                            {e.venue?.location && (
+                              <span className="text-xs text-gray-500 truncate">
+                                {e.venue.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {getStatusBadge(e.status)}
+                    </td>
 
                     <td className="px-6 py-4">
                       <div className="flex justify-center">
@@ -283,7 +413,7 @@ if (statusFilter !== "all") {
                                 setShowDetailModal(true);
                               },
                             },
-                            // {  
+                            // {
                             //   label: "Xóa",
                             //   icon: Trash2,
                             //   onClick: () => {
@@ -304,58 +434,58 @@ if (statusFilter !== "all") {
           </table>
         </div>
         {/* Pagination Controls */}
-      {events.length > 0 && (
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            {/* Showing info */}
-            <div className="text-sm text-gray-600">
-              {/* Hiển thị <span className="font-semibold text-gray-900">{startIndex + 1}</span> đến{' '}
+        {events.length > 0 && (
+          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              {/* Showing info */}
+              <div className="text-sm text-gray-600">
+                {/* Hiển thị <span className="font-semibold text-gray-900">{startIndex + 1}</span> đến{' '}
               <span className="font-semibold text-gray-900">{Math.min(endIndex, filteredEvents.length)}</span> trong tổng số{' '}
               <span className="font-semibold text-gray-900">{filteredEvents.length}</span> sự kiện */}
-            </div>
-
-            {/* Pagination controls */}
-            <div className="flex items-center gap-2">
-              {/* Previous button */}
-              <button
-                onClick={goToPrevPage}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Trang trước"
-              >
-                <ChevronLeft size={20} className="text-gray-600" />
-              </button>
-
-              {/* Page numbers */}
-              <div className="flex items-center gap-1">
-                {getPageNumbers().map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-colors ${
-                      pageNum === currentPage
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
               </div>
 
-              {/* Next button */}
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Trang sau"
-              >
-                <ChevronRight size={20} className="text-gray-600" />
-              </button>
+              {/* Pagination controls */}
+              <div className="flex items-center gap-2">
+                {/* Previous button */}
+                <button
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Trang trước"
+                >
+                  <ChevronLeft size={20} className="text-gray-600" />
+                </button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`min-w-[40px] h-10 px-3 rounded-lg font-medium transition-colors ${
+                        pageNum === currentPage
+                          ? "bg-orange-600 text-white"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Next button */}
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Trang sau"
+                >
+                  <ChevronRight size={20} className="text-gray-600" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
 
       {/* {filteredEvents.length > 0 && (
@@ -366,18 +496,21 @@ if (statusFilter !== "all") {
 
       {/* ✅ Detail Modal - REDESIGNED UI */}
       {showDetailModal && selectedEvent && (
-        <EventModal title="Chi tiết sự kiện" onClose={() => setShowDetailModal(false)}>
+        <EventModal
+          title="Chi tiết sự kiện"
+          onClose={() => setShowDetailModal(false)}
+        >
           <div className="space-y-6">
             {/* Banner Image - Full Width */}
             <div className="relative w-full h-72 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg">
               {selectedEvent.imageUrl || selectedEvent.bannerUrl ? (
-                <img 
-                  src={selectedEvent.bannerUrl || selectedEvent.imageUrl} 
+                <img
+                  src={selectedEvent.bannerUrl || selectedEvent.imageUrl}
                   alt={selectedEvent.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
+                    target.style.display = "none";
                     const parent = target.parentElement;
                     if (parent) {
                       parent.innerHTML = `
@@ -397,7 +530,7 @@ if (statusFilter !== "all") {
                   <p className="text-sm font-medium">Chưa có ảnh banner</p>
                 </div>
               )}
-              
+
               {/* Status Badge Overlay */}
               <div className="absolute top-4 right-4">
                 {getStatusBadge(selectedEvent.status)}
@@ -406,8 +539,12 @@ if (statusFilter !== "all") {
 
             {/* Event Title & ID */}
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
-              <p className="text-sm text-gray-500 font-mono">ID: {selectedEvent.id}</p>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {selectedEvent.title}
+              </h2>
+              <p className="text-sm text-gray-500 font-mono">
+                ID: {selectedEvent.id}
+              </p>
             </div>
 
             {/* Main Info Grid */}
@@ -416,40 +553,143 @@ if (statusFilter !== "all") {
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-blue-500 rounded-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
                     </svg>
                   </div>
-                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Ban tổ chức</p>
+                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                    Ban tổ chức
+                  </p>
                 </div>
-                <p className="text-lg font-bold text-blue-900">{selectedEvent.organizer.name}</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {selectedEvent.organizer.name}
+                </p>
               </div>
 
-              {/* Venue */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-purple-500 rounded-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+              {/* Venue / Online Link */}
+              {selectedEvent.isOnline || selectedEvent.onlineMeetingUrl ? (
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-blue-500 rounded-lg">
+                      <Video size={20} className="text-white" />
+                    </div>
+                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                      Link họp online
+                    </p>
                   </div>
-                  <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Địa điểm</p>
+                  {selectedEvent.onlineMeetingUrl ? (
+                    <a
+                      href={selectedEvent.onlineMeetingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-bold text-blue-900 hover:text-blue-700 flex items-center gap-2 group"
+                    >
+                      <span className="truncate">
+                        {(() => {
+                          const url = selectedEvent.onlineMeetingUrl || "";
+                          const meetMatch = url.match(
+                            /meet\.google\.com\/([a-z-]+)/i
+                          );
+                          if (meetMatch) {
+                            return `meet.google.com/${meetMatch[1]}`;
+                          }
+                          try {
+                            const urlObj = new URL(url);
+                            return urlObj.hostname.replace("www.", "");
+                          } catch {
+                            return url.length > 30
+                              ? `${url.substring(0, 27)}...`
+                              : url;
+                          }
+                        })()}
+                      </span>
+                      <ExternalLink
+                        size={16}
+                        className="text-blue-600 group-hover:text-blue-800 flex-shrink-0"
+                      />
+                    </a>
+                  ) : (
+                    <p className="text-lg font-bold text-blue-900">
+                      Trực tuyến
+                    </p>
+                  )}
                 </div>
-                <p className="text-lg font-bold text-purple-900">{selectedEvent.venue?.name || "Sự kiện Online"}</p>
-              </div>
+              ) : (
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-purple-500 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">
+                      Địa điểm
+                    </p>
+                  </div>
+                  <div className="flex flex-col">
+                    <p className="text-lg font-bold text-purple-900">
+                      {selectedEvent.venue?.name || "Chưa xác định"}
+                    </p>
+                    {selectedEvent.venue?.location && (
+                      <p className="text-sm text-purple-700 mt-1">
+                        {selectedEvent.venue.location}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Category */}
               <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-amber-500 rounded-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                      />
                     </svg>
                   </div>
-                  <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Danh mục</p>
+                  <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">
+                    Danh mục
+                  </p>
                 </div>
-                <p className="text-lg font-bold text-amber-900">{selectedEvent.category || "Chưa phân loại"}</p>
+                <p className="text-lg font-bold text-amber-900">
+                  {selectedEvent.category || "Chưa phân loại"}
+                </p>
               </div>
             </div>
 
@@ -458,19 +698,31 @@ if (statusFilter !== "all") {
               {/* Start Time */}
               <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 border border-green-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
-                  <p className="text-sm font-semibold text-green-700">Thời gian bắt đầu</p>
+                  <p className="text-sm font-semibold text-green-700">
+                    Thời gian bắt đầu
+                  </p>
                 </div>
                 <p className="text-base font-bold text-green-900">
-                  {new Date(selectedEvent.startTime).toLocaleString('vi-VN', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                  {new Date(selectedEvent.startTime).toLocaleString("vi-VN", {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </p>
               </div>
@@ -478,19 +730,31 @@ if (statusFilter !== "all") {
               {/* End Time */}
               <div className="bg-gradient-to-br from-orange-50 to-red-100 rounded-xl p-4 border border-orange-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5 text-orange-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
-                  <p className="text-sm font-semibold text-orange-700">Thời gian kết thúc</p>
+                  <p className="text-sm font-semibold text-orange-700">
+                    Thời gian kết thúc
+                  </p>
                 </div>
                 <p className="text-base font-bold text-orange-900">
-                  {new Date(selectedEvent.endTime).toLocaleString('vi-VN', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                  {new Date(selectedEvent.endTime).toLocaleString("vi-VN", {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </p>
               </div>
@@ -502,18 +766,34 @@ if (statusFilter !== "all") {
                 {/* Registration Start */}
                 <div className="bg-gradient-to-br from-cyan-50 to-blue-100 rounded-xl p-4 border border-cyan-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <svg
+                      className="w-5 h-5 text-cyan-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
                     </svg>
-                    <p className="text-sm font-semibold text-cyan-700">Mở đăng ký</p>
+                    <p className="text-sm font-semibold text-cyan-700">
+                      Mở đăng ký
+                    </p>
                   </div>
                   <p className="text-base font-bold text-cyan-900">
-                    {new Date(selectedEvent.startTimeRegister || (selectedEvent as any).startTimeRegistration || "").toLocaleString('vi-VN', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
+                    {new Date(
+                      selectedEvent.startTimeRegister ||
+                        (selectedEvent as any).startTimeRegistration ||
+                        ""
+                    ).toLocaleString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </p>
                 </div>
@@ -521,18 +801,34 @@ if (statusFilter !== "all") {
                 {/* Registration End */}
                 <div className="bg-gradient-to-br from-pink-50 to-rose-100 rounded-xl p-4 border border-pink-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <svg
+                      className="w-5 h-5 text-pink-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
                     </svg>
-                    <p className="text-sm font-semibold text-pink-700">Đóng đăng ký</p>
+                    <p className="text-sm font-semibold text-pink-700">
+                      Đóng đăng ký
+                    </p>
                   </div>
                   <p className="text-base font-bold text-pink-900">
-                    {new Date(selectedEvent.endTimeRegister || (selectedEvent as any).endTimeRegistration || "").toLocaleString('vi-VN', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
+                    {new Date(
+                      selectedEvent.endTimeRegister ||
+                        (selectedEvent as any).endTimeRegistration ||
+                        ""
+                    ).toLocaleString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </p>
                 </div>
@@ -543,10 +839,22 @@ if (statusFilter !== "all") {
             {selectedEvent.description && (
               <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-5 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                  <svg
+                    className="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h7"
+                    />
                   </svg>
-                  <p className="text-sm font-semibold text-gray-700">Mô tả sự kiện</p>
+                  <p className="text-sm font-semibold text-gray-700">
+                    Mô tả sự kiện
+                  </p>
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                   {selectedEvent.description}
@@ -555,82 +863,111 @@ if (statusFilter !== "all") {
             )}
 
             {/* Speakers Section */}
-            {selectedEvent.eventSpeakers && selectedEvent.eventSpeakers.length > 0 && (
-              <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl p-5 border border-indigo-200 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-indigo-500 rounded-lg">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-bold text-indigo-900">Diễn giả</h3>
-                  </div>
-                  <span className="px-3 py-1 bg-indigo-500 text-white text-xs font-bold rounded-full">
-                    {selectedEvent.eventSpeakers.length}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedEvent.eventSpeakers.map((eventSpeaker) => (
-                    <div 
-                      key={eventSpeaker.id} 
-                      className="bg-white rounded-xl p-4 border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200"
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Avatar */}
-                        {eventSpeaker.speaker.avatar ? (
-                          <img 
-                            src={eventSpeaker.speaker.avatar} 
-                            alt={eventSpeaker.speaker.name}
-                            className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-3 border-indigo-200 shadow-md"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(eventSpeaker.speaker.name)}&background=6366F1&color=fff&size=128`;
-                            }}
+            {selectedEvent.eventSpeakers &&
+              selectedEvent.eventSpeakers.length > 0 && (
+                <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-xl p-5 border border-indigo-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-indigo-500 rounded-lg">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                           />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl flex-shrink-0 border-3 border-indigo-200 shadow-md">
-                            {eventSpeaker.speaker.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-bold text-indigo-900">
+                        Diễn giả
+                      </h3>
+                    </div>
+                    <span className="px-3 py-1 bg-indigo-500 text-white text-xs font-bold rounded-full">
+                      {selectedEvent.eventSpeakers.length}
+                    </span>
+                  </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-base text-gray-900 mb-1">
-                            {eventSpeaker.speaker.name}
-                          </p>
-                          
-                          {eventSpeaker.speaker.company && (
-                            <div className="flex items-center gap-1 mb-2">
-                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                              </svg>
-                              <p className="text-sm text-gray-600 font-medium">{eventSpeaker.speaker.company}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedEvent.eventSpeakers.map((eventSpeaker) => (
+                      <div
+                        key={eventSpeaker.id}
+                        className="bg-white rounded-xl p-4 border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200"
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Avatar */}
+                          {eventSpeaker.speaker.avatar ? (
+                            <img
+                              src={eventSpeaker.speaker.avatar}
+                              alt={eventSpeaker.speaker.name}
+                              className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-3 border-indigo-200 shadow-md"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                  eventSpeaker.speaker.name
+                                )}&background=6366F1&color=fff&size=128`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl flex-shrink-0 border-3 border-indigo-200 shadow-md">
+                              {eventSpeaker.speaker.name
+                                .charAt(0)
+                                .toUpperCase()}
                             </div>
                           )}
-                          
-                          {eventSpeaker.topic && (
-                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-2">
-                              <p className="text-xs text-indigo-700 font-semibold flex items-center gap-1">
-                                <span>📚</span>
-                                <span>{eventSpeaker.topic}</span>
-                              </p>
-                            </div>
-                          )}
-                          
-                          {eventSpeaker.speaker.bio && (
-                            <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                              {eventSpeaker.speaker.bio}
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-base text-gray-900 mb-1">
+                              {eventSpeaker.speaker.name}
                             </p>
-                          )}
+
+                            {eventSpeaker.speaker.company && (
+                              <div className="flex items-center gap-1 mb-2">
+                                <svg
+                                  className="w-4 h-4 text-gray-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                  />
+                                </svg>
+                                <p className="text-sm text-gray-600 font-medium">
+                                  {eventSpeaker.speaker.company}
+                                </p>
+                              </div>
+                            )}
+
+                            {eventSpeaker.topic && (
+                              <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2 mb-2">
+                                <p className="text-xs text-indigo-700 font-semibold flex items-center gap-1">
+                                  <span>📚</span>
+                                  <span>{eventSpeaker.topic}</span>
+                                </p>
+                              </div>
+                            )}
+
+                            {eventSpeaker.speaker.bio && (
+                              <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                {eventSpeaker.speaker.bio}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Action Buttons */}
             {selectedEvent.status === "PENDING" && (
@@ -678,8 +1015,6 @@ if (statusFilter !== "all") {
         }}
         type="danger"
       />
-
-      
     </div>
   );
 };

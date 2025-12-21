@@ -8,6 +8,8 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  Video,
+  Tag,
 } from "lucide-react";
 import type { Event, EventStatus } from "../../../types/Event";
 import EventFormModal from "../../../components/organizer/event/EventFormModal";
@@ -110,6 +112,7 @@ const EventManagementPage = () => {
       title: source.title || "",
       description: source.description || "",
       eventType: source.category || source.eventType || "OTHER",
+      category: source.category || undefined,
       status: mappedStatus,
       startDate: source.startTime || source.startDate || "",
       endDate: source.endTime || source.endDate || "",
@@ -122,13 +125,15 @@ const EventManagementPage = () => {
       currentParticipants:
         source.registeredCount || source.currentParticipants || 0,
       venueId: source.venueId || source.venue?.id || 0,
-      venueName: source.venue?.name || source.venueName || "Chua x c d?nh",
+      venueName: source.venue?.name || source.venueName || "Chua x c d?nh",
       campusId: source.venue?.campusId || source.campusId || 0,
       campusName: source.venue?.campus?.name || source.campusName || "",
       organizerId: source.organizerId || source.organizer?.id || 0,
       organizerName: source.organizer?.name || source.organizerName || "",
       requiresApproval: source.requiresApproval ?? true,
       isPublished: source.isPublished ?? source.status === "PUBLISHED",
+      isOnline: source.isOnline === true || !!source.onlineMeetingUrl,
+      onlineMeetingUrl: source.onlineMeetingUrl || undefined,
     };
   };
 
@@ -248,6 +253,7 @@ const EventManagementPage = () => {
             title: apiEvent.title || "",
             description: apiEvent.description || "",
             eventType: apiEvent.category || apiEvent.eventType || "OTHER",
+            category: apiEvent.category || undefined,
             status: mappedStatus,
             startDate: apiEvent.startTime || apiEvent.startDate || "",
             endDate: apiEvent.endTime || apiEvent.endDate || "",
@@ -272,7 +278,11 @@ const EventManagementPage = () => {
             requiresApproval: apiEvent.requiresApproval ?? true,
             isPublished:
               apiEvent.isPublished ?? apiEvent.status === "PUBLISHED",
-          };
+            isOnline: apiEvent.isOnline === true || !!apiEvent.onlineMeetingUrl,
+            onlineMeetingUrl: apiEvent.onlineMeetingUrl || undefined,
+            // Lưu venue object để có thể truy cập location
+            venue: apiEvent.venue || undefined,
+          } as any;
         })
         .filter((event): event is Event => event !== null);
 
@@ -807,6 +817,9 @@ const EventManagementPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Sự kiện
                     </th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">
+                      Loại
+                    </th>
                     <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">
                       Trạng thái
                     </th>
@@ -842,6 +855,16 @@ const EventManagementPage = () => {
                         </div>
                       </td>
 
+                      {/* Loại sự kiện (Category) */}
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Tag size={14} className="text-gray-400" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {event.eventType || event.category || "N/A"}
+                          </span>
+                        </div>
+                      </td>
+
                       {/* Trạng thái */}
                       <td className="px-6 py-4 text-center">
                         {getStatusBadge(event.status)}
@@ -870,18 +893,86 @@ const EventManagementPage = () => {
                       {/* Địa điểm */}
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-2">
-                          <MapPin
-                            size={16}
-                            className="text-gray-400 flex-shrink-0 mt-0.5"
-                          />
+                          {event.isOnline ? (
+                            <Video
+                              size={16}
+                              className="text-blue-500 flex-shrink-0 mt-0.5"
+                            />
+                          ) : (
+                            <MapPin
+                              size={16}
+                              className="text-gray-400 flex-shrink-0 mt-0.5"
+                            />
+                          )}
                           <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-gray-900 truncate">
-                              {event.venueName || "Chưa xác định"}
-                            </span>
-                            {event.campusName && (
-                              <span className="text-xs text-gray-500 truncate">
-                                {event.campusName}
-                              </span>
+                            {event.isOnline ? (
+                              <>
+                                <span className="text-sm font-medium text-blue-600">
+                                  Trực tuyến
+                                </span>
+                                {event.onlineMeetingUrl && (
+                                  <div
+                                    className="text-xs text-gray-500 truncate group relative"
+                                    title={event.onlineMeetingUrl}
+                                  >
+                                    <span className="inline-flex items-center gap-1">
+                                      <Video
+                                        size={12}
+                                        className="text-blue-400"
+                                      />
+                                      <span className="truncate">
+                                        {(() => {
+                                          // Rút ngắn link Google Meet
+                                          const url =
+                                            event.onlineMeetingUrl || "";
+                                          // Nếu là Google Meet link, chỉ lấy phần code
+                                          const meetMatch = url.match(
+                                            /meet\.google\.com\/([a-z-]+)/i
+                                          );
+                                          if (meetMatch) {
+                                            return `meet.google.com/${meetMatch[1]}`;
+                                          }
+                                          // Nếu không phải Google Meet, rút ngắn domain
+                                          try {
+                                            const urlObj = new URL(url);
+                                            const hostname =
+                                              urlObj.hostname.replace(
+                                                "www.",
+                                                ""
+                                              );
+                                            return hostname.length > 25
+                                              ? `${hostname.substring(
+                                                  0,
+                                                  22
+                                                )}...`
+                                              : hostname;
+                                          } catch {
+                                            return url.length > 25
+                                              ? `${url.substring(0, 22)}...`
+                                              : url;
+                                          }
+                                        })()}
+                                      </span>
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm font-medium text-gray-900 truncate">
+                                  {event.venueName || "Chưa xác định"}
+                                </span>
+                                {/* Hiển thị location nếu có */}
+                                {(event as any).venue?.location ? (
+                                  <span className="text-xs text-gray-500 truncate">
+                                    {(event as any).venue.location}
+                                  </span>
+                                ) : event.campusName ? (
+                                  <span className="text-xs text-gray-500 truncate">
+                                    {event.campusName}
+                                  </span>
+                                ) : null}
+                              </>
                             )}
                           </div>
                         </div>
